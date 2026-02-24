@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デスクオーガナイザーメーカー | Hidamari Works</title>
+<meta name="description" content="ブラウザだけで自分だけのデスクオーガナイザーを作ろう。サイズ・仕切りを自由にカスタマイズしてSTLをダウンロード。3Dプリンターですぐに印刷できます。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf8f5; --surface: #ffffff; --surface2: #f3f0eb;
+  --border: #e8e2d9; --border2: #d4cdc2;
+  --text: #2c2416; --text2: #6b5e4f; --text3: #9c8e7d;
+  --accent: #d97706; --accent-light: #fef3c7; --accent-dark: #92400e;
+  --green: #059669; --green-light: #d1fae5; --green-dark: #065f46;
+  --blue: #2563eb; --blue-light: #dbeafe;
+  --red: #dc2626; --red-light: #fee2e2;
+  --shadow: 0 1px 3px rgba(44,36,22,0.06), 0 4px 12px rgba(44,36,22,0.04);
+  --shadow-lg: 0 4px 16px rgba(44,36,22,0.08), 0 12px 40px rgba(44,36,22,0.06);
+  --radius: 12px; --radius-sm: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  background: var(--bg); color: var(--text);
+  overflow-x: hidden; min-height: 100vh;
+}
+
+/* ─── Layout ─── */
+.app {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+
+/* ─── Header ─── */
+.header {
+  grid-column: 1 / -1;
+  padding: 10px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(217,119,6,0.25);
+}
+.logo-text { font-weight: 800; font-size: 15px; color: var(--text); }
+.logo-text span { color: var(--accent); }
+.logo-sub {
+  font-size: 10px; color: var(--text3); font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.header-badges { display: flex; gap: 8px; align-items: center; }
+.badge {
+  font-size: 10px; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+.badge-free { background: var(--green-light); color: var(--green-dark); }
+.badge-browser { background: var(--blue-light); color: var(--blue); }
+
+/* ─── Sidebar ─── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* Presets */
+.presets {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--surface) 100%);
+}
+.presets-title {
+  font-size: 11px; font-weight: 700; color: var(--accent-dark);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.presets-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.preset-btn {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 4px;
+  cursor: pointer; text-align: center;
+  transition: all 0.2s; font-family: inherit;
+}
+.preset-btn:hover {
+  border-color: var(--accent); background: var(--accent-light);
+  transform: translateY(-1px); box-shadow: var(--shadow);
+}
+.preset-btn.active {
+  border-color: var(--accent); background: var(--accent-light);
+  box-shadow: 0 0 0 2px rgba(217,119,6,0.15);
+}
+.preset-icon { font-size: 20px; margin-bottom: 2px; }
+.preset-name { font-size: 10px; font-weight: 700; color: var(--text); line-height: 1.2; }
+
+/* Section */
+.section {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.section-title {
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.section-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+
+/* Params */
+.param { margin-bottom: 10px; }
+.param:last-child { margin-bottom: 0; }
+.param-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 4px;
+}
+.param-label { font-size: 13px; font-weight: 500; }
+.param-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--accent-dark); font-weight: 600;
+  background: var(--accent-light); padding: 2px 8px;
+  border-radius: 6px; min-width: 55px; text-align: center;
+}
+
+input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 6px;
+  border-radius: 3px; background: var(--surface2);
+  outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); border: 3px solid var(--surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer; transition: transform 0.15s;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); border: 3px solid var(--surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15); cursor: pointer;
+}
+
+/* Pocket grid */
+.pocket-row { display: flex; gap: 5px; margin-top: 4px; }
+.pocket-btn {
+  flex: 1; height: 36px;
+  background: var(--surface2); border: 2px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-family: inherit;
+}
+.pocket-btn:hover { border-color: var(--accent); }
+.pocket-btn.active {
+  border-color: var(--green); background: var(--green-light);
+  box-shadow: 0 0 0 2px rgba(5,150,105,0.1);
+}
+.mini-grid { display: grid; gap: 2px; }
+.mini-grid .cell {
+  background: var(--text3); border-radius: 1px; opacity: 0.4;
+  min-width: 5px; min-height: 4px;
+}
+.pocket-btn.active .mini-grid .cell { background: var(--green); opacity: 0.8; }
+
+/* Color */
+.color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-swatch {
+  width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+  border: 2.5px solid transparent; transition: all 0.2s;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15);
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.active {
+  border-color: var(--text);
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15), 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+}
+
+/* Printer check */
+.printer-check {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.printer-select {
+  width: 100%; padding: 8px 12px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-family: inherit; font-size: 12px;
+  background: var(--surface); color: var(--text); cursor: pointer;
+  font-weight: 500;
+}
+.printer-result {
+  margin-top: 8px; padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+  line-height: 1.5;
+}
+.printer-ok { background: var(--green-light); color: var(--green-dark); }
+.printer-ng { background: var(--red-light); color: var(--red); }
+
+/* Estimation */
+.est-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;
+}
+.est-card {
+  background: var(--surface2); border-radius: var(--radius-sm);
+  padding: 10px; text-align: center;
+}
+.est-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 600; color: var(--accent-dark);
+}
+.est-label { font-size: 10px; color: var(--text3); margin-top: 2px; font-weight: 500; }
+
+/* Export */
+.export-section { padding: 14px 18px; }
+.btn-export {
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.25s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-export:active { transform: scale(0.98); }
+.btn-stl {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(5,150,105,0.3);
+}
+.btn-stl:hover { box-shadow: 0 6px 24px rgba(5,150,105,0.4); transform: translateY(-1px); }
+.btn-ascii {
+  background: var(--surface); color: var(--text2);
+  border: 1.5px solid var(--border); margin-top: 8px;
+  font-size: 12px; padding: 10px;
+}
+.btn-ascii:hover { border-color: var(--text3); }
+
+.export-info {
+  margin-top: 8px; padding: 8px 12px;
+  background: var(--green-light); border-radius: var(--radius-sm);
+  font-size: 12px; color: var(--green-dark); text-align: center;
+  font-weight: 600; display: none;
+}
+.export-info.show { display: block; animation: fadeIn 0.3s; }
+
+.print-tips {
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--surface2); border-radius: var(--radius-sm);
+  font-size: 11px; color: var(--text2); line-height: 1.8;
+}
+.print-tips strong { color: var(--text); }
+
+/* ─── Viewport ─── */
+.viewport {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #e8e2d9 0%, #f3f0eb 40%, #faf8f5 100%);
+}
+#canvas3d { width: 100%; height: 100%; display: block; cursor: grab; }
+
+.dim-overlay {
+  position: absolute; top: 14px; right: 14px;
+  background: rgba(255,255,255,0.92); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  backdrop-filter: blur(8px); z-index: 10;
+  box-shadow: var(--shadow);
+}
+.dim-row {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text2); line-height: 1.8;
+}
+.dim-row span { font-weight: 700; color: var(--accent-dark); }
+
+.vol-overlay {
+  position: absolute; top: 14px; left: 14px;
+  background: rgba(255,255,255,0.92); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  backdrop-filter: blur(8px); z-index: 10;
+  text-align: center; box-shadow: var(--shadow);
+}
+.vol-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 700; color: var(--green);
+}
+.vol-label { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; }
+
+.viewport-bar {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 4px; z-index: 10;
+  background: rgba(255,255,255,0.92); border: 1px solid var(--border);
+  border-radius: 10px; padding: 4px; backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+.vbtn {
+  padding: 6px 14px; background: transparent;
+  border: none; border-radius: 7px; color: var(--text2);
+  font-family: inherit; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.vbtn:hover { background: var(--surface2); color: var(--text); }
+.vbtn.active { background: var(--accent); color: #fff; }
+
+/* footer credit */
+.footer-credit {
+  position: absolute; bottom: 14px; right: 14px;
+  font-size: 10px; color: var(--text3);
+  background: rgba(255,255,255,0.7); padding: 4px 10px;
+  border-radius: 6px; backdrop-filter: blur(4px); z-index:10;
+}
+.footer-credit a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+/* ─── Animations ─── */
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+/* ─── Mobile ─── */
+@media (max-width: 800px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 45vh auto;
+    height: auto; min-height: 100vh;
+  }
+  .sidebar { order: 2; border-right: none; border-top: 1px solid var(--border); }
+  .viewport { order: 1; min-height: 45vh; }
+  .header-badges { display: none; }
+  .dim-overlay, .vol-overlay { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <a class="logo" href="#">
+      <div class="logo-mark">☀️</div>
+      <div>
+        <div class="logo-text"><span>Hidamari</span> Works</div>
+        <div class="logo-sub">デスクオーガナイザーメーカー</div>
+      </div>
+    </a>
+    <div class="header-badges">
+      <div class="badge badge-free">🆓 完全無料</div>
+      <div class="badge badge-browser">🌐 サーバー不要</div>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <!-- Presets -->
+    <div class="presets">
+      <div class="presets-title">⚡ プリセット</div>
+      <div class="presets-grid">
+        <button class="preset-btn" onclick="applyPreset('pen')">
+          <div class="preset-icon">🖊️</div>
+          <div class="preset-name">ペン立て</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('sd')">
+          <div class="preset-icon">💾</div>
+          <div class="preset-name">SDカード</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('remote')">
+          <div class="preset-icon">📱</div>
+          <div class="preset-name">リモコン</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('tools')">
+          <div class="preset-icon">🔧</div>
+          <div class="preset-name">工具入れ</div>
+        </button>
+        <button class="preset-btn" onclick="applyPreset('desk')">
+          <div class="preset-icon">📎</div>
+          <div class="preset-name">文房具</div>
+        </button>
+        <button class="preset-btn active" onclick="applyPreset('custom')">
+          <div class="preset-icon">✏️</div>
+          <div class="preset-name">カスタム</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Dimensions -->
+    <div class="section">
+      <div class="section-title"><div class="section-dot" style="background:var(--accent)"></div>サイズ</div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">幅 (W)</span><div class="param-val" id="v-w">120mm</div></div>
+        <input type="range" id="s-w" min="30" max="250" value="120" step="5">
+      </div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">奥行き (D)</span><div class="param-val" id="v-d">80mm</div></div>
+        <input type="range" id="s-d" min="30" max="200" value="80" step="5">
+      </div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">高さ (H)</span><div class="param-val" id="v-h">60mm</div></div>
+        <input type="range" id="s-h" min="15" max="150" value="60" step="5">
+      </div>
+    </div>
+
+    <!-- Pockets -->
+    <div class="section">
+      <div class="section-title"><div class="section-dot" style="background:var(--green)"></div>仕切り</div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">横</span></div>
+        <div class="pocket-row" id="pgx"></div>
+      </div>
+      <div class="param" style="margin-top:8px">
+        <div class="param-head"><span class="param-label">縦</span></div>
+        <div class="pocket-row" id="pgy"></div>
+      </div>
+    </div>
+
+    <!-- Structure -->
+    <div class="section">
+      <div class="section-title"><div class="section-dot" style="background:var(--blue)"></div>構造</div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">壁の厚さ</span><div class="param-val" id="v-wl">2.5mm</div></div>
+        <input type="range" id="s-wl" min="1" max="6" value="2.5" step="0.5">
+      </div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">底の厚さ</span><div class="param-val" id="v-bt">3.0mm</div></div>
+        <input type="range" id="s-bt" min="1" max="8" value="3" step="0.5">
+      </div>
+      <div class="param">
+        <div class="param-head"><span class="param-label">角の丸み</span><div class="param-val" id="v-fl">3.0mm</div></div>
+        <input type="range" id="s-fl" min="0" max="15" value="3" step="0.5">
+      </div>
+    </div>
+
+    <!-- Color -->
+    <div class="section">
+      <div class="section-title"><div class="section-dot" style="background:var(--accent)"></div>プレビュー色</div>
+      <div class="color-row" id="colors"></div>
+    </div>
+
+    <!-- Printer Check -->
+    <div class="printer-check">
+      <div class="section-title"><div class="section-dot" style="background:var(--green)"></div>プリンターチェック</div>
+      <select class="printer-select" id="printer-sel" onchange="checkPrinter()">
+        <option value="0">プリンターを選択...</option>
+        <option value="180x180x180">Bambu Lab A1 mini (180×180×180)</option>
+        <option value="256x256x256">Bambu Lab A1 / P1S / X1C (256×256×256)</option>
+        <option value="220x220x250">Creality Ender-3 V3 (220×220×250)</option>
+        <option value="220x220x250">Creality Ender-3 S1 (220×220×250)</option>
+        <option value="300x300x340">Creality K1 Max (300×300×340)</option>
+        <option value="250x210x210">Prusa MK4 (250×210×210)</option>
+        <option value="180x180x170">Prusa MINI+ (180×180×170)</option>
+        <option value="256x256x256">Anker M5 (256×256×256)</option>
+      </select>
+      <div class="printer-result" id="printer-result" style="display:none"></div>
+    </div>
+
+    <!-- Estimation -->
+    <div class="section">
+      <div class="section-title"><div class="section-dot" style="background:var(--accent)"></div>プリント概算</div>
+      <div class="est-grid">
+        <div class="est-card">
+          <div class="est-num" id="est-weight">—</div>
+          <div class="est-label">フィラメント (g)</div>
+        </div>
+        <div class="est-card">
+          <div class="est-num" id="est-time">—</div>
+          <div class="est-label">印刷時間 (目安)</div>
+        </div>
+        <div class="est-card">
+          <div class="est-num" id="est-cost">—</div>
+          <div class="est-label">材料費 (¥)</div>
+        </div>
+        <div class="est-card">
+          <div class="est-num" id="est-length">—</div>
+          <div class="est-label">フィラメント (m)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="export-section">
+      <button class="btn-export btn-stl" onclick="exportSTL(false)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 2v10M5 8l4 4 4-4M3 14h12"/></svg>
+        STLダウンロード
+      </button>
+      <button class="btn-export btn-ascii" onclick="exportSTL(true)">ASCII形式でダウンロード</button>
+      <div class="export-info" id="export-info">✅ ダウンロード完了！</div>
+      <div class="print-tips">
+        <strong>💡 プリントのコツ</strong><br>
+        ・レイヤー高さ: <strong>0.2mm</strong>（速度と品質のバランス）<br>
+        ・インフィル: <strong>15〜20%</strong>（十分な強度）<br>
+        ・サポート: <strong>不要</strong>（上面が開いているため）<br>
+        ・向き: <strong>底面を下</strong>にしてそのまま配置
+      </div>
+    </div>
+  </aside>
+
+  <main class="viewport">
+    <canvas id="canvas3d"></canvas>
+    <div class="dim-overlay">
+      <div class="dim-row">W: <span id="dd-w">120</span> × D: <span id="dd-d">80</span> × H: <span id="dd-h">60</span> mm</div>
+      <div class="dim-row">仕切り: <span id="dd-p">2×1</span></div>
+    </div>
+    <div class="vol-overlay">
+      <div class="vol-num" id="vol-num">—</div>
+      <div class="vol-label">収納 cm³</div>
+    </div>
+    <div class="viewport-bar">
+      <button class="vbtn" onclick="setView('front')">正面</button>
+      <button class="vbtn" onclick="setView('top')">上面</button>
+      <button class="vbtn" onclick="setView('iso')">斜め</button>
+      <button class="vbtn" id="btn-wire" onclick="toggleWire()">ワイヤー</button>
+      <button class="vbtn active" id="btn-auto" onclick="toggleAuto()">自動回転</button>
+    </div>
+    <div class="footer-credit">Made with ☀️ by <a href="https://hidamari-works.com">Hidamari Works</a></div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ══════════════════════════════════════════════
+// STL Exporter
+// ══════════════════════════════════════════════
+class STLExporter {
+  parse(scene, options = {}) {
+    return options.binary !== false ? this.parseBinary(scene) : this.parseASCII(scene);
+  }
+  parseBinary(scene) {
+    const tri = this._count(scene);
+    const buf = new ArrayBuffer(80 + 4 + tri * 50);
+    const dv = new DataView(buf);
+    let off = 80;
+    dv.setUint32(off, tri, true); off += 4;
+    scene.traverse(o => {
+      if (!o.isMesh) return;
+      const g = o.geometry, m = o.matrixWorld;
+      const idx = g.index, pos = g.getAttribute('position');
+      const cnt = idx ? idx.count : pos.count;
+      for (let i = 0; i < cnt; i += 3) {
+        const ia = idx?idx.getX(i):i, ib = idx?idx.getX(i+1):i+1, ic = idx?idx.getX(i+2):i+2;
+        const a = new THREE.Vector3().fromBufferAttribute(pos,ia).applyMatrix4(m);
+        const b = new THREE.Vector3().fromBufferAttribute(pos,ib).applyMatrix4(m);
+        const c = new THREE.Vector3().fromBufferAttribute(pos,ic).applyMatrix4(m);
+        const n = new THREE.Vector3().subVectors(c,b).cross(new THREE.Vector3().subVectors(a,b)).normalize();
+        [n,a,b,c].forEach(v=>{dv.setFloat32(off,v.x,true);off+=4;dv.setFloat32(off,v.y,true);off+=4;dv.setFloat32(off,v.z,true);off+=4;});
+        dv.setUint16(off,0,true); off+=2;
+      }
+    });
+    return buf;
+  }
+  parseASCII(scene) {
+    let out = 'solid exported\n';
+    scene.traverse(o => {
+      if (!o.isMesh) return;
+      const g=o.geometry, m=o.matrixWorld, idx=g.index, pos=g.getAttribute('position');
+      const cnt = idx?idx.count:pos.count;
+      for (let i=0;i<cnt;i+=3) {
+        const ia=idx?idx.getX(i):i, ib=idx?idx.getX(i+1):i+1, ic=idx?idx.getX(i+2):i+2;
+        const a=new THREE.Vector3().fromBufferAttribute(pos,ia).applyMatrix4(m);
+        const b=new THREE.Vector3().fromBufferAttribute(pos,ib).applyMatrix4(m);
+        const c=new THREE.Vector3().fromBufferAttribute(pos,ic).applyMatrix4(m);
+        const n=new THREE.Vector3().subVectors(c,b).cross(new THREE.Vector3().subVectors(a,b)).normalize();
+        out+=`facet normal ${n.x} ${n.y} ${n.z}\n  outer loop\n`;
+        [a,b,c].forEach(v=>{out+=`    vertex ${v.x} ${v.y} ${v.z}\n`;});
+        out+='  endloop\nendfacet\n';
+      }
+    });
+    return out+'endsolid exported\n';
+  }
+  _count(scene) { let c=0; scene.traverse(o=>{if(!o.isMesh)return;const g=o.geometry;c+=g.index?g.index.count/3:g.getAttribute('position').count/3;}); return c; }
+}
+
+// ══════════════════════════════════════════════
+// Solid Geometry Builder (for STL export)
+// ══════════════════════════════════════════════
+function buildSolidGeometries(W, D, H, px, py, wall, bottom) {
+  const geos = [];
+  const iW = W - 2*wall, iD = D - 2*wall;
+  const pW = (iW - (px-1)*wall) / px;
+  const pD = (iD - (py-1)*wall) / py;
+  if (pW < 2 || pD < 2) { const g = new THREE.BoxGeometry(W,H,D); g.translate(0,H/2,0); return [g]; }
+
+  // Bottom
+  const bg = new THREE.BoxGeometry(W, bottom, D); bg.translate(0, bottom/2, 0); geos.push(bg);
+  // Left
+  const lg = new THREE.BoxGeometry(wall, H-bottom, D); lg.translate(-W/2+wall/2, bottom+(H-bottom)/2, 0); geos.push(lg);
+  // Right
+  const rg = new THREE.BoxGeometry(wall, H-bottom, D); rg.translate(W/2-wall/2, bottom+(H-bottom)/2, 0); geos.push(rg);
+  // Front
+  const fg = new THREE.BoxGeometry(W-2*wall, H-bottom, wall); fg.translate(0, bottom+(H-bottom)/2, -D/2+wall/2); geos.push(fg);
+  // Back
+  const bkg = new THREE.BoxGeometry(W-2*wall, H-bottom, wall); bkg.translate(0, bottom+(H-bottom)/2, D/2-wall/2); geos.push(bkg);
+  // X dividers
+  for (let ix=1; ix<px; ix++) {
+    const x = -iW/2 + ix*(pW+wall) - wall/2;
+    const g = new THREE.BoxGeometry(wall, H-bottom, iD); g.translate(x, bottom+(H-bottom)/2, 0); geos.push(g);
+  }
+  // Y dividers
+  for (let iy=1; iy<py; iy++) {
+    const z = -iD/2 + iy*(pD+wall) - wall/2;
+    for (let ix=0; ix<px; ix++) {
+      const x = -iW/2 + pW/2 + ix*(pW+wall);
+      const g = new THREE.BoxGeometry(pW, H-bottom, wall); g.translate(x, bottom+(H-bottom)/2, z); geos.push(g);
+    }
+  }
+  return geos;
+}
+
+// ══════════════════════════════════════════════
+// State & Presets
+// ══════════════════════════════════════════════
+const PRESETS = {
+  pen:    { w:80,  d:80,  h:100, px:2, py:2, wl:2, bt:3, fl:4,  label:'ペン立て' },
+  sd:     { w:90,  d:40,  h:25,  px:4, py:1, wl:1.5, bt:2, fl:2, label:'SDカード' },
+  remote: { w:60,  d:80,  h:120, px:2, py:1, wl:2.5, bt:3, fl:3, label:'リモコン' },
+  tools:  { w:200, d:100, h:50,  px:4, py:2, wl:2.5, bt:3, fl:3, label:'工具入れ' },
+  desk:   { w:150, d:80,  h:40,  px:3, py:1, wl:2, bt:2.5, fl:5, label:'文房具' },
+  custom: { w:120, d:80,  h:60,  px:2, py:1, wl:2.5, bt:3, fl:3, label:'カスタム' },
+};
+
+const S = { w:120, d:80, h:60, px:2, py:1, wl:2.5, bt:3, fl:3, col:'#d97706', wire:false, auto:true };
+
+const COLS = [
+  '#d97706','#dc2626','#059669','#2563eb',
+  '#7c3aed','#ec4899','#1e293b','#f5f5f4',
+  '#ea580c','#0891b2','#65a30d','#a16207'
+];
+
+// ══════════════════════════════════════════════
+// Three.js Setup
+// ══════════════════════════════════════════════
+const cvs = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 2000);
+
+// Camera controls
+let drag=false, pinch=false, lastPinchDist=0, pm={x:0,y:0};
+let sp={t:0.8,p:0.85,r:300}, tsp={...sp};
+
+function updCam() {
+  cam.position.set(sp.r*Math.sin(sp.p)*Math.cos(sp.t), sp.r*Math.cos(sp.p), sp.r*Math.sin(sp.p)*Math.sin(sp.t));
+  cam.lookAt(0, S.h*0.3, 0);
+}
+
+// Mouse
+cvs.addEventListener('pointerdown', e => { if(e.pointerType==='touch' && e.isPrimary===false) return; drag=true; pm={x:e.clientX,y:e.clientY}; cvs.style.cursor='grabbing'; });
+cvs.addEventListener('pointermove', e => {
+  if(!drag) return;
+  tsp.t -= (e.clientX-pm.x)*0.005;
+  tsp.p = Math.max(0.15, Math.min(Math.PI-0.15, tsp.p+(e.clientY-pm.y)*0.005));
+  pm={x:e.clientX,y:e.clientY};
+});
+cvs.addEventListener('pointerup', () => { drag=false; cvs.style.cursor='grab'; });
+cvs.addEventListener('wheel', e => { e.preventDefault(); tsp.r=Math.max(50,Math.min(700,tsp.r+e.deltaY*0.5)); }, {passive:false});
+
+// Touch pinch zoom
+cvs.addEventListener('touchstart', e => {
+  if(e.touches.length===2) { pinch=true; lastPinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
+}, {passive:true});
+cvs.addEventListener('touchmove', e => {
+  if(pinch && e.touches.length===2) {
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    tsp.r=Math.max(50,Math.min(700,tsp.r-(d-lastPinchDist)*1.5));
+    lastPinchDist=d;
+  }
+}, {passive:true});
+cvs.addEventListener('touchend', () => { pinch=false; });
+
+// Lights
+scene.add(new THREE.AmbientLight(0xfff5eb, 0.6));
+
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(120, 200, 100); sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.near=10; sun.shadow.camera.far=500;
+sun.shadow.camera.left=-200; sun.shadow.camera.right=200;
+sun.shadow.camera.top=200; sun.shadow.camera.bottom=-200;
+scene.add(sun);
+
+scene.add(new THREE.DirectionalLight(0x88aaff, 0.3).translateX(-80).translateY(60).translateZ(-60));
+scene.add(new THREE.DirectionalLight(0xffaa88, 0.15).translateX(50).translateY(40).translateZ(-100));
+
+// Ground
+const gnd = new THREE.Mesh(
+  new THREE.PlaneGeometry(600,600),
+  new THREE.MeshStandardMaterial({color:0xe8e2d9, roughness:0.95})
+);
+gnd.rotation.x=-Math.PI/2; gnd.position.y=-0.5; gnd.receiveShadow=true;
+scene.add(gnd);
+
+const grid = new THREE.GridHelper(400, 40, 0xd4cdc2, 0xe0d9cf);
+scene.add(grid);
+
+// ══════════════════════════════════════════════
+// Model Builder
+// ══════════════════════════════════════════════
+const visualGroup = new THREE.Group(); scene.add(visualGroup);
+const stlGroup = new THREE.Group();
+
+function mkShape(hw, hd, r) {
+  const s = new THREE.Shape();
+  r = Math.min(r, hw*0.45, hd*0.45);
+  if (r < 0.5) r = 0;
+  if (r > 0) {
+    s.moveTo(-hw+r,-hd); s.lineTo(hw-r,-hd);
+    s.quadraticCurveTo(hw,-hd, hw,-hd+r);
+    s.lineTo(hw,hd-r); s.quadraticCurveTo(hw,hd, hw-r,hd);
+    s.lineTo(-hw+r,hd); s.quadraticCurveTo(-hw,hd, -hw,hd-r);
+    s.lineTo(-hw,-hd+r); s.quadraticCurveTo(-hw,-hd, -hw+r,-hd);
+  } else {
+    s.moveTo(-hw,-hd); s.lineTo(hw,-hd); s.lineTo(hw,hd); s.lineTo(-hw,hd); s.closePath();
+  }
+  return s;
+}
+
+function mkExtruded(w, h, d, r, bevel) {
+  const g = new THREE.ExtrudeGeometry(mkShape(w/2, d/2, r), {
+    depth: h, bevelEnabled: !!bevel,
+    bevelThickness: bevel ? Math.min(r*0.3,1.5) : 0,
+    bevelSize: bevel ? Math.min(r*0.2,1) : 0,
+    bevelSegments: 3,
+  });
+  g.rotateX(-Math.PI/2); g.translate(0,h,0);
+  return g;
+}
+
+function clearGroup(g) {
+  while(g.children.length) {
+    const c=g.children[0]; c.geometry?.dispose(); c.material?.dispose(); g.remove(c);
+  }
+}
+
+function build() {
+  clearGroup(visualGroup);
+  clearGroup(stlGroup);
+
+  const {w:W, d:D, h:H, px:PX, py:PY, wl, bt, fl, col} = S;
+  const mc = new THREE.Color(col);
+
+  // Visual outer shell
+  const outerMat = new THREE.MeshPhysicalMaterial({
+    color: mc, roughness: 0.35, metalness: 0.05, clearcoat: 0.4, clearcoatRoughness: 0.2,
+  });
+  const innerMat = new THREE.MeshPhysicalMaterial({
+    color: mc.clone().multiplyScalar(0.55), roughness: 0.6, metalness: 0.02, side: THREE.DoubleSide,
+  });
+  const btmMat = new THREE.MeshPhysicalMaterial({
+    color: mc.clone().multiplyScalar(0.35), roughness: 0.75, side: THREE.DoubleSide,
+  });
+
+  const outer = new THREE.Mesh(mkExtruded(W, H, D, fl, true), outerMat);
+  outer.castShadow=true; outer.receiveShadow=true;
+  visualGroup.add(outer);
+
+  const iW=W-2*wl, iD=D-2*wl;
+  const pW=(iW-(PX-1)*wl)/PX, pD=(iD-(PY-1)*wl)/PY;
+  const pH=H-bt+1.5;
+  let totalVol=0;
+
+  if (pW>3 && pD>3) {
+    for (let ix=0;ix<PX;ix++) {
+      for (let iy=0;iy<PY;iy++) {
+        const cx=-iW/2+pW/2+ix*(pW+wl), cy=-iD/2+pD/2+iy*(pD+wl);
+        const pg=mkExtruded(pW, pH, pD, Math.min(fl*0.4,2), false);
+        visualGroup.add(new THREE.Mesh(pg, innerMat).translateX(cx).translateY(bt).translateZ(cy));
+        const bg=new THREE.PlaneGeometry(pW-1,pD-1);
+        const bm=new THREE.Mesh(bg, btmMat);
+        bm.rotation.x=-Math.PI/2; bm.position.set(cx,bt+0.1,cy);
+        visualGroup.add(bm);
+        totalVol += pW*pD*(H-bt);
+      }
+    }
+  }
+
+  if (S.wire) {
+    const wg=mkExtruded(W,H,D,fl,false);
+    visualGroup.add(new THREE.Mesh(wg, new THREE.MeshBasicMaterial({color:0x2563eb, wireframe:true, transparent:true, opacity:0.3})));
+  }
+
+  // STL solid model
+  const stlMat = new THREE.MeshBasicMaterial();
+  buildSolidGeometries(W,D,H,PX,PY,wl,bt).forEach(geo => stlGroup.add(new THREE.Mesh(geo, stlMat)));
+
+  // UI updates
+  document.getElementById('dd-w').textContent = W;
+  document.getElementById('dd-d').textContent = D;
+  document.getElementById('dd-h').textContent = H;
+  document.getElementById('dd-p').textContent = `${PX}×${PY}`;
+  document.getElementById('vol-num').textContent = (totalVol/1000).toFixed(1);
+  tsp.r = Math.max(W, D, H) * 2.5;
+
+  updateEstimation();
+  checkPrinter();
+}
+
+// ══════════════════════════════════════════════
+// Estimation
+// ══════════════════════════════════════════════
+function updateEstimation() {
+  const {w:W, d:D, h:H, px:PX, py:PY, wl, bt} = S;
+  const iW=W-2*wl, iD=D-2*wl;
+  const pW=(iW-(PX-1)*wl)/PX, pD=(iD-(PY-1)*wl)/PY;
+
+  // Solid volume (walls + bottom) in mm³
+  const outerVol = W*D*H;
+  let pocketVol = 0;
+  if (pW>0 && pD>0) pocketVol = PX*PY*pW*pD*(H-bt);
+  const solidVol = outerVol - pocketVol;
+
+  // With ~20% infill, effective material = shell + 20% infill
+  // Rough: shell thickness ~1.2mm (3 walls), top/bottom 0.8mm
+  // For small objects, assume ~40% effective fill ratio
+  const effectiveVol = solidVol * 0.40;
+
+  // PLA density: ~1.24 g/cm³
+  const weightG = (effectiveVol / 1000) * 1.24;
+  // Filament: 1.75mm diameter, cross section area = π*(0.875)² ≈ 2.405 mm²
+  const lengthMM = effectiveVol / 2.405;
+  const lengthM = lengthMM / 1000;
+
+  // Print time rough estimate: ~20-40 cm³/hr for FDM at 0.2mm layer
+  const hours = (solidVol / 1000) / 25;
+  // Cost: PLA ~¥3000/kg = ¥3/g
+  const costYen = Math.round(weightG * 3);
+
+  document.getElementById('est-weight').textContent = weightG < 1 ? '<1' : Math.round(weightG);
+  document.getElementById('est-length').textContent = lengthM.toFixed(1);
+  document.getElementById('est-cost').textContent = '¥' + (costYen < 1 ? '<1' : costYen);
+
+  if (hours < 1) {
+    document.getElementById('est-time').textContent = Math.round(hours*60) + '分';
+  } else {
+    const h = Math.floor(hours), m = Math.round((hours-h)*60);
+    document.getElementById('est-time').textContent = h + '時間' + (m>0?m+'分':'');
+  }
+}
+
+// ══════════════════════════════════════════════
+// Printer Check
+// ══════════════════════════════════════════════
+function checkPrinter() {
+  const sel = document.getElementById('printer-sel');
+  const res = document.getElementById('printer-result');
+  if (sel.value === '0') { res.style.display='none'; return; }
+
+  const [bx,by,bz] = sel.value.split('x').map(Number);
+  const ok = S.w <= bx && S.d <= by && S.h <= bz;
+
+  res.style.display = 'flex';
+  res.className = 'printer-result ' + (ok ? 'printer-ok' : 'printer-ng');
+
+  if (ok) {
+    const mx = Math.min((bx-S.w)/2, (by-S.d)/2);
+    res.innerHTML = `✅ プリント可能！ベッドに余裕 ${Math.round(mx)}mm`;
+  } else {
+    const issues = [];
+    if (S.w > bx) issues.push(`幅が${S.w-bx}mm超過`);
+    if (S.d > by) issues.push(`奥行きが${S.d-by}mm超過`);
+    if (S.h > bz) issues.push(`高さが${S.h-bz}mm超過`);
+    res.innerHTML = `⚠️ サイズオーバー: ${issues.join('、')}`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// Presets
+// ══════════════════════════════════════════════
+function applyPreset(name) {
+  const p = PRESETS[name];
+  S.w=p.w; S.d=p.d; S.h=p.h; S.px=p.px; S.py=p.py; S.wl=p.wl; S.bt=p.bt; S.fl=p.fl;
+
+  // Update sliders
+  const map = {w:'s-w',d:'s-d',h:'s-h',wl:'s-wl',bt:'s-bt',fl:'s-fl'};
+  Object.entries(map).forEach(([k,id])=>{
+    document.getElementById(id).value = S[k];
+    const vid = id.replace('s-','v-');
+    document.getElementById(vid).textContent = S[k]+'mm';
+  });
+
+  // Update pocket buttons
+  updatePocketBtns();
+
+  // Update preset buttons
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  build();
+}
+
+function updatePocketBtns() {
+  ['pgx','pgy'].forEach((id,axis)=>{
+    const btns = document.getElementById(id).querySelectorAll('.pocket-btn');
+    const val = axis ? S.py : S.px;
+    btns.forEach((b,i)=>b.classList.toggle('active', i+1===val));
+  });
+}
+
+// ══════════════════════════════════════════════
+// STL Export
+// ══════════════════════════════════════════════
+const exporter = new STLExporter();
+
+function exportSTL(ascii) {
+  const name = `organizer_${S.w}x${S.d}x${S.h}_${S.px}x${S.py}`;
+  let blob;
+  if (ascii) {
+    blob = new Blob([exporter.parseASCII(stlGroup)], {type:'text/plain'});
+  } else {
+    blob = new Blob([exporter.parseBinary(stlGroup)], {type:'application/octet-stream'});
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=name+'.stl'; a.click();
+  URL.revokeObjectURL(url);
+
+  const info = document.getElementById('export-info');
+  const kb = (blob.size/1024).toFixed(1);
+  info.textContent = `✅ ダウンロード完了！ (${kb} KB · ${ascii?'ASCII':'Binary'})`;
+  info.classList.add('show');
+  setTimeout(()=>info.classList.remove('show'), 4000);
+}
+
+// ══════════════════════════════════════════════
+// UI Init
+// ══════════════════════════════════════════════
+function initUI() {
+  [['s-w','w','v-w'],['s-d','d','v-d'],['s-h','h','v-h'],
+   ['s-wl','wl','v-wl'],['s-bt','bt','v-bt'],['s-fl','fl','v-fl']
+  ].forEach(([sid,key,vid])=>{
+    document.getElementById(sid).addEventListener('input', e => {
+      S[key]=parseFloat(e.target.value);
+      document.getElementById(vid).textContent = e.target.value+'mm';
+      // Mark as custom
+      document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelector('.preset-btn:last-child').classList.add('active');
+      build();
+    });
+  });
+
+  ['pgx','pgy'].forEach((id,axis)=>{
+    const c = document.getElementById(id);
+    for (let i=1; i<=5; i++) {
+      const b = document.createElement('button');
+      b.className = 'pocket-btn' + (i===(axis?S.py:S.px)?' active':'');
+      const cols=axis?1:i, rows=axis?i:1;
+      b.innerHTML = `<div class="mini-grid" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr)">${'<div class="cell"></div>'.repeat(cols*rows)}</div>`;
+      b.onclick = () => {
+        if(axis) S.py=i; else S.px=i;
+        c.querySelectorAll('.pocket-btn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        build();
+      };
+      c.appendChild(b);
+    }
+  });
+
+  const cc = document.getElementById('colors');
+  COLS.forEach(hex => {
+    const s = document.createElement('div');
+    s.className = 'color-swatch'+(hex===S.col?' active':'');
+    s.style.background = hex;
+    s.onclick = () => {
+      S.col=hex;
+      cc.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));
+      s.classList.add('active');
+      build();
+    };
+    cc.appendChild(s);
+  });
+}
+
+function setView(v) {
+  if(v==='front'){tsp.t=0;tsp.p=Math.PI/2;}
+  else if(v==='top'){tsp.t=0;tsp.p=0.15;}
+  else{tsp.t=0.8;tsp.p=0.85;}
+}
+function toggleWire(){S.wire=!S.wire;document.getElementById('btn-wire').classList.toggle('active',S.wire);build();}
+function toggleAuto(){S.auto=!S.auto;document.getElementById('btn-auto').classList.toggle('active',S.auto);}
+
+function loop() {
+  requestAnimationFrame(loop);
+  if(S.auto && !drag) tsp.t += 0.003;
+  sp.t+=(tsp.t-sp.t)*0.08;
+  sp.p+=(tsp.p-sp.p)*0.08;
+  sp.r+=(tsp.r-sp.r)*0.08;
+  updCam();
+  const rc=cvs.parentElement.getBoundingClientRect();
+  if(cvs.width!==rc.width*devicePixelRatio||cvs.height!==rc.height*devicePixelRatio){
+    renderer.setSize(rc.width,rc.height);
+    cam.aspect=rc.width/rc.height;
+    cam.updateProjectionMatrix();
+  }
+  renderer.render(scene,cam);
+}
+
+initUI();
+build();
+loop();
+</script>
+</body>
+</html>

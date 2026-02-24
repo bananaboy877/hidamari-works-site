@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hidamari Works | 3Dプリンター用パラメトリックツール</title>
+<meta name="description" content="ブラウザだけで3Dプリンター用モデルをカスタマイズ。サイズ自由自在、STLダウンロードですぐ印刷。サーバー不要・完全無料。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#faf8f5;--surface:#fff;--surface2:#f3f0eb;
+  --border:#e8e2d9;--text:#2c2416;--text2:#6b5e4f;--text3:#9c8e7d;
+  --accent:#b45309;--accent-light:#fef3c7;--accent-dark:#78350f;
+  --green:#059669;--green-light:#d1fae5;
+  --blue:#2563eb;--blue-light:#dbeafe;
+  --shadow:0 1px 3px rgba(44,36,22,0.06),0 6px 20px rgba(44,36,22,0.06);
+  --shadow-lg:0 8px 32px rgba(44,36,22,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'M PLUS Rounded 1c',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* Hero */
+.hero{
+  text-align:center;padding:60px 24px 40px;
+  background:linear-gradient(180deg,var(--accent-light) 0%,var(--bg) 100%);
+}
+.hero-logo{
+  display:inline-flex;align-items:center;gap:14px;margin-bottom:20px;
+}
+.hero-mark{
+  width:56px;height:56px;
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;box-shadow:0 4px 16px rgba(217,119,6,0.3);
+}
+.hero-brand{font-size:28px;font-weight:900;color:var(--text);}
+.hero-brand span{color:var(--accent);}
+.hero-tagline{
+  font-size:18px;color:var(--text2);font-weight:500;
+  max-width:500px;margin:0 auto 16px;line-height:1.7;
+}
+.hero-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.badge{
+  font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;
+}
+.badge-free{background:var(--green-light);color:#065f46;}
+.badge-browser{background:var(--blue-light);color:var(--blue);}
+.badge-print{background:var(--accent-light);color:var(--accent-dark);}
+
+/* Tools Grid */
+.tools-section{
+  max-width:900px;margin:0 auto;padding:20px 24px 60px;
+}
+.section-header{
+  text-align:center;margin-bottom:32px;
+}
+.section-title{
+  font-size:14px;font-weight:800;color:var(--accent);
+  text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;
+}
+.section-sub{font-size:22px;font-weight:800;color:var(--text);}
+
+.tools-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
+}
+
+.tool-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  transition:all 0.3s;cursor:pointer;text-decoration:none;color:inherit;
+  display:block;
+}
+.tool-card:hover{
+  transform:translateY(-4px);box-shadow:var(--shadow-lg);
+  border-color:var(--accent);
+}
+
+.tool-visual{
+  height:180px;display:flex;align-items:center;justify-content:center;
+  font-size:64px;
+  position:relative;overflow:hidden;
+}
+.tool-visual-desk{background:linear-gradient(135deg,#fef3c7,#fde68a);}
+.tool-visual-shutter{background:linear-gradient(135deg,#dbeafe,#bfdbfe);}
+.tool-visual-coming{background:linear-gradient(135deg,var(--surface2),#e8e2d9);}
+
+.tool-body{padding:18px 20px;}
+.tool-title{font-size:16px;font-weight:800;margin-bottom:4px;}
+.tool-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;}
+.tool-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.tool-tag{
+  font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;
+  background:var(--surface2);color:var(--text3);
+}
+.tool-tag-new{background:#fae8ff;color:#86198f;}
+
+.coming-soon{
+  position:absolute;top:12px;right:12px;
+  background:var(--text3);color:#fff;font-size:10px;font-weight:700;
+  padding:3px 10px;border-radius:12px;letter-spacing:0.5px;
+}
+
+/* Footer */
+.footer{
+  text-align:center;padding:30px 24px;
+  border-top:1px solid var(--border);
+  font-size:12px;color:var(--text3);
+}
+.footer a{color:var(--accent);text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-logo">
+    <div class="hero-mark">☀️</div>
+    <div class="hero-brand"><span>Hidamari</span> Works</div>
+  </div>
+  <p class="hero-tagline">
+    ブラウザだけで3Dプリンター用モデルをカスタマイズ。<br>
+    サイズを自由に変えて、STLをダウンロード。すぐ印刷。
+  </p>
+  <div class="hero-badges">
+    <span class="badge badge-free">🆓 完全無料</span>
+    <span class="badge badge-browser">🌐 サーバー不要</span>
+    <span class="badge badge-print">🖨 STLダウンロード</span>
+  </div>
+</section>
+
+<section class="tools-section">
+  <div class="section-header">
+    <div class="section-title">Tools</div>
+    <div class="section-sub">パラメトリックツール</div>
+  </div>
+
+  <div class="tools-grid">
+    <a class="tool-card" href="tools/desk-organizer.html">
+      <div class="tool-visual tool-visual-desk">🗃️</div>
+      <div class="tool-body">
+        <div class="tool-title">デスクオーガナイザーメーカー</div>
+        <div class="tool-desc">仕切りの数・サイズを自由にカスタマイズ。デスク周りの整理に。プリセット6種類搭載。</div>
+        <div class="tool-tags">
+          <span class="tool-tag">サイズ自由</span>
+          <span class="tool-tag">仕切り変更</span>
+          <span class="tool-tag">サポート不要</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="tool-card" href="tools/shutter-box.html">
+      <div class="tool-visual tool-visual-shutter">🔒</div>
+      <div class="tool-body">
+        <div class="tool-title">スライドシャッターBOXメーカー</div>
+        <div class="tool-desc">リビングヒンジ式シャッター付き小物入れ。開閉アニメーションで仕上がりを確認。</div>
+        <div class="tool-tags">
+          <span class="tool-tag-new tool-tag">✨ NEW</span>
+          <span class="tool-tag">2パーツ出力</span>
+          <span class="tool-tag">開閉ギミック</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="tool-card" style="cursor:default;opacity:0.7;">
+      <div class="tool-visual tool-visual-coming" style="font-size:48px;">
+        🔜
+        <div class="coming-soon">COMING SOON</div>
+      </div>
+      <div class="tool-body">
+        <div class="tool-title">次のツールは？</div>
+        <div class="tool-desc">リクエスト募集中！「こんなの欲しい」があればお気軽にどうぞ。</div>
+        <div class="tool-tags">
+          <span class="tool-tag">ケーブルホルダー？</span>
+          <span class="tool-tag">引き出し仕切り？</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>© 2026 <a href="https://hidamari-works.com">Hidamari Works</a> — Made with ☀️</p>
+</footer>
+
+</body>
+</html>
