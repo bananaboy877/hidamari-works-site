@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ロゴ グラデーション＆外縁生成</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans JP',sans-serif;background:#08080e;color:#e0e0e8;min-height:100vh}
+  .app{max-width:1200px;margin:0 auto;padding:16px 14px 50px}
+  header{text-align:center;margin-bottom:18px}
+  header h1{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  header p{font-size:.75rem;color:#555;margin-top:3px}
+  .upload-zone{border:2px dashed #2a2a40;border-radius:14px;padding:40px 16px;text-align:center;cursor:pointer;transition:all .25s;margin-bottom:16px;position:relative;background:#0c0c14}
+  .upload-zone:hover,.upload-zone.dragover{border-color:#4d96ff;background:#0e0e1a}
+  .upload-zone.has-image{padding:10px;cursor:default}
+  .upload-zone input{display:none}
+  .re-btn{position:absolute;top:6px;left:6px;z-index:10;padding:5px 12px;border-radius:7px;border:1px solid #333;background:rgba(10,10,20,.85);color:#aaa;font-size:.65rem;cursor:pointer;font-family:inherit;display:none}
+  .upload-zone.has-image .re-btn{display:block}
+  .preview-area{position:relative;border-radius:12px;overflow:hidden;margin-bottom:14px;border:1px solid #1a1a2e;display:none}
+  .preview-area.visible{display:block}
+  .bg-row{position:absolute;top:8px;right:8px;z-index:10;display:flex;gap:4px}
+  .bg-b{width:26px;height:26px;border-radius:5px;border:2px solid #333;cursor:pointer;transition:border-color .2s}
+  .bg-b:hover,.bg-b.active{border-color:#4d96ff}
+  .bg-b.bw{background:#fff}.bg-b.bd{background:#1a1a2e}
+  .bg-b.bc{background-image:linear-gradient(45deg,#ccc 25%,transparent 25%),linear-gradient(-45deg,#ccc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ccc 75%),linear-gradient(-45deg,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0px}
+  .cw{display:flex;justify-content:center;align-items:center;padding:24px 12px;min-height:160px;transition:background .3s;background:#fff}
+  #resultCanvas{max-width:100%;height:auto;display:block}
+  .cols{display:grid;gap:10px;margin-bottom:10px}
+  .c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:860px){.c3{grid-template-columns:1fr 1fr}.c2{grid-template-columns:1fr}}
+  @media(max-width:600px){.c3{grid-template-columns:1fr}}
+  .sec{background:#0f0f18;border-radius:10px;padding:12px;border:1px solid #1a1a2e;margin-bottom:10px}
+  .st{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:8px}
+  .r{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+  .r label{font-size:.7rem;color:#888;min-width:52px;flex-shrink:0}
+  .r input[type=range]{flex:1;accent-color:#4d96ff;height:3px}
+  .r span{font-size:.7rem;color:#aaa;min-width:34px;text-align:right;flex-shrink:0}
+  .r input[type=color]{width:30px;height:22px;border:none;border-radius:4px;cursor:pointer;background:transparent;padding:0;flex-shrink:0}
+  .r input[type=color]::-webkit-color-swatch-wrapper{padding:1px}
+  .r input[type=color]::-webkit-color-swatch{border-radius:3px;border:none}
+  .r select{background:#0a0a14;color:#ccc;border:1px solid #2a2a40;border-radius:5px;padding:4px 8px;font-size:.7rem;font-family:inherit;flex:1;cursor:pointer}
+  .ck{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+  .ck label{font-size:.7rem;color:#aaa;cursor:pointer}.ck input{accent-color:#4d96ff;cursor:pointer}
+  .thr{display:flex;gap:6px;margin-top:6px}.tc{border-radius:5px;border:1px solid #222;max-width:100%;height:auto}
+  .tl{font-size:.58rem;color:#555;text-align:center;margin-top:1px}
+  .eg{background:#0a0a12;border-radius:7px;padding:9px;margin-bottom:7px;border:1px solid #161622}
+  .egt{font-size:.65rem;font-weight:600;color:#777;margin-bottom:5px}
+  .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:4px}
+  .pb{position:relative;height:38px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .15s;overflow:hidden}
+  .pb:hover{transform:translateY(-1px)}.pb.active{border-color:#fff}
+  .pl{position:absolute;bottom:1px;left:0;right:0;text-align:center;font-size:.48rem;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9);pointer-events:none}
+  .ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+  .ab{position:relative;height:44px;border-radius:8px;border:2px solid transparent;cursor:pointer;transition:all .15s;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px}
+  .ab:hover{transform:translateY(-1px)}.ab.active{border-color:#fff}
+  .ab canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:6px}
+  .ab .al{position:relative;z-index:1;font-size:.54rem;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none}
+  .asb{display:inline-flex;align-items:center;gap:3px;padding:4px 12px;border-radius:6px;border:1px solid #ff4444;background:transparent;color:#ff6666;font-family:inherit;font-size:.68rem;cursor:pointer;margin-bottom:8px}
+  .asb.hid{display:none}
+  .dg{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+  .db{padding:5px 2px;border-radius:5px;border:1px solid #222;background:#0a0a12;color:#888;font-size:.62rem;cursor:pointer;text-align:center}
+  .db:hover{background:#161625;color:#fff}.db.active{background:#222240;color:#fff;border-color:#4d96ff}
+  .dlb{display:inline-flex;align-items:center;gap:5px;padding:9px 20px;border-radius:7px;border:none;background:linear-gradient(135deg,#4d96ff,#6b5bff);color:#fff;font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;margin-top:12px}
+  .dlb:hover{transform:translateY(-1px)}.dlb:disabled{opacity:.3;cursor:default;transform:none}
+  .note{font-size:.6rem;color:#444;margin-top:3px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>ロゴ グラデーション＆外縁生成</h1>
+    <p>グラデーション＋二重縁取り＋グロー＋外縁アルゴリズム（モルフォロジー閉鎖/凸包/αシェイプ）</p>
+  </header>
+
+  <div class="upload-zone" id="uz">
+    <button class="re-btn" id="reb">🔄 変更</button>
+    <input type="file" id="fi" accept="image/*">
+    <div id="up"><div style="font-size:2rem;margin-bottom:6px">🖼️</div><div style="font-size:.85rem;color:#888">クリック or ドラッグ＆ドロップ</div><div style="font-size:.65rem;color:#555;margin-top:3px">PNG推奨</div></div>
+    <canvas id="st" style="display:none;max-width:100%;height:auto;border-radius:7px"></canvas>
+  </div>
+
+  <!-- Binarization + Gradient -->
+  <div class="cols c2">
+    <div class="sec" id="sBin" style="display:none">
+      <div class="st">前景検出</div>
+      <div class="r"><label>明度閾値</label><input type="range" id="thr" min="10" max="250" value="128"><span id="thrV">128</span></div>
+      <div class="ck"><input type="checkbox" id="inv"><label for="inv">反転（明るい部分を前景にする）</label></div>
+      <div style="font-size:.6rem;color:#555;margin-bottom:3px">マスクプレビュー:</div>
+      <div class="thr">
+        <div style="flex:1"><canvas id="mTh" class="tc"></canvas></div>
+      </div>
+    </div>
+    <div class="sec" id="sGrad" style="display:none">
+      <div class="st">グラデーション</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div class="r"><label>カラー1</label><input type="color" id="c1" value="#ff4500"></div>
+          <div class="r"><label>カラー2</label><input type="color" id="c2" value="#ff8c00"></div>
+          <div class="r"><label>カラー3</label><input type="color" id="c3" value="#ffd700"></div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;color:#666;margin-bottom:3px">方向</div>
+          <div class="dg" id="dg">
+            <button class="db" data-d="to right">→</button><button class="db active" data-d="to bottom right">↘</button>
+            <button class="db" data-d="to bottom">↓</button><button class="db" data-d="to bottom left">↙</button>
+            <button class="db" data-d="to left">←</button><button class="db" data-d="to top left">↖</button>
+            <button class="db" data-d="to top">↑</button><button class="db" data-d="to top right">↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Outline Algorithm + Double Outline + Glow -->
+  <div class="cols c3">
+    <div class="sec" id="sAlgo" style="display:none">
+      <div class="st">🔬 外縁アルゴリズム</div>
+      <div class="ck"><input type="checkbox" id="algoOn"><label for="algoOn"><b>外縁を有効にする</b></label></div>
+      <div class="r"><label>方式</label><select id="algoSel"><option value="morph">モルフォロジー閉鎖</option><option value="convex">凸包</option><option value="alpha">αシェイプ</option></select></div>
+      <div id="morphParams">
+        <div class="r"><label>閉鎖半径</label><input type="range" id="morphR" min="1" max="60" value="20"><span id="morphRV">20px</span></div>
+      </div>
+      <div id="alphaParams" style="display:none">
+        <div class="r"><label>α半径</label><input type="range" id="alphaR" min="2" max="80" value="15"><span id="alphaRV">15px</span></div>
+      </div>
+      <div class="r"><label>オフセット</label><input type="range" id="algoOff" min="0" max="50" value="10"><span id="algoOffV">10px</span></div>
+      <div class="r"><label>平滑化</label><input type="range" id="algoSmooth" min="0" max="30" value="5"><span id="algoSmoothV">5px</span></div>
+      <div class="r"><label>線の太さ</label><input type="range" id="algoStroke" min="1" max="20" value="3"><span id="algoStrokeV">3px</span></div>
+      <div class="r"><label>カラー</label><input type="color" id="algoColor" value="#000000"></div>
+      <div class="r"><label>不透明度</label><input type="range" id="algoAlpha" min="10" max="100" value="100"><span id="algoAlphaV">100%</span></div>
+      <div class="ck"><input type="checkbox" id="algoPad" checked><label for="algoPad">余白自動付与</label></div>
+    </div>
+    <div class="sec" id="sOl" style="display:none">
+      <div class="st">🖊️ 二重縁取り</div>
+      <div class="eg">
+        <div class="ck"><input type="checkbox" id="o1On" checked><label for="o1On"><b>縁取り1</b></label></div>
+        <div class="r"><label>太さ</label><input type="range" id="o1T" min="1" max="40" value="4"><span id="o1TV">4px</span></div>
+        <div class="r"><label>色</label><input type="color" id="o1C" value="#ffffff"></div>
+        <div class="r"><label>不透明度</label><input type="range" id="o1A" min="10" max="100" value="100"><span id="o1AV">100%</span></div>
+      </div>
+      <div class="eg">
+        <div class="ck"><input type="checkbox" id="o2On"><label for="o2On"><b>縁取り2</b></label></div>
+        <div class="r"><label>太さ</label><input type="range" id="o2T" min="1" max="40" value="6"><span id="o2TV">6px</span></div>
+        <div class="r"><label>色</label><input type="color" id="o2C" value="#000000"></div>
+        <div class="r"><label>不透明度</label><input type="range" id="o2A" min="10" max="100" value="100"><span id="o2AV">100%</span></div>
+      </div>
+    </div>
+    <div class="sec" id="sGlow" style="display:none">
+      <div class="st">✨ グロー（光彩）</div>
+      <div class="ck"><input type="checkbox" id="glOn"><label for="glOn"><b>グロー有効</b></label></div>
+      <div class="r"><label>半径</label><input type="range" id="glR" min="2" max="80" value="20"><span id="glRV">20px</span></div>
+      <div class="r"><label>色</label><input type="color" id="glC" value="#ff8800"></div>
+      <div class="r"><label>不透明度</label><input type="range" id="glA" min="10" max="100" value="60"><span id="glAV">60%</span></div>
+    </div>
+  </div>
+
+  <div class="preview-area" id="pa">
+    <div class="bg-row"><div class="bg-b bw active" data-b="#ffffff"></div><div class="bg-b bd" data-b="#1a1a2e"></div><div class="bg-b bc" data-b="checker"></div></div>
+    <div class="cw" id="cw"><canvas id="resultCanvas"></canvas></div>
+  </div>
+
+  <div class="sec" id="sPre" style="display:none">
+    <div class="st">🎨 プリセット</div><div class="pg" id="pGrid"></div>
+  </div>
+  <div class="sec" id="sAnim" style="display:none">
+    <div class="st">✨ アニメーション</div>
+    <button class="asb hid" id="aStop">⏹ 停止</button>
+    <div class="ag" id="aGrid"></div>
+    <div class="r" style="margin-top:6px"><label>速度</label><input type="range" id="aSpd" min="0.2" max="4" step="0.1" value="1"><span id="aSpdV">1.0x</span></div>
+  </div>
+  <div style="text-align:center"><button class="dlb" id="dlBtn" disabled>⬇ PNG ダウンロード</button><div class="note">※アニメ中は現在フレームを保存</div></div>
+</div>
+
+<script>
+/* ===== Util ===== */
+const C=(v,a,b)=>Math.max(a,Math.min(b,v));
+const Lr=(a,b,t)=>a+(b-a)*t;
+function h2r(h,s,l){h=((h%360)+360)%360/360;s=C(s,0,100)/100;l=C(l,0,100)/100;if(!s){const v=Math.round(l*255);return[v,v,v]}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,f=(p,q,t)=>{t=((t%1)+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p};return[f(p,q,h+1/3),f(p,q,h),f(p,q,h-1/3)].map(v=>Math.round(v*255))}
+function hx2(h){if(typeof h!=='string')return[0,0,0];const m=h.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);return m?[+('0x'+m[1]),+('0x'+m[2]),+('0x'+m[3])]:[0,0,0]}
+function r2h(r,g,b){return'#'+[r,g,b].map(v=>C(Math.round(v||0),0,255).toString(16).padStart(2,'0')).join('')}
+function sPal(c,p){if(!c||!c.length)return[0,0,0];if(c.length===1)return hx2(c[0]);p=C(p,0,1);const s=p*(c.length-1),lo=Math.floor(s),hi=Math.min(lo+1,c.length-1),f=s-lo,a=hx2(c[lo]),b=hx2(c[hi]);return[C(Math.round(Lr(a[0],b[0],f)),0,255),C(Math.round(Lr(a[1],b[1],f)),0,255),C(Math.round(Lr(a[2],b[2],f)),0,255)]}
+
+/* ===== Distance Field (Chamfer 2-pass) ===== */
+function computeDF(mask,w,h){
+  const n=w*h,df=new Float32Array(n),INF=1e8,DG=1.4142;
+  for(let i=0;i<n;i++)df[i]=mask[i]?0:INF;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(mask[i])continue;let d=df[i];if(y>0)d=Math.min(d,df[i-w]+1);if(x>0)d=Math.min(d,df[i-1]+1);if(y>0&&x>0)d=Math.min(d,df[i-w-1]+DG);if(y>0&&x<w-1)d=Math.min(d,df[i-w+1]+DG);df[i]=d}
+  for(let y=h-1;y>=0;y--)for(let x=w-1;x>=0;x--){const i=y*w+x;if(mask[i])continue;let d=df[i];if(y<h-1)d=Math.min(d,df[i+w]+1);if(x<w-1)d=Math.min(d,df[i+1]+1);if(y<h-1&&x<w-1)d=Math.min(d,df[i+w+1]+DG);if(y<h-1&&x>0)d=Math.min(d,df[i+w-1]+DG);df[i]=d}
+  return df;
+}
+/** DF from interior: distance of each 1-pixel to nearest 0-pixel */
+function computeInternalDF(mask,w,h){
+  const inv=new Uint8Array(w*h);
+  for(let i=0;i<w*h;i++)inv[i]=mask[i]?0:1;
+  return computeDF(inv,w,h);
+}
+
+/* ===== Convex Hull (Graham Scan) ===== */
+function convexHull(points){
+  if(points.length<3)return points.slice();
+  points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lower=[];
+  for(const p of points){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p)}
+  const upper=[];
+  for(let i=points.length-1;i>=0;i--){const p=points[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p)}
+  lower.pop();upper.pop();
+  return lower.concat(upper);
+}
+
+/* ===== Data ===== */
+const PRESETS=[
+  {n:"炎",c:["#ff4500","#ff8c00","#ffd700"]},{n:"海",c:["#0077b6","#00b4d8","#90e0ef"]},
+  {n:"桜",c:["#ff6b81","#ffb3c1","#fff0f3"]},{n:"夕焼",c:["#ff006e","#fb5607","#ffbe0b"]},
+  {n:"森",c:["#1b4332","#40916c","#95d5b2"]},{n:"虹",c:["#ff0000","#ff8800","#ffff00","#00cc00","#0066ff","#8800ff"]},
+  {n:"金",c:["#b8860b","#ffd700","#fffacd"]},{n:"銀",c:["#4a4a5a","#a8a8b8","#e8e8f0"]},
+  {n:"紫雲",c:["#240046","#7b2cbf","#e0aaff"]},{n:"氷",c:["#a2d2ff","#bde0fe","#ffffff"]},
+  {n:"溶岩",c:["#4a0000","#cc0000","#ff6600","#ffcc00"]},{n:"電撃",c:["#000033","#0055ff","#00eeff","#ffffff"]},
+  {n:"毒",c:["#1a002e","#7700aa","#cc00ff","#ff44ff"]},{n:"ネオン",c:["#ff00ff","#00ffff"]},
+  {n:"深海",c:["#000428","#004e92","#00d4ff"]},{n:"秋",c:["#8b0000","#d2691e","#daa520","#556b2f"]},
+  {n:"パステル",c:["#ffc8dd","#bde0fe","#a2d2ff","#cdb4db"]},{n:"鋼",c:["#2c3e50","#4ca1af","#c4e0e5"]},
+  {n:"青龍",c:["#000066","#0044cc","#00ccff","#ccffff"]},{n:"赤龍",c:["#330000","#990000","#ff3300","#ffcc00"]},
+  {n:"翡翠",c:["#004d40","#00796b","#80cbc4"]},{n:"桃",c:["#ee9ca7","#ffdde1"]},
+  {n:"星雲",c:["#1a0033","#cc00ff","#0088ff","#00ffcc"]},
+  {n:"ホロ",c:["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"]},{n:"黒",c:["#000000","#000000"]},
+];
+const ANIMS=[
+  {n:"🔥 炎",t:"hr",bh:15,s:100,lr:[35,60]},{n:"🌊 波",t:"sw",c:["#003366","#0077b6","#00ccff","#aaeeff","#0077b6","#003366"]},
+  {n:"⚡ 電撃",t:"pu",c:["#000033","#0044ff","#00eeff","#ffffff"]},{n:"🌈 虹",t:"rb",s:90,l:50},
+  {n:"✨ ゴールド",t:"sh",b:[45,80,45],h:[50,100,80]},{n:"💜 ネオン",t:"br",c:["#ff00ff","#8800ff","#0044ff","#00ffff"]},
+  {n:"🐉 龍",t:"sw",c:["#000000","#220000","#ff3300","#ffcc00","#ffffff","#ffcc00","#ff3300","#220000","#000000"]},
+  {n:"🌸 桜",t:"hr",bh:340,s:70,lr:[70,90]},{n:"💎 水晶",t:"sh",b:[200,40,60],h:[195,100,95]},
+  {n:"🔮 魔法",t:"sw",c:["#0a001a","#3300aa","#aa00ff","#ff44ff","#ffffff","#ff44ff","#aa00ff","#3300aa","#0a001a"]},
+  {n:"☀️ 日出",t:"sw",c:["#1a0033","#660033","#ff4500","#ff8c00","#ffd700","#fffacd","#ffd700","#ff8c00","#ff4500","#660033","#1a0033"]},
+];
+const DM={"to right":[0,.5,1,.5],"to bottom right":[0,0,1,1],"to bottom":[.5,0,.5,1],"to bottom left":[1,0,0,1],"to left":[1,.5,0,.5],"to top left":[1,1,0,0],"to top":[.5,1,.5,0],"to top right":[0,1,1,0]};
+
+/* ===== State ===== */
+let sImg,sW=0,sH=0,lumD,maskA,distF;
+let algoShapeMask=null; // Uint8Array for algo outline shape
+let algoShapeDF=null;   // DF of algo shape (for stroke rendering)
+let glowCV=null,glowPd=0;
+let cPre=0,cDir="to bottom right",anOn=false,anId=null,anIdx=-1,anSpd=1;
+const cv=document.getElementById("resultCanvas"),cx=cv.getContext("2d");
+
+/* ===== Upload ===== */
+const uz=document.getElementById("uz"),fi=document.getElementById("fi"),reb=document.getElementById("reb");
+uz.onclick=e=>{if(e.target!==reb&&!reb.contains(e.target)&&!uz.classList.contains("has-image"))fi.click()};
+reb.onclick=()=>fi.click();
+uz.ondragover=e=>{e.preventDefault();uz.classList.add("dragover")};
+uz.ondragleave=()=>uz.classList.remove("dragover");
+uz.ondrop=e=>{e.preventDefault();uz.classList.remove("dragover");if(e.dataTransfer.files.length)loadF(e.dataTransfer.files[0])};
+fi.onchange=()=>{if(fi.files.length)loadF(fi.files[0])};
+function loadF(f){if(!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{sImg=img;sW=img.naturalWidth;sH=img.naturalHeight;buildLum();showUI();rebuildAll()};img.src=ev.target.result};r.readAsDataURL(f)}
+function buildLum(){const o=document.createElement("canvas");o.width=sW;o.height=sH;const c=o.getContext("2d");c.drawImage(sImg,0,0);const d=c.getImageData(0,0,sW,sH);lumD=new Float32Array(sW*sH);for(let i=0;i<sW*sH;i++){if(d.data[i*4+3]<10){lumD[i]=255;continue}lumD[i]=.299*d.data[i*4]+.587*d.data[i*4+1]+.114*d.data[i*4+2]}}
+function showUI(){uz.classList.add("has-image");document.getElementById("up").style.display="none";
+  const s=document.getElementById("st");s.style.display="block";const sc=Math.min(1,(Math.min(uz.clientWidth-30,800))/sW);
+  s.width=Math.round(sW*sc);s.height=Math.round(sH*sc);s.getContext("2d").drawImage(sImg,0,0,s.width,s.height);
+  ["sBin","sGrad","sAlgo","sOl","sGlow"].forEach(i=>document.getElementById(i).style.display="");
+  document.getElementById("pa").classList.add("visible");
+  ["sPre","sAnim"].forEach(i=>document.getElementById(i).style.display="");
+  document.getElementById("dlBtn").disabled=false}
+
+/* ===== Mask ===== */
+function rebuildMask(){
+  if(!lumD)return;const th=+$("thr").value,inv=$("inv").checked,n=sW*sH;
+  maskA=new Uint8Array(n);for(let i=0;i<n;i++){let d=lumD[i]<th;if(inv)d=!d;maskA[i]=d?1:0}
+  distF=computeDF(maskA,sW,sH);
+  // mask thumb
+  const mt=$("mTh"),ts=Math.min(1,280/sW);
+  mt.width=Math.round(sW*ts);mt.height=Math.round(sH*ts);
+  const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;
+  const tc=tmp.getContext("2d"),id=tc.createImageData(sW,sH);
+  for(let i=0;i<n;i++){const v=maskA[i]?0:255;id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}
+  tc.putImageData(id,0,0);mt.getContext("2d").drawImage(tmp,0,0,mt.width,mt.height);
+}
+
+/* ===== Outline Algorithm ===== */
+function rebuildAlgoShape(){
+  if(!maskA)return;
+  const on=$("algoOn").checked;
+  if(!on){algoShapeMask=null;algoShapeDF=null;return}
+  const algo=$("algoSel").value;
+  let shape;
+
+  if(algo==="morph"){
+    // Morphological closing: dilate → erode
+    const R=+$("morphR").value;
+    // 1) Dilate: all pixels where distF ≤ R
+    const dilated=new Uint8Array(sW*sH);
+    for(let i=0;i<sW*sH;i++) dilated[i]=(maskA[i]||distF[i]<=R)?1:0;
+    // 2) Erode: compute internal DF of dilated, remove pixels with intDF < R
+    const intDF=computeInternalDF(dilated,sW,sH);
+    shape=new Uint8Array(sW*sH);
+    for(let i=0;i<sW*sH;i++) shape[i]=(dilated[i]&&intDF[i]>=R)?1:0;
+  }
+  else if(algo==="convex"){
+    // Convex hull of foreground pixels
+    const pts=[];
+    // Sample boundary pixels for performance
+    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
+      const i=y*sW+x;
+      if(!maskA[i])continue;
+      // Check if boundary pixel
+      let isBnd=false;
+      if(x===0||x===sW-1||y===0||y===sH-1)isBnd=true;
+      else if(!maskA[i-1]||!maskA[i+1]||!maskA[i-sW]||!maskA[i+sW])isBnd=true;
+      if(isBnd)pts.push([x,y]);
+    }
+    if(pts.length<3){algoShapeMask=null;algoShapeDF=null;return}
+    const hull=convexHull(pts);
+    // Fill hull polygon
+    const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;
+    const tc=tmp.getContext("2d");tc.fillStyle="#fff";
+    tc.beginPath();tc.moveTo(hull[0][0],hull[0][1]);
+    for(let i=1;i<hull.length;i++)tc.lineTo(hull[i][0],hull[i][1]);
+    tc.closePath();tc.fill();
+    const id=tc.getImageData(0,0,sW,sH);
+    shape=new Uint8Array(sW*sH);
+    for(let i=0;i<sW*sH;i++)shape[i]=id.data[i*4]>128?1:0;
+  }
+  else if(algo==="alpha"){
+    // Alpha shape approximation: grid-based
+    const alpha=+$("alphaR").value;
+    const gw=Math.ceil(sW/alpha),gh=Math.ceil(sH/alpha);
+    const grid=new Uint8Array(gw*gh);
+    // Mark grid cells containing foreground pixels
+    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
+      if(!maskA[y*sW+x])continue;
+      const gx=Math.floor(x/alpha),gy=Math.floor(y/alpha);
+      grid[gy*gw+gx]=1;
+    }
+    // Fill grid holes via morphological closing at grid level (radius 1)
+    const gdf=computeDF(grid,gw,gh);
+    const gdil=new Uint8Array(gw*gh);
+    for(let i=0;i<gw*gh;i++)gdil[i]=(grid[i]||gdf[i]<=1.5)?1:0;
+    const gidf=computeInternalDF(gdil,gw,gh);
+    const gclosed=new Uint8Array(gw*gh);
+    for(let i=0;i<gw*gh;i++)gclosed[i]=(gdil[i]&&gidf[i]>=1)?1:0;
+    // Upscale to full resolution
+    shape=new Uint8Array(sW*sH);
+    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
+      const gx=C(Math.floor(x/alpha),0,gw-1),gy=C(Math.floor(y/alpha),0,gh-1);
+      shape[y*sW+x]=gclosed[gy*gw+gx];
+    }
+  }
+
+  if(!shape){algoShapeMask=null;algoShapeDF=null;return}
+
+  // Offset: dilate shape
+  const off=+$("algoOff").value;
+  if(off>0){
+    const shapeDF=computeDF(shape,sW,sH);
+    for(let i=0;i<sW*sH;i++){if(!shape[i]&&shapeDF[i]<=off)shape[i]=1}
+  }
+
+  // Smoothing via blur
+  const sm=+$("algoSmooth").value;
+  if(sm>0){
+    const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;
+    const tc=tmp.getContext("2d"),id=tc.createImageData(sW,sH);
+    for(let i=0;i<sW*sH;i++){const v=shape[i]?255:0;id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}
+    tc.putImageData(id,0,0);
+    const tmp2=document.createElement("canvas");tmp2.width=sW;tmp2.height=sH;
+    const tc2=tmp2.getContext("2d");
+    tc2.filter=`blur(${sm}px)`;tc2.drawImage(tmp,0,0);
+    const blurred=tc2.getImageData(0,0,sW,sH);
+    for(let i=0;i<sW*sH;i++)shape[i]=blurred.data[i*4]>128?1:0;
+  }
+
+  algoShapeMask=shape;
+  // DF for stroke rendering
+  algoShapeDF=computeDF(shape,sW,sH);
+  // Also need internal DF for stroke
+  algoShapeDF._int=computeInternalDF(shape,sW,sH);
+}
+
+/* ===== Glow ===== */
+function rebuildGlow(){
+  if(!maskA||!distF)return;
+  if(!$("glOn").checked){glowCV=null;return}
+  const rad=+$("glR").value,col=hx2($("glC").value);
+  const o1T=$("o1On").checked?+$("o1T").value:0;
+  const o2T=$("o2On").checked?+$("o2T").value:0;
+  const totalT=o1T+o2T;
+  const sh=document.createElement("canvas");sh.width=sW;sh.height=sH;
+  const sc=sh.getContext("2d"),sid=sc.createImageData(sW,sH);
+  for(let i=0;i<sW*sH;i++){if(maskA[i]||distF[i]<=totalT){sid.data[i*4]=col[0];sid.data[i*4+1]=col[1];sid.data[i*4+2]=col[2];sid.data[i*4+3]=255}}
+  sc.putImageData(sid,0,0);
+  glowPd=Math.ceil(rad*2.5);
+  glowCV=document.createElement("canvas");glowCV.width=sW+glowPd*2;glowCV.height=sH+glowPd*2;
+  const gc=glowCV.getContext("2d");gc.filter=`blur(${rad}px)`;gc.drawImage(sh,glowPd,glowPd);
+}
+
+function rebuildAll(){rebuildMask();rebuildAlgoShape();rebuildGlow();if(!anOn)render()}
+
+/* ===== Render ===== */
+function dc(d,w,h){const v=DM[d]||[0,0,1,1];return[v[0]*w,v[1]*h,v[2]*w,v[3]*h]}
+
+function renderFrame(hc,dir){
+  if(!maskA||!distF||!hc||hc.length<2)return;
+  const w=sW,h=sH,th=+$("thr").value;
+  const o1On=$("o1On").checked,o1T=o1On?+$("o1T").value:0,o1C=hx2($("o1C").value),o1A=+$("o1A").value/100;
+  const o2On=$("o2On").checked,o2T=o2On?+$("o2T").value:0,o2C=hx2($("o2C").value),o2A=+$("o2A").value/100;
+  const glOn=$("glOn").checked,glA=+$("glA").value/100;
+  const aOn=$("algoOn").checked;
+  const aSt=+$("algoStroke").value,aC=hx2($("algoColor").value),aA=+$("algoAlpha").value/100;
+  const pad=(glOn&&glowCV)?glowPd:0;
+  const apd=aOn&&$("algoPad").checked&&algoShapeMask?Math.max(pad,+$("algoOff").value+$("algoSmooth")?+$("algoSmooth").value:0+aSt+10):pad;
+  const finalPad=Math.max(pad,aOn?apd:0);
+  cv.width=w+finalPad*2;cv.height=h+finalPad*2;
+  cx.clearRect(0,0,cv.width,cv.height);
+
+  // 1) Glow
+  if(glOn&&glowCV){cx.globalAlpha=glA;cx.drawImage(glowCV,finalPad-glowPd,finalPad-glowPd);cx.globalAlpha=1}
+
+  // 2) Algo outline
+  if(aOn&&algoShapeMask&&algoShapeDF){
+    const oid=cx.createImageData(w,h);
+    const intDF=algoShapeDF._int;
+    for(let i=0;i<w*h;i++){
+      // Stroke: pixels that are on the border of the shape within strokeWidth
+      if(algoShapeMask[i]&&intDF[i]<=aSt){
+        const fade=C(intDF[i],0,1); // anti-alias inner edge
+        oid.data[i*4]=aC[0];oid.data[i*4+1]=aC[1];oid.data[i*4+2]=aC[2];
+        oid.data[i*4+3]=C(Math.round(fade*aA*255),0,255);
+      } else if(!algoShapeMask[i]&&algoShapeDF[i]<=aSt){
+        const fade=C(aSt-algoShapeDF[i]+1,0,1);
+        oid.data[i*4]=aC[0];oid.data[i*4+1]=aC[1];oid.data[i*4+2]=aC[2];
+        oid.data[i*4+3]=C(Math.round(fade*aA*255),0,255);
+      }
+    }
+    const otmp=document.createElement("canvas");otmp.width=w;otmp.height=h;
+    otmp.getContext("2d").putImageData(oid,0,0);
+    cx.drawImage(otmp,finalPad,finalPad);
+  }
+
+  // 3) Double outline + gradient
+  const gt=document.createElement("canvas");gt.width=w;gt.height=h;const gc=gt.getContext("2d");
+  const[x0,y0,x1,y1]=dc(dir,w,h);
+  const gr=gc.createLinearGradient(x0,y0,x1,y1);
+  hc.forEach((c,i)=>gr.addColorStop(i/(hc.length-1),c));
+  gc.fillStyle=gr;gc.fillRect(0,0,w,h);
+  const gd=gc.getImageData(0,0,w,h);
+  const res=cx.createImageData(w,h);const edge=th*.12;
+  for(let i=0;i<w*h;i++){
+    const dist=distF[i];
+    if(maskA[i]){
+      const diff=th-lumD[i],a=edge>0?C(diff/edge,0,1):1;
+      res.data[i*4]=gd.data[i*4];res.data[i*4+1]=gd.data[i*4+1];res.data[i*4+2]=gd.data[i*4+2];
+      res.data[i*4+3]=C(Math.round(a*255),0,255);
+    }else if(o1On&&dist<=o1T){
+      const fade=C(o1T-dist+1,0,1);
+      res.data[i*4]=o1C[0];res.data[i*4+1]=o1C[1];res.data[i*4+2]=o1C[2];res.data[i*4+3]=C(Math.round(fade*o1A*255),0,255);
+    }else if(o2On&&dist<=o1T+o2T){
+      const fade=C(o1T+o2T-dist+1,0,1);
+      res.data[i*4]=o2C[0];res.data[i*4+1]=o2C[1];res.data[i*4+2]=o2C[2];res.data[i*4+3]=C(Math.round(fade*o2A*255),0,255);
+    }
+  }
+  const ctmp=document.createElement("canvas");ctmp.width=w;ctmp.height=h;
+  ctmp.getContext("2d").putImageData(res,0,0);
+  cx.drawImage(ctmp,finalPad,finalPad);
+}
+
+function gCC(){return[$("c1").value,$("c2").value,$("c3").value]}
+function render(){if(!maskA)return;stopAn();const c=(cPre>=0&&PRESETS[cPre])?PRESETS[cPre].c:gCC();renderFrame(c,cDir)}
+function $(id){return document.getElementById(id)}
+
+/* ===== Animation ===== */
+function stopAn(){if(anId){cancelAnimationFrame(anId);anId=null}anOn=false;anIdx=-1;$("aStop").classList.add("hid");document.querySelectorAll(".ab").forEach(b=>b.classList.remove("active"))}
+function startAn(idx){stopAn();document.querySelectorAll(".pb").forEach(b=>b.classList.remove("active"));cPre=-1;anOn=true;anIdx=idx;$("aStop").classList.remove("hid");document.querySelectorAll(".ab")[idx]?.classList.add("active");const ap=ANIMS[idx],st=performance.now();(function tk(now){if(!anOn)return;renderFrame(gAn(ap,((now-st)/1000)*anSpd),cDir);anId=requestAnimationFrame(tk)})(performance.now())}
+function gAn(a,t){
+  const N=7;
+  if(a.t==="hr"){const h=((a.bh||0)+Math.sin(t*1.2)*25+t*15)%360,s=a.s||80,l0=(a.lr||[40,60])[0],l1=(a.lr||[40,60])[1];return[r2h(...h2r(h-10,s,l0)),r2h(...h2r(h,s,(l0+l1)/2)),r2h(...h2r(h+10,s,l1))]}
+  if(a.t==="sw"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const o=((t*.4)%1+1)%1,r=[];for(let i=0;i<N;i++)r.push(r2h(...sPal(b,((i/(N-1)+o)%1+1)%1)));return r}
+  if(a.t==="pu"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const m=.3+.7*(.5+.5*Math.sin(t*2.5));return b.map(c=>{const[r,g,bl]=hx2(c);return r2h(r*m,g*m,bl*m)})}
+  if(a.t==="rb"){const s=a.s||90,l=a.l||50,o=((t*40)%360+360)%360,r=[];for(let i=0;i<N;i++)r.push(r2h(...h2r((o+i*(360/N))%360,s,l)));return r}
+  if(a.t==="sh"){const[bH,bS,bL]=a.b||[0,0,50],[hH,hS,hL]=a.h||[0,100,90],sp=Math.sin(t*1.8)*.5+.5,r=[];for(let i=0;i<9;i++){const x=i/8,int=C(1-Math.abs(x-sp)*3,0,1);r.push(r2h(...h2r(Lr(bH,hH,int),Lr(bS,hS,int),Lr(bL,hL,int))))}return r}
+  if(a.t==="br"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const br=Math.sin(t*1.5)*.5+.5,ph=((t*.3)%1+1)%1;return b.map((c,i)=>{const[r,g,bl]=hx2(c),s=i/b.length+ph,m=.3+.7*(.5+.5*Math.sin((br+s)*Math.PI*2));return r2h(r*m,g*m,bl*m)})}
+  return["#333","#fff"];
+}
+
+/* ===== Build Presets ===== */
+(function(){
+  const g=$("pGrid");PRESETS.forEach((p,i)=>{const b=document.createElement("button");b.className="pb"+(i===0?" active":"");
+    const st=p.c.map((c,j)=>`${c} ${(j/(p.c.length-1)*100).toFixed(0)}%`).join(",");
+    b.style.background=`linear-gradient(135deg,${st})`;b.innerHTML=`<span class="pl">${p.n}</span>`;
+    b.onclick=()=>{stopAn();g.querySelectorAll(".pb").forEach(x=>x.classList.remove("active"));b.classList.add("active");cPre=i;
+      const c=p.c;$("c1").value=c[0];$("c2").value=c[Math.floor(c.length/2)];$("c3").value=c[c.length-1];render()};
+    g.appendChild(b)});
+})();
+(function(){
+  const g=$("aGrid");ANIMS.forEach((a,i)=>{const b=document.createElement("button");b.className="ab";
+    const c=document.createElement("canvas");c.width=120;c.height=44;b.appendChild(c);
+    const l=document.createElement("span");l.className="al";l.textContent=a.n;b.appendChild(l);
+    b.onclick=()=>{if(maskA)startAn(i)};g.appendChild(b);
+    const mc=c.getContext("2d"),s=performance.now();
+    (function mt(now){const cols=gAn(a,((now-s)/1000)*.8);if(cols.length>=2){const gr=mc.createLinearGradient(0,0,120,44);cols.forEach((c,j)=>gr.addColorStop(j/(cols.length-1),c));mc.fillStyle=gr;mc.fillRect(0,0,120,44)}requestAnimationFrame(mt)})(performance.now());
+  });
+})();
+
+/* ===== Events ===== */
+// Mask
+$("thr").oninput=function(){$("thrV").textContent=this.value;rebuildAll()};
+$("inv").onchange=rebuildAll;
+
+// Algo
+$("algoSel").onchange=function(){
+  $("morphParams").style.display=this.value==="morph"?"":"none";
+  $("alphaParams").style.display=this.value==="alpha"?"":"none";
+  rebuildAlgoShape();rebuildGlow();if(!anOn)render();
+};
+$("algoOn").onchange=()=>{rebuildAlgoShape();if(!anOn)render()};
+$("algoPad").onchange=()=>{rebuildAlgoShape();if(!anOn)render()};
+$("morphR").oninput=function(){$("morphRV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
+$("alphaR").oninput=function(){$("alphaRV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
+$("algoOff").oninput=function(){$("algoOffV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
+$("algoSmooth").oninput=function(){$("algoSmoothV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
+$("algoStroke").oninput=function(){$("algoStrokeV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
+$("algoColor").oninput=()=>{if(!anOn)render()};
+$("algoAlpha").oninput=function(){$("algoAlphaV").textContent=this.value+"%";if(!anOn)render()};
+
+// Outline
+$("o1On").onchange=()=>{rebuildGlow();if(!anOn)render()};
+$("o2On").onchange=()=>{rebuildGlow();if(!anOn)render()};
+$("o1T").oninput=function(){$("o1TV").textContent=this.value+"px";rebuildGlow();if(!anOn)render()};
+$("o2T").oninput=function(){$("o2TV").textContent=this.value+"px";rebuildGlow();if(!anOn)render()};
+$("o1C").oninput=()=>{if(!anOn)render()};
+$("o2C").oninput=()=>{if(!anOn)render()};
+$("o1A").oninput=function(){$("o1AV").textContent=this.value+"%";if(!anOn)render()};
+$("o2A").oninput=function(){$("o2AV").textContent=this.value+"%";if(!anOn)render()};
+
+// Glow
+$("glOn").onchange=()=>{rebuildGlow();if(!anOn)render()};
+$("glR").oninput=function(){$("glRV").textContent=this.value+"px";rebuildGlow();if(!anOn)render()};
+$("glC").oninput=()=>{rebuildGlow();if(!anOn)render()};
+$("glA").oninput=function(){$("glAV").textContent=this.value+"%";if(!anOn)render()};
+
+// Gradient
+["c1","c2","c3"].forEach(id=>{$(id).oninput=()=>{stopAn();document.querySelectorAll(".pb").forEach(b=>b.classList.remove("active"));cPre=-1;render()}});
+$("dg").onclick=e=>{const b=e.target.closest(".db");if(!b)return;document.querySelectorAll(".db").forEach(x=>x.classList.remove("active"));b.classList.add("active");cDir=b.dataset.d;if(!anOn)render()};
+
+// Anim
+$("aStop").onclick=()=>{stopAn();render()};
+$("aSpd").oninput=function(){anSpd=parseFloat(this.value);$("aSpdV").textContent=anSpd.toFixed(1)+"x"};
+
+// BG
+document.querySelectorAll(".bg-b").forEach(b=>{b.onclick=()=>{document.querySelectorAll(".bg-b").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+  const bg=b.dataset.b,w=$("cw");
+  if(bg==="checker"){w.style.background="";w.style.backgroundImage="linear-gradient(45deg,#ddd 25%,transparent 25%),linear-gradient(-45deg,#ddd 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ddd 75%),linear-gradient(-45deg,transparent 75%,#ddd 75%)";w.style.backgroundSize="20px 20px";w.style.backgroundPosition="0 0,0 10px,10px -10px,-10px 0px"}
+  else{w.style.backgroundImage="none";w.style.background=bg}}});
+
+// Download
+$("dlBtn").onclick=()=>{if(!maskA)return;const a=document.createElement("a");a.download="logo.png";a.href=cv.toDataURL("image/png");a.click()};
+</script>
+</body>
+</html>
