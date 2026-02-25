@@ -150,8 +150,6 @@ body{font-family:'Zen Maru Gothic','Fredoka',sans-serif;background:var(--bg);col
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
 .empty-state h2{font-family:'Fredoka',sans-serif;font-size:1.4rem;color:#c8a8ab;margin-top:14px;}
 .empty-state p{color:#d4b0b5;margin-top:6px;font-size:0.88rem;}
-.empty-state .shortcut-hint{margin-top:16px;padding:8px 18px;background:white;border-radius:50px;display:inline-block;font-size:0.78rem;color:#b89a9e;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
-.empty-state kbd{background:#f0e0e3;padding:2px 8px;border-radius:6px;font-family:'Consolas',monospace;font-size:0.75rem;font-weight:600;}
 
 .confetti-piece{position:fixed;z-index:1000;pointer-events:none;animation:confettiFall 1.4s ease forwards;}
 @keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1);}100%{opacity:0;transform:translateY(350px) rotate(720deg) scale(0.3);}}
@@ -313,7 +311,6 @@ body{font-family:'Zen Maru Gothic','Fredoka',sans-serif;background:var(--bg);col
 <div class="empty-state" id="emptyState">
   <div class="big-emoji">📝</div><h2>メモはまだないよ！</h2>
   <p>右下の ＋ ボタンで最初のメモを書こう</p>
-  <div class="shortcut-hint"><kbd>Ctrl</kbd>+<kbd>N</kbd> でもメモを追加できるよ</div>
 </div>
 
 <div class="color-palette" id="colorPalette">
@@ -325,7 +322,7 @@ body{font-family:'Zen Maru Gothic','Fredoka',sans-serif;background:var(--bg);col
   <div class="color-dot" style="background:var(--pop-purple)" data-color="purple" data-label="パープル"></div>
 </div>
 
-<button class="add-btn" id="addBtn" title="新しいメモ (Ctrl+N)">＋</button>
+<button class="add-btn" id="addBtn" title="新しいメモ">＋</button>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -367,7 +364,6 @@ function sortMemos(list){
 addBtn.onclick=()=>{paletteOpen=!paletteOpen;palette.classList.toggle('show',paletteOpen);};
 document.querySelectorAll('.color-dot').forEach(d=>d.onclick=()=>{createMemo(d.dataset.color);paletteOpen=false;palette.classList.remove('show');spawnConfetti(d);showToast('✨ 新しいメモを追加！');});
 document.addEventListener('click',e=>{if(!palette.contains(e.target)&&e.target!==addBtn){paletteOpen=false;palette.classList.remove('show');}});
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();createMemo('pink');showToast('✨ 新しいメモを追加！');}});
 
 // Search
 searchBar.oninput=()=>render();
@@ -434,8 +430,8 @@ function render(){
   let filtered=sortMemos(memos.filter(m=>m.text.toLowerCase().includes(q)));
   if(!filtered.length&&!memos.length){emptyState.style.display='block';grid.innerHTML='';return;}
   emptyState.style.display=filtered.length?'none':'block';
-  if(!filtered.length&&q){emptyState.querySelector('h2').textContent='見つからないよ 🔍';emptyState.querySelector('p').textContent='別のキーワードで試してみてね';emptyState.querySelector('.shortcut-hint').style.display='none';}
-  else{emptyState.querySelector('h2').textContent='メモはまだないよ！';emptyState.querySelector('p').textContent='右下の ＋ ボタンで最初のメモを書こう';emptyState.querySelector('.shortcut-hint').style.display='';}
+  if(!filtered.length&&q){emptyState.querySelector('h2').textContent='見つからないよ 🔍';emptyState.querySelector('p').textContent='別のキーワードで試してみてね';}
+  else{emptyState.querySelector('h2').textContent='メモはまだないよ！';emptyState.querySelector('p').textContent='右下の ＋ ボタンで最初のメモを書こう';}
 
   grid.innerHTML=filtered.map(memo=>{
     const c=COLORS[memo.color]||COLORS.pink;
