@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>かんたんキー設定ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f7fa;
+  --surface: #ffffff;
+  --surface2: #f0f4f8;
+  --surface3: #e6ecf2;
+  --border: #d4dde6;
+  --text: #2c3e50;
+  --text-dim: #6b839a;
+  --text-dimmer: #9badbf;
+  --accent: #0ea5a5;
+  --accent-dim: rgba(14,165,165,0.10);
+  --accent-glow: rgba(14,165,165,0.20);
+  --green: #10b981;
+  --green-dim: rgba(16,185,129,0.10);
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.08);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+  --radius: 12px;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.7; }
+
+.app { max-width: 820px; margin: 0 auto; padding: 24px 16px 80px; }
+
+/* ── Header ── */
+.header { text-align: center; margin-bottom: 32px; }
+.header h1 {
+  font-size: 22px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.header h1 .icon { font-size: 26px; }
+.header .subtitle { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+/* ── Welcome Banner ── */
+.welcome {
+  background: linear-gradient(135deg, rgba(14,165,165,0.06), rgba(59,130,246,0.05));
+  border: 1px solid rgba(14,165,165,0.18);
+  border-radius: var(--radius); padding: 20px 24px; margin-bottom: 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.welcome-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.welcome p { font-size: 14px; color: var(--text-dim); line-height: 1.8; }
+.welcome .flow {
+  display: flex; align-items: center; gap: 8px; margin-top: 14px;
+  flex-wrap: wrap; font-size: 13px; font-weight: 600;
+}
+.welcome .flow-step {
+  background: var(--surface2); padding: 6px 14px; border-radius: 8px;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.welcome .flow-step .num {
+  background: var(--accent); color: #fff; width: 20px; height: 20px;
+  border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.welcome .flow-arrow { color: var(--text-dimmer); font-size: 16px; }
+
+/* ── Step Section ── */
+.step {
+  margin-bottom: 28px; position: relative;
+  padding-left: 48px;
+}
+.step-badge {
+  position: absolute; left: 0; top: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 16px; font-weight: 700;
+  box-shadow: 0 2px 12px var(--accent-glow);
+  flex-shrink: 0;
+}
+.step-badge.done { background: var(--green); box-shadow: 0 2px 12px rgba(16,185,129,0.25); }
+.step-badge.optional { background: var(--surface3); color: var(--text-dim); box-shadow: none; border: 1px solid var(--border); }
+
+.step-header { margin-bottom: 8px; }
+.step-title { font-size: 16px; font-weight: 700; }
+.step-desc {
+  font-size: 13px; color: var(--text-dim); line-height: 1.8; margin-bottom: 12px;
+}
+.step-desc strong { color: var(--text); font-weight: 600; }
+.step-tip {
+  font-size: 12px; color: var(--blue); background: var(--blue-dim);
+  border: 1px dashed rgba(96,165,250,0.25);
+  border-radius: 8px; padding: 10px 14px; margin-top: 10px;
+  line-height: 1.7;
+}
+.step-tip::before { content: '💡 '; }
+
+/* ── Connection ── */
+.conn-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.conn-status { display: flex; align-items: center; gap: 10px; flex: 1; }
+.conn-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); transition: all 0.3s; flex-shrink: 0; }
+.conn-dot.on { background: var(--green); box-shadow: 0 0 8px rgba(16,185,129,0.4); animation: pulse 2s infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 14px rgba(16,185,129,0.4); } }
+.conn-label { font-size: 14px; font-weight: 500; }
+.conn-label small { font-size: 12px; color: var(--text-dim); display: block; margin-top: 1px; }
+.conn-btn {
+  font-family: var(--sans); font-size: 14px; font-weight: 700; padding: 10px 24px;
+  border: 1px solid var(--accent); background: var(--accent); color: #fff;
+  border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.conn-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 14px var(--accent-glow); }
+.conn-btn.disconnect { background: var(--surface); border-color: var(--red); color: var(--red); }
+.conn-btn.disconnect:hover { background: var(--red); color: #fff; }
+
+/* ── Grid Size Config ── */
+.grid-config {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.grid-config .size-group { display: flex; align-items: center; gap: 8px; }
+.grid-config .size-label-text { font-size: 14px; font-weight: 500; color: var(--text-dim); }
+.grid-config .size-input {
+  font-family: var(--mono); font-size: 18px; font-weight: 700; text-align: center;
+  width: 56px; padding: 8px 4px; background: var(--bg); color: var(--accent);
+  border: 2px solid var(--border); border-radius: 8px; outline: none;
+}
+.grid-config .size-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.grid-config .x-mark { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text-dimmer); }
+.grid-config .total-badge {
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  background: var(--accent-dim); color: var(--accent); padding: 6px 14px; border-radius: 6px;
+}
+
+/* ── Visual Grid ── */
+.grid-section { margin-bottom: 0; }
+.grid-wrapper {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.key-grid { display: inline-grid; gap: 8px; width: 100%; }
+.key-cell {
+  background: var(--surface2); border: 2px solid var(--border); border-radius: 10px;
+  padding: 12px 8px; cursor: pointer; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 78px; min-width: 64px; position: relative; user-select: none;
+}
+.key-cell:hover { border-color: var(--accent); background: var(--surface3); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.key-cell.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim), 0 4px 16px rgba(0,0,0,0.08); background: var(--accent-dim); transform: translateY(-2px); }
+.key-cell .cell-num {
+  font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text-dimmer);
+  position: absolute; top: 6px; left: 8px;
+}
+.key-cell .cell-key {
+  font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text);
+  margin-top: 4px; text-align: center; line-height: 1.2; word-break: break-all;
+}
+.key-cell .cell-mod {
+  font-family: var(--mono); font-size: 9px; font-weight: 500; color: var(--accent);
+  margin-top: 3px; text-align: center;
+}
+.key-cell.active .cell-key { color: var(--accent); }
+
+/* ── Editor Panel ── */
+.editor-panel {
+  background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 20px; margin-top: 14px; display: none;
+  animation: slideIn 0.2s ease;
+  box-shadow: 0 4px 16px rgba(14,165,165,0.10);
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.editor-panel.open { display: block; }
+.editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.editor-title {
+  font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+}
+.editor-title .num { font-family: var(--mono); color: var(--accent); font-size: 16px; }
+.editor-close {
+  font-size: 20px; color: var(--text-dimmer); background: none;
+  border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px;
+}
+.editor-close:hover { color: var(--text); background: var(--surface2); }
+.editor-methods { margin-bottom: 14px; }
+.editor-method-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
+.editor-method-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.editor-method-tab {
+  font-size: 13px; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim);
+  font-weight: 500; transition: all 0.2s;
+}
+.editor-method-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.editor-method-tab:hover:not(.active) { background: var(--surface3); }
+.editor-method-content { margin-top: 12px; }
+.editor-method-content > div { display: none; }
+.editor-method-content > div.active { display: block; }
+
+/* Method A: keyboard press */
+.method-keyboard {
+  background: var(--bg); border: 2px dashed var(--accent); border-radius: var(--radius);
+  padding: 24px; text-align: center; cursor: default; transition: all 0.2s;
+  position: relative;
+}
+.method-keyboard.listening { border-color: var(--green); border-style: solid; background: rgba(16,185,129,0.04); }
+.method-keyboard .kb-icon { font-size: 32px; margin-bottom: 8px; }
+.method-keyboard .kb-main { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.method-keyboard .kb-sub { font-size: 12px; color: var(--text-dim); }
+.method-keyboard .kb-result {
+  margin-top: 12px; font-family: var(--mono); font-size: 24px; font-weight: 700;
+  color: var(--accent); min-height: 34px;
+}
+.method-keyboard .kb-result.captured { color: var(--green); }
+.method-keyboard .kb-status {
+  margin-top: 6px; font-size: 12px; font-weight: 600;
+  min-height: 18px;
+}
+.method-keyboard .kb-status.ok { color: var(--green); }
+
+/* Method B: dropdown */
+.editor-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.editor-field { flex: 1; min-width: 160px; }
+.editor-field label {
+  display: block; font-size: 12px; font-weight: 600; color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.editor-field label .field-help { font-weight: 400; color: var(--text-dimmer); }
+.editor-field select {
+  width: 100%; font-family: var(--sans); font-size: 14px; padding: 12px 14px;
+  background: var(--bg); color: var(--text); border: 2px solid var(--border); border-radius: 8px;
+  outline: none; cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2378788a'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.editor-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.editor-preview {
+  margin-top: 14px; padding: 12px 16px; background: var(--bg); border-radius: 8px;
+  font-size: 14px; display: flex; align-items: center; gap: 10px;
+}
+.editor-preview .label { color: var(--text-dim); font-size: 12px; }
+.editor-preview .value { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 18px; }
+
+/* ── Action Buttons ── */
+.action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+.action-btn {
+  font-family: var(--sans); font-size: 14px; font-weight: 700; padding: 14px 24px;
+  border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.action-btn.primary { flex: 1; justify-content: center; background: var(--accent); color: #fff; font-size: 15px; }
+.action-btn.primary:not(:disabled):hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+.action-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.action-btn.secondary:not(:disabled):hover { background: var(--surface3); }
+
+/* ── Test Area ── */
+.test-section {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.test-header {
+  padding: 14px 18px; font-size: 13px; font-weight: 600;
+  color: var(--text-dim); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.test-header .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: livePulse 1.5s infinite; }
+@keyframes livePulse { 50% { box-shadow: 0 0 8px rgba(16,185,129,0.4); } }
+.test-input-area {
+  padding: 20px; cursor: text; outline: none; font-size: 14px;
+  color: var(--text-dimmer); border-bottom: 1px solid var(--border);
+  min-height: 56px; transition: color 0.2s; text-align: center;
+}
+.test-input-area:focus { color: var(--text); background: rgba(14,165,165,0.03); }
+.test-display { padding: 18px 20px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.test-pressed {
+  font-family: var(--mono); font-size: 34px; font-weight: 700; color: var(--text);
+  min-height: 44px; transition: transform 0.1s;
+}
+.test-pressed.pop { transform: scale(1.05); }
+.test-match-info {
+  font-size: 15px; font-weight: 700; color: var(--green);
+  min-height: 22px; display: flex; align-items: center; gap: 6px;
+}
+.test-match-info.flash { animation: matchFlash 0.5s ease; }
+@keyframes matchFlash { 0% { opacity: 0; transform: translateX(6px); } 100% { opacity: 1; transform: translateX(0); } }
+.test-grid-highlight { padding: 4px 18px 16px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.test-mini-cell {
+  font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 5px 10px;
+  border-radius: 5px; background: var(--surface2); color: var(--text-dimmer);
+  border: 1px solid var(--border); transition: all 0.2s;
+}
+.test-mini-cell.hit { background: var(--green-dim); color: var(--green); border-color: var(--green); transform: scale(1.05); }
+.test-history { padding: 8px 18px 14px; border-top: 1px solid var(--border); }
+.test-history-item {
+  font-family: var(--mono); font-size: 11px; color: var(--text-dimmer); line-height: 2;
+  display: flex; gap: 10px;
+}
+.test-history-item .time { min-width: 70px; }
+.test-history-item .keys { color: var(--text-dim); }
+.test-history-item .match { color: var(--green); }
+
+/* ── Log ── */
+.log-section { margin-top: 8px; }
+.log-toggle {
+  font-size: 12px; color: var(--text-dimmer); background: none;
+  border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 6px 0;
+}
+.log-toggle:hover { color: var(--text-dim); }
+.log-desc {
+  display: none; font-size: 12px; color: var(--text-dim); line-height: 1.8;
+  margin-top: 6px; padding: 10px 14px; background: var(--surface2); border-radius: 8px;
+}
+.log-desc.open { display: block; }
+.log-console {
+  background: #f8fafb; border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px; max-height: 160px; overflow-y: auto; font-family: var(--mono); font-size: 11px; line-height: 1.8;
+  display: none;
+}
+.log-console.open { display: block; margin-top: 6px; }
+.log-console::-webkit-scrollbar { width: 5px; }
+.log-console::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+.log-line { color: var(--text-dimmer); }
+.log-line.sent { color: #2563eb; }
+.log-line.recv { color: #059669; }
+.log-line.err { color: var(--red); }
+.log-line.info { color: var(--accent); }
+.log-line::before { content: attr(data-t); color: #bbb; margin-right: 8px; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+  font-size: 14px; font-weight: 600;
+  padding: 12px 24px; border-radius: 10px; background: #fff; border: 1px solid var(--border);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  opacity: 0; transition: all 0.25s ease; z-index: 999; pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.ok { color: #059669; border-color: rgba(16,185,129,0.3); }
+.toast.ng { color: var(--red); border-color: rgba(239,68,68,0.3); }
+
+@media (max-width: 520px) {
+  .step { padding-left: 44px; }
+  .step-badge { width: 32px; height: 32px; font-size: 14px; }
+  .welcome .flow { flex-direction: column; align-items: flex-start; }
+  .welcome .flow-arrow { transform: rotate(90deg); }
+  .editor-row { flex-direction: column; }
+  .action-bar { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <h1><span class="icon">⌨</span> かんたんキー設定ツール</h1>
+    <div class="subtitle">拡張キーボードのボタンに好きなキーを割り当てられます</div>
+  </div>
+
+  <!-- Welcome -->
+  <div class="welcome">
+    <div class="welcome-title">👋 はじめに — 使い方はかんたん3ステップ！</div>
+    <p>USBケーブルでキーボードをパソコンにつないだら、下の手順に沿って設定するだけ。<br>
+    むずかしい操作はありません。ゆっくり進めてみてください。</p>
+    <div class="flow">
+      <span class="flow-step"><span class="num">1</span> つなぐ</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step"><span class="num">2</span> ボタンを選んでキーを決める</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step"><span class="num">3</span> 保存する</span>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 1: Connect ═══ -->
+  <div class="step">
+    <div class="step-badge">1</div>
+    <div class="step-header"><div class="step-title">キーボードをパソコンにつなぐ</div></div>
+    <div class="step-desc">
+      USBケーブルでキーボードをパソコンに接続してから、<strong>「接続する」ボタン</strong>を押してください。<br>
+      小さいウィンドウが出てくるので、表示されたデバイス名を選んで「接続」を押します。
+    </div>
+    <div class="conn-bar">
+      <div class="conn-status">
+        <div class="conn-dot" id="connDot"></div>
+        <div class="conn-label" id="connLabel">
+          まだつながっていません
+          <small>USBケーブルを確認してください</small>
+        </div>
+      </div>
+      <button class="conn-btn" id="connBtn" onclick="toggleSerial()">🔌 接続する</button>
+    </div>
+    <div class="step-tip">
+      うまくいかない場合は、USBケーブルがちゃんと刺さっているか確認してみてください。<br>
+      このツールは <strong>Chrome</strong> または <strong>Edge</strong> ブラウザでのみ動作します。
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2: Grid & Keys ═══ -->
+  <div class="step">
+    <div class="step-badge">2</div>
+    <div class="step-header"><div class="step-title">ボタンの配置を決めて、キーを割り当てる</div></div>
+    <div class="step-desc">
+      まず、お使いのキーボードの<strong>ボタンの並び</strong>を下の数字で合わせます。<br>
+      そのあと、<strong>設定したいボタンをタップ</strong>すると、キーの変更画面が出ます。
+    </div>
+
+    <!-- Grid Size -->
+    <div class="grid-config">
+      <div class="size-group">
+        <span class="size-label-text">横</span>
+        <input type="number" class="size-input" id="inputCols" value="3" min="1" max="8">
+        <span class="x-mark">×</span>
+        <span class="size-label-text">縦</span>
+        <input type="number" class="size-input" id="inputRows" value="3" min="1" max="8">
+      </div>
+      <span class="total-badge" id="totalBadge">= 9 ボタン</span>
+    </div>
+
+    <div class="step-tip">
+      数字を変えると、下のボタン配列が自動で変わります。<br>
+      お使いのキーボードのボタンの数に合わせてください。
+    </div>
+
+    <!-- Visual Grid -->
+    <div class="grid-section">
+      <div class="grid-wrapper">
+        <div class="key-grid" id="keyGrid"></div>
+      </div>
+    </div>
+
+    <!-- Editor Panel -->
+    <div class="editor-panel" id="editorPanel">
+      <div class="editor-header">
+        <div class="editor-title">
+          <span class="num" id="editorNum">#0</span>
+          <span id="editorLabel">ボタン 0</span> のキーを変更
+        </div>
+        <button class="editor-close" onclick="closeEditor()" title="閉じる">✕</button>
+      </div>
+
+      <!-- Method switcher -->
+      <div class="editor-methods">
+        <div class="editor-method-label">設定方法をえらんでください：</div>
+        <div class="editor-method-tabs">
+          <div class="editor-method-tab active" onclick="switchMethod('keyboard')">⌨ キーボードで入力<br><small style="font-size:11px;opacity:0.7">（かんたん・おすすめ）</small></div>
+          <div class="editor-method-tab" onclick="switchMethod('dropdown')">📋 リストから選ぶ<br><small style="font-size:11px;opacity:0.7">（ファンクションキーなど）</small></div>
+        </div>
+      </div>
+
+      <div class="editor-method-content">
+        <!-- Method A: Keyboard -->
+        <div id="methodKeyboard" class="active">
+          <div class="method-keyboard" id="kbCapture" tabindex="0">
+            <div class="kb-icon">🎹</div>
+            <div class="kb-main">この枠をクリックしてから、割り当てたいキーを押してください</div>
+            <div class="kb-sub">Ctrl や Shift を押しながらでもOK！</div>
+            <div class="kb-result" id="kbResult"></div>
+            <div class="kb-status" id="kbStatus"></div>
+          </div>
+        </div>
+
+        <!-- Method B: Dropdown -->
+        <div id="methodDropdown">
+          <div class="editor-row">
+            <div class="editor-field">
+              <label>修飾キー <span class="field-help">（Ctrlなどを同時に押す場合）</span></label>
+              <select id="editorMod" onchange="updateEditorPreview()"></select>
+            </div>
+            <div class="editor-field">
+              <label>キー <span class="field-help">（割り当てたいキー）</span></label>
+              <select id="editorKey" onchange="updateEditorPreview()"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-preview">
+        <span class="label">現在の割り当て →</span>
+        <span class="value" id="editorPreview">Ctrl + C</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3: Save ═══ -->
+  <div class="step">
+    <div class="step-badge">3</div>
+    <div class="step-header"><div class="step-title">設定をキーボードに保存する</div></div>
+    <div class="step-desc">
+      設定が終わったら <strong>「💾 保存する」ボタン</strong> を押してください。<br>
+      キーボード本体に設定が書き込まれ、USBを抜いても設定は残ります。
+    </div>
+    <div class="action-bar">
+      <button class="action-btn secondary" id="btnRead" onclick="readConfig()" disabled>📖 今の設定を読み取る</button>
+      <button class="action-btn primary" id="btnSave" onclick="writeConfig()" disabled>💾 保存する</button>
+    </div>
+    <div class="step-tip">
+      「📖 今の設定を読み取る」を押すと、キーボードに入っている設定を画面に表示できます。<br>
+      保存せずにページを閉じると、変更は反映されません。忘れずに保存してください！
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4: Test (Optional) ═══ -->
+  <div class="step">
+    <div class="step-badge optional">✓</div>
+    <div class="step-header"><div class="step-title">ちゃんと動くかテストする（おまけ）</div></div>
+    <div class="step-desc">
+      保存が終わったら、下の枠をクリックしてから<strong>キーボードのボタンを押して</strong>みてください。<br>
+      押したキーが画面に表示され、どのボタンに対応しているか確認できます。
+    </div>
+
+    <div class="test-section">
+      <div class="test-header"><div class="live-dot"></div>キーテスト</div>
+      <div class="test-input-area" tabindex="0" id="testInput">👆 ここをクリックしてからボタンを押してね</div>
+      <div class="test-display">
+        <div class="test-pressed" id="testPressed"></div>
+        <div class="test-match-info" id="testMatch"></div>
+      </div>
+      <div class="test-grid-highlight" id="testMiniGrid"></div>
+      <div class="test-history" id="testHistory"></div>
+    </div>
+    <div class="step-tip">
+      ボタンを押して「✓ ボタン○ に一致」と表示されれば成功です！🎉<br>
+      表示されない場合は、ステップ2に戻って設定を確認してみてください。
+    </div>
+  </div>
+
+  <!-- Log (hidden by default) -->
+  <div class="log-section">
+    <button class="log-toggle" onclick="toggleLog()">🔧 詳しいログを見る <span id="logCount" style="color:var(--accent)"></span></button>
+    <div class="log-desc" id="logDesc">
+      キーボード本体とこのツールの間でやり取りしている通信内容をそのまま表示します。<br>
+      ふだんは見なくて大丈夫です。設定がうまく反映されないときなど、原因を調べるのに役立ちます。
+    </div>
+    <div class="log-console" id="logConsole"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════ Key Data ══════
+const KEYS = [];
+for (let i = 0; i < 26; i++) KEYS.push({ l: String.fromCharCode(65+i), c: 0x04+i });
+for (let i = 1; i <= 9; i++) KEYS.push({ l: `${i}`, c: 0x1E+i-1 });
+KEYS.push({ l: '0', c: 0x27 });
+for (let i = 1; i <= 12; i++) KEYS.push({ l: `F${i}`, c: 0x3A+i-1 });
+[['Enter',0x28],['Esc',0x29],['Backspace',0x2A],['Tab',0x2B],['Space',0x2C],['Delete',0x4C],
+ ['PrintScreen',0x46],['Home',0x4A],['End',0x4D],['PgUp',0x4B],['PgDn',0x4E],
+ ['↑',0x52],['↓',0x51],['←',0x50],['→',0x4F],['CapsLock',0x39],['Insert',0x49],
+ ['- ハイフン',0x2D],['= イコール',0x2E],['[ 左括弧',0x2F],['] 右括弧',0x30],
+ ['\\ バックスラッシュ',0x31],['; セミコロン',0x33],["' クォート",0x34],
+ ['` バッククォート',0x35],[', カンマ',0x36],['. ピリオド',0x37],['/ スラッシュ',0x38],
+].forEach(([l,c]) => KEYS.push({ l, c }));
+
+const MODS = [
+  { l: 'なし', v: 0 }, { l: 'Ctrl', v: 1 }, { l: 'Shift', v: 2 }, { l: 'Alt', v: 4 },
+  { l: 'Ctrl+Shift', v: 3 }, { l: 'Ctrl+Alt', v: 5 }, { l: 'Shift+Alt', v: 6 }, { l: 'Ctrl+Shift+Alt', v: 7 },
+];
+
+function keyLabel(code) { return (KEYS.find(k => k.c === code) || { l: `Key(${code})` }).l; }
+function previewText(m, k) {
+  const parts = [];
+  if (m & 1) parts.push('Ctrl');
+  if (m & 2) parts.push('Shift');
+  if (m & 4) parts.push('Alt');
+  parts.push(keyLabel(k));
+  return parts.join(' + ');
+}
+
+// ══════ JS Key Map ══════
+const jsKeyMap = {};
+for (let i = 0; i < 26; i++) jsKeyMap[`Key${String.fromCharCode(65+i)}`] = String.fromCharCode(65+i);
+for (let i = 0; i <= 9; i++) jsKeyMap[`Digit${i}`] = `${i}`;
+for (let i = 1; i <= 12; i++) jsKeyMap[`F${i}`] = `F${i}`;
+Object.assign(jsKeyMap, {
+  Enter:'Enter',Escape:'Esc',Backspace:'Backspace',Tab:'Tab',Space:'Space',Delete:'Delete',
+  ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',
+  Home:'Home',End:'End',PageUp:'PgUp',PageDown:'PgDn',NumpadEnter:'Enter',
+  CapsLock:'CapsLock',Insert:'Insert',PrintScreen:'PrintScreen',
+});
+
+// ══════ State ══════
+let cols = 3, rows = 3;
+let config = [];
+let selectedIdx = -1;
+let currentMethod = 'keyboard';
+let port = null, reader = null, readableStreamClosed = null;
+let logOpen = false, logCount = 0;
+const testHist = [];
+
+// ══════ Init ══════
+function init() {
+  const modSel = document.getElementById('editorMod');
+  modSel.innerHTML = MODS.map(m => `<option value="${m.v}">${m.l}</option>`).join('');
+  const keySel = document.getElementById('editorKey');
+  keySel.innerHTML = KEYS.map(k => `<option value="${k.c}">${k.l}</option>`).join('');
+
+  applyGrid();
+  document.getElementById('inputCols').addEventListener('input', applyGrid);
+  document.getElementById('inputRows').addEventListener('input', applyGrid);
+
+  // Keyboard capture area
+  const kbEl = document.getElementById('kbCapture');
+  kbEl.addEventListener('focus', () => {
+    kbEl.classList.add('listening');
+    kbEl.querySelector('.kb-main').textContent = '入力待ち… キーを押してください';
+  });
+  kbEl.addEventListener('blur', () => {
+    kbEl.classList.remove('listening');
+    kbEl.querySelector('.kb-main').textContent = 'この枠をクリックしてから、割り当てたいキーを押してください';
+  });
+}
+
+// ══════ Grid ══════
+function applyGrid() {
+  cols = Math.max(1, Math.min(8, parseInt(document.getElementById('inputCols').value) || 3));
+  rows = Math.max(1, Math.min(8, parseInt(document.getElementById('inputRows').value) || 3));
+  const total = cols * rows;
+  document.getElementById('totalBadge').textContent = `= ${total} ボタン`;
+
+  const old = config.slice();
+  config = [];
+  for (let i = 0; i < total; i++) {
+    config.push(i < old.length ? old[i] : { modifier: 0, keycode: 0x28 });
+  }
+  selectedIdx = -1;
+  closeEditor();
+  renderGrid();
+  renderMiniGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('keyGrid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+
+  config.forEach((cfg, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'key-cell' + (i === selectedIdx ? ' active' : '');
+    cell.onclick = () => selectKey(i);
+    const modParts = [];
+    if (cfg.modifier & 1) modParts.push('Ctrl');
+    if (cfg.modifier & 2) modParts.push('Shift');
+    if (cfg.modifier & 4) modParts.push('Alt');
+    cell.innerHTML = `
+      <span class="cell-num">${i}</span>
+      <span class="cell-key">${keyLabel(cfg.keycode)}</span>
+      ${modParts.length ? `<span class="cell-mod">${modParts.join('+')}</span>` : ''}
+    `;
+    grid.appendChild(cell);
+  });
+}
+
+function selectKey(idx) {
+  selectedIdx = idx;
+  renderGrid();
+  const panel = document.getElementById('editorPanel');
+  panel.classList.add('open');
+  document.getElementById('editorNum').textContent = `#${idx}`;
+  document.getElementById('editorLabel').textContent = `ボタン ${idx}`;
+  document.getElementById('editorMod').value = config[idx].modifier;
+  document.getElementById('editorKey').value = config[idx].keycode;
+  document.getElementById('editorPreview').textContent = previewText(config[idx].modifier, config[idx].keycode);
+  document.getElementById('kbResult').textContent = '';
+  document.getElementById('kbResult').className = 'kb-result';
+  document.getElementById('kbStatus').textContent = '';
+  document.getElementById('kbStatus').className = 'kb-status';
+
+  // Auto-focus keyboard capture if that method is active
+  if (currentMethod === 'keyboard') {
+    setTimeout(() => document.getElementById('kbCapture').focus(), 100);
+  }
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function updateEditorPreview() {
+  if (selectedIdx < 0) return;
+  config[selectedIdx].modifier = parseInt(document.getElementById('editorMod').value);
+  config[selectedIdx].keycode = parseInt(document.getElementById('editorKey').value);
+  document.getElementById('editorPreview').textContent = previewText(config[selectedIdx].modifier, config[selectedIdx].keycode);
+  renderGrid();
+  renderMiniGrid();
+}
+
+function closeEditor() {
+  selectedIdx = -1;
+  document.getElementById('editorPanel').classList.remove('open');
+  renderGrid();
+}
+
+// ══════ Editor Method Switch ══════
+function switchMethod(method) {
+  currentMethod = method;
+  document.querySelectorAll('.editor-method-tab').forEach((t, i) => {
+    t.classList.toggle('active', (method === 'keyboard' && i === 0) || (method === 'dropdown' && i === 1));
+  });
+  document.getElementById('methodKeyboard').classList.toggle('active', method === 'keyboard');
+  document.getElementById('methodDropdown').classList.toggle('active', method === 'dropdown');
+  if (method === 'keyboard' && selectedIdx >= 0) {
+    setTimeout(() => document.getElementById('kbCapture').focus(), 100);
+  }
+}
+
+// ══════ Keyboard Capture for Editor ══════
+document.getElementById('kbCapture').addEventListener('keydown', function(e) {
+  if (selectedIdx < 0) return;
+  if (['Control','Shift','Alt','Meta'].includes(e.key)) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const kl = jsKeyMap[e.code] || e.key;
+  let mb = 0;
+  if (e.ctrlKey || e.metaKey) mb |= 1;
+  if (e.shiftKey) mb |= 2;
+  if (e.altKey) mb |= 4;
+
+  const found = KEYS.find(k => k.l === kl);
+  if (!found) return;
+
+  config[selectedIdx].modifier = mb;
+  config[selectedIdx].keycode = found.c;
+
+  // Update all UI
+  document.getElementById('editorMod').value = mb;
+  document.getElementById('editorKey').value = found.c;
+  const pvText = previewText(mb, found.c);
+  document.getElementById('editorPreview').textContent = pvText;
+
+  const resultEl = document.getElementById('kbResult');
+  resultEl.textContent = pvText;
+  resultEl.className = 'kb-result captured';
+  const statusEl = document.getElementById('kbStatus');
+  statusEl.textContent = '✓ 割り当てました！ 別のボタンを選ぶか、そのまま保存へ進んでください';
+  statusEl.className = 'kb-status ok';
+
+  renderGrid();
+  renderMiniGrid();
+});
+
+// ══════ Mini Grid for Test ══════
+function renderMiniGrid() {
+  document.getElementById('testMiniGrid').innerHTML = config.map((cfg, i) =>
+    `<span class="test-mini-cell" id="mini${i}">${i}: ${previewText(cfg.modifier, cfg.keycode)}</span>`
+  ).join('');
+}
+
+// ══════ Serial ══════
+async function toggleSerial() { port ? await disconnectSerial() : await connectSerial(); }
+
+async function connectSerial() {
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    setConnected(true);
+    logMsg('接続しました', 'info');
+    startReading();
+    setTimeout(() => sendCmd('SHOW'), 500);
+  } catch (e) {
+    logMsg('接続失敗: ' + e.message, 'err');
+    port = null;
+  }
+}
+
+async function disconnectSerial() {
+  try { if (reader) { await reader.cancel(); await readableStreamClosed.catch(() => {}); } if (port) await port.close(); } catch {}
+  port = null; reader = null;
+  setConnected(false);
+  logMsg('切断しました', 'info');
+}
+
+function setConnected(on) {
+  document.getElementById('connDot').classList.toggle('on', on);
+  const lbl = document.getElementById('connLabel');
+  lbl.innerHTML = on
+    ? '接続できました！ 🎉<small>デバイスとの通信が確立されています</small>'
+    : 'まだつながっていません<small>USBケーブルを確認してください</small>';
+  const btn = document.getElementById('connBtn');
+  btn.textContent = on ? '切断する' : '🔌 接続する';
+  btn.className = 'conn-btn' + (on ? ' disconnect' : '');
+  document.getElementById('btnRead').disabled = !on;
+  document.getElementById('btnSave').disabled = !on;
+}
+
+async function startReading() {
+  const dec = new TextDecoderStream();
+  readableStreamClosed = port.readable.pipeTo(dec.writable);
+  reader = dec.readable.getReader();
+  let buf = '';
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      lines.forEach(l => { const t = l.trim(); if (t) handleLine(t); });
+    }
+  } catch {}
+}
+
+async function sendCmd(cmd) {
+  if (!port?.writable) { logMsg('未接続', 'err'); return; }
+  const w = port.writable.getWriter();
+  await w.write(new TextEncoder().encode(cmd + '\n'));
+  w.releaseLock();
+  logMsg('→ ' + cmd, 'sent');
+}
+
+function handleLine(line) {
+  logMsg('← ' + line, 'recv');
+  const m = line.match(/ボタン(\d+):\s*(.*)/);
+  if (m) { const idx = parseInt(m[1]); if (idx >= 0 && idx < config.length) parseShowLine(idx, m[2]); }
+}
+
+function parseShowLine(idx, desc) {
+  let mod = 0, kl = desc;
+  if (kl.includes('Ctrl+')) { mod |= 1; kl = kl.replace('Ctrl+', ''); }
+  if (kl.includes('Shift+')) { mod |= 2; kl = kl.replace('Shift+', ''); }
+  if (kl.includes('Alt+')) { mod |= 4; kl = kl.replace('Alt+', ''); }
+  kl = kl.trim();
+  const found = KEYS.find(k => k.l === kl || k.l.startsWith(kl));
+  if (found) {
+    config[idx].modifier = mod; config[idx].keycode = found.c;
+    renderGrid(); renderMiniGrid();
+    if (selectedIdx === idx) {
+      document.getElementById('editorMod').value = mod;
+      document.getElementById('editorKey').value = found.c;
+      document.getElementById('editorPreview').textContent = previewText(mod, found.c);
+    }
+  }
+}
+
+async function readConfig() { await sendCmd('SHOW'); toast('設定を読み取り中…', 'ok'); }
+
+async function writeConfig() {
+  for (let i = 0; i < config.length; i++) {
+    await sendCmd(`SET:${i}:${config[i].modifier}:${config[i].keycode}`);
+    await sleep(80);
+  }
+  await sleep(100);
+  await sendCmd('SAVE');
+  toast('✓ 保存しました！ キーボードを抜いても設定は残ります', 'ok');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ══════ Key Test ══════
+const testInputEl = document.getElementById('testInput');
+testInputEl.addEventListener('focus', function() { this.textContent = '⏳ 入力待ち… ボタンを押してね'; });
+testInputEl.addEventListener('blur', function() { this.textContent = '👆 ここをクリックしてからボタンを押してね'; });
+
+document.addEventListener('keydown', function(e) {
+  if (document.activeElement !== testInputEl) return;
+  e.preventDefault(); e.stopPropagation();
+  if (['Control','Shift','Alt','Meta'].includes(e.key)) return;
+
+  const kl = jsKeyMap[e.code] || e.key;
+  let mb = 0;
+  if (e.ctrlKey || e.metaKey) mb |= 1;
+  if (e.shiftKey) mb |= 2;
+  if (e.altKey) mb |= 4;
+  const parts = [];
+  if (mb & 1) parts.push('Ctrl');
+  if (mb & 2) parts.push('Shift');
+  if (mb & 4) parts.push('Alt');
+  parts.push(kl);
+  const display = parts.join(' + ');
+
+  const pressedEl = document.getElementById('testPressed');
+  pressedEl.textContent = display;
+  pressedEl.classList.remove('pop'); void pressedEl.offsetWidth; pressedEl.classList.add('pop');
+
+  const matchEl = document.getElementById('testMatch');
+  const matches = [];
+  config.forEach((_, i) => { const mc = document.getElementById(`mini${i}`); if (mc) mc.classList.remove('hit'); });
+  config.forEach((cfg, i) => {
+    if (mb === cfg.modifier && kl === keyLabel(cfg.keycode)) {
+      matches.push(i);
+      const mc = document.getElementById(`mini${i}`); if (mc) mc.classList.add('hit');
+    }
+  });
+
+  if (matches.length > 0) {
+    matchEl.textContent = '✓ ボタン ' + matches.join(', ') + ' に一致！';
+    matchEl.classList.remove('flash'); void matchEl.offsetWidth; matchEl.classList.add('flash');
+  } else {
+    matchEl.textContent = '';
+  }
+
+  const t = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  testHist.unshift({ t, display, matches: matches.length > 0 ? matches.slice() : null });
+  if (testHist.length > 8) testHist.pop();
+  document.getElementById('testHistory').innerHTML = testHist.map(h =>
+    `<div class="test-history-item"><span class="time">${h.t}</span><span class="keys">${h.display}</span>${h.matches ? `<span class="match">→ ボタン ${h.matches.join(',')} に一致</span>` : ''}</div>`
+  ).join('');
+}, false);
+
+document.addEventListener('keydown', function(e) {
+  if (document.activeElement === testInputEl) e.preventDefault();
+}, true);
+
+// ══════ Log ══════
+function logMsg(msg, cls = '') {
+  const el = document.getElementById('logConsole');
+  const d = document.createElement('div');
+  d.className = 'log-line ' + cls;
+  d.setAttribute('data-t', new Date().toLocaleTimeString('ja-JP', { hour12: false }));
+  d.textContent = msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+  logCount++;
+  document.getElementById('logCount').textContent = `(${logCount})`;
+}
+
+function toggleLog() {
+  logOpen = !logOpen;
+  document.getElementById('logConsole').classList.toggle('open', logOpen);
+  document.getElementById('logDesc').classList.toggle('open', logOpen);
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ══════ Web Serial check ══════
+if (!('serial' in navigator)) {
+  logMsg('⚠ Web Serial API非対応。Chrome/Edgeを使用してください。', 'err');
+  document.getElementById('connBtn').disabled = true;
+  document.getElementById('connLabel').innerHTML = 'このブラウザでは使えません<small>Chrome または Edge をお使いください</small>';
+}
+
+init();
+</script>
+</body>
+</html>
