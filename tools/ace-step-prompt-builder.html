@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE-Step Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-body: #1a1714;
+  --bg-primary: #211e1a;
+  --bg-card: #2a2621;
+  --bg-chip: #332e28;
+  --bg-chip-hover: #3d3730;
+  --bg-chip-on: rgba(217, 119, 70, 0.14);
+  --border: #3a3530;
+  --border-active: #d97746;
+  --text-primary: #ede7dd;
+  --text-secondary: #b5aa9a;
+  --text-muted: #857a6c;
+  --accent: #d97746;
+  --accent-glow: rgba(217, 119, 70, 0.25);
+  --accent-blue: #7ca2e0;
+  --accent-orange: #d97746;
+  --accent-pink: #d98fa3;
+  --accent-purple: #a78bfa;
+  --accent-red: #d9645a;
+  --accent-yellow: #d4b94e;
+  --output-bg: #15120f;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.7;
+  font-weight: 400;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 960px; margin: 0 auto; padding: 32px 20px 200px; }
+
+/* Header */
+.header { text-align: center; padding: 32px 0 28px; margin-bottom: 24px; }
+.header h1 {
+  font-size: 30px; font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.header p { color: var(--text-secondary); font-size: 15px; }
+
+/* Category Section */
+.category {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.category-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.category-header:hover { background: rgba(255,255,255,0.03); }
+.category-icon {
+  font-size: 20px; width: 30px; text-align: center; flex-shrink: 0;
+}
+.category-title {
+  font-size: 16px; font-weight: 700; flex: 1;
+}
+.category-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600;
+  background: var(--bg-chip);
+  color: var(--text-muted);
+  padding: 2px 9px;
+  border-radius: 10px;
+  min-width: 26px; text-align: center;
+  transition: all 0.2s;
+}
+.category-count.has-active {
+  background: var(--bg-chip-on);
+  color: var(--accent);
+}
+.category-chevron {
+  color: var(--text-muted);
+  font-size: 13px;
+  transition: transform 0.2s;
+}
+.category.open .category-chevron { transform: rotate(180deg); }
+.category-body {
+  display: none;
+  padding: 4px 20px 18px;
+}
+.category.open .category-body { display: block; }
+
+/* Subcategory */
+.subcategory-label {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin: 12px 0 8px; padding-left: 2px;
+}
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-chip);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip:hover {
+  background: var(--bg-chip-hover);
+  color: var(--text-primary);
+}
+.chip.on {
+  background: var(--bg-chip-on);
+  border-color: var(--border-active);
+  color: var(--accent);
+}
+.chip .jp {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+.chip.on .jp { color: rgba(217, 119, 70, 0.55); }
+
+/* Custom input */
+.custom-input-row {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.custom-input {
+  flex: 1;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+}
+.custom-input:focus { border-color: var(--accent); }
+.custom-input::placeholder { color: var(--text-muted); }
+.custom-add-btn {
+  padding: 9px 18px;
+  background: var(--accent);
+  color: var(--bg-body);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  white-space: nowrap;
+}
+.custom-add-btn:hover { opacity: 0.85; }
+
+/* Output Panel (sticky bottom) */
+.output-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--output-bg);
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  background: rgba(21, 18, 15, 0.95);
+}
+.output-inner {
+  max-width: 960px; margin: 0 auto;
+}
+.output-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.output-label {
+  font-size: 12px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.output-actions { display: flex; gap: 8px; }
+.btn-small {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-chip);
+  color: var(--text-secondary);
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: all 0.15s;
+}
+.btn-small:hover { border-color: var(--accent); color: var(--text-primary); }
+.btn-copy {
+  background: var(--accent);
+  color: var(--bg-body);
+  border-color: var(--accent);
+}
+.btn-copy:hover { opacity: 0.85; }
+.output-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--accent);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-height: 44px;
+  max-height: 80px;
+  overflow-y: auto;
+  word-break: break-all;
+}
+.output-text.empty {
+  color: var(--text-muted);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-style: italic;
+}
+.output-word-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Toast */
+.toast {
+  position: fixed; top: 20px; right: 20px;
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* Search */
+.search-bar {
+  position: relative;
+  margin-bottom: 16px;
+}
+.search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px 12px 40px;
+  font-size: 15px;
+  color: var(--text-primary);
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); }
+.search-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+@media (max-width: 640px) {
+  .app { padding: 20px 12px 200px; }
+  .chip { font-size: 13px; padding: 6px 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="header">
+    <h1>🎵 ACE-Step Prompt Builder</h1>
+    <p>タグをタップしてON/OFF → 下部にプロンプトが自動生成されます</p>
+  </div>
+
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="タグを検索…（例: piano, battle, warm）" id="searchInput">
+  </div>
+
+  <div id="categories"></div>
+</div>
+
+<!-- Output Panel -->
+<div class="output-panel">
+  <div class="output-inner">
+    <div class="output-header">
+      <span class="output-label">生成プロンプト (Caption)</span>
+      <div class="output-actions">
+        <button class="btn-small" onclick="clearAll()">全解除</button>
+        <button class="btn-small btn-copy" onclick="copyPrompt()">コピー</button>
+      </div>
+    </div>
+    <div class="output-text empty" id="outputText">タグを選択するとここにプロンプトが表示されます</div>
+    <div class="output-word-count" id="wordCount"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">コピーしました！</div>
+
+<script>
+// ===== DATA =====
+const CATEGORIES = [
+  {
+    id: "base",
+    icon: "🎮",
+    title: "基本設定",
+    open: true,
+    subcategories: [
+      { label: "出力形式", tags: [
+        { en: "instrumental", jp: "インスト" },
+      ]},
+      { label: "用途", tags: [
+        { en: "game music", jp: "ゲーム音楽" },
+        { en: "background music", jp: "BGM" },
+        { en: "film score", jp: "映画音楽" },
+        { en: "soundtrack", jp: "サントラ" },
+        { en: "trailer music", jp: "予告編" },
+        { en: "loop music", jp: "ループ曲" },
+        { en: "ambient background", jp: "環境BGM" },
+      ]},
+    ]
+  },
+  {
+    id: "genre",
+    icon: "🎸",
+    title: "ジャンル",
+    subcategories: [
+      { label: "クラシック / オーケストラ", tags: [
+        { en: "orchestral", jp: "オーケストラ" },
+        { en: "cinematic orchestral", jp: "映画的管弦" },
+        { en: "chamber music", jp: "室内楽" },
+        { en: "symphonic", jp: "交響的" },
+        { en: "baroque", jp: "バロック" },
+        { en: "classical", jp: "クラシック" },
+        { en: "neo-classical", jp: "ネオクラシカル" },
+      ]},
+      { label: "ロック / メタル", tags: [
+        { en: "rock", jp: "ロック" },
+        { en: "hard rock", jp: "ハードロック" },
+        { en: "alternative rock", jp: "オルタナティブ" },
+        { en: "progressive rock", jp: "プログレ" },
+        { en: "punk rock", jp: "パンク" },
+        { en: "metal", jp: "メタル" },
+        { en: "heavy metal", jp: "ヘヴィメタル" },
+        { en: "power metal", jp: "パワーメタル" },
+      ]},
+      { label: "エレクトロニック", tags: [
+        { en: "electronic", jp: "エレクトロ" },
+        { en: "EDM", jp: "EDM" },
+        { en: "synthwave", jp: "シンセウェーブ" },
+        { en: "chiptune", jp: "チップチューン" },
+        { en: "ambient", jp: "アンビエント" },
+        { en: "lo-fi", jp: "ローファイ" },
+        { en: "drum and bass", jp: "ドラムンベース" },
+        { en: "house", jp: "ハウス" },
+        { en: "techno", jp: "テクノ" },
+        { en: "trance", jp: "トランス" },
+        { en: "dubstep", jp: "ダブステップ" },
+        { en: "electro-acoustic", jp: "電子音響" },
+      ]},
+      { label: "ジャズ / ブルース / ソウル", tags: [
+        { en: "jazz", jp: "ジャズ" },
+        { en: "smooth jazz", jp: "スムースジャズ" },
+        { en: "jazz fusion", jp: "ジャズフュージョン" },
+        { en: "blues", jp: "ブルース" },
+        { en: "soul", jp: "ソウル" },
+        { en: "neo-soul", jp: "ネオソウル" },
+        { en: "funk", jp: "ファンク" },
+        { en: "R&B", jp: "R&B" },
+      ]},
+      { label: "ポップ / フォーク", tags: [
+        { en: "pop", jp: "ポップ" },
+        { en: "J-pop", jp: "Jポップ" },
+        { en: "K-pop", jp: "Kポップ" },
+        { en: "indie pop", jp: "インディーポップ" },
+        { en: "folk", jp: "フォーク" },
+        { en: "acoustic", jp: "アコースティック" },
+        { en: "country", jp: "カントリー" },
+        { en: "bossa nova", jp: "ボサノバ" },
+      ]},
+      { label: "ヒップホップ / ラップ", tags: [
+        { en: "hip-hop", jp: "ヒップホップ" },
+        { en: "trap", jp: "トラップ" },
+        { en: "lo-fi hip-hop", jp: "ローファイヒップホップ" },
+        { en: "boom bap", jp: "ブームバップ" },
+      ]},
+      { label: "ワールド / 民族", tags: [
+        { en: "celtic", jp: "ケルト" },
+        { en: "Japanese traditional", jp: "和風" },
+        { en: "Chinese traditional", jp: "中華風" },
+        { en: "Middle Eastern", jp: "中東風" },
+        { en: "Latin", jp: "ラテン" },
+        { en: "African", jp: "アフリカン" },
+        { en: "Nordic", jp: "北欧風" },
+        { en: "medieval", jp: "中世風" },
+      ]},
+      { label: "ゲーム特化ジャンル", tags: [
+        { en: "JRPG battle theme", jp: "JRPG戦闘曲" },
+        { en: "JRPG exploration theme", jp: "JRPGフィールド曲" },
+        { en: "JRPG town theme", jp: "JRPG街の曲" },
+        { en: "boss battle theme", jp: "ボス戦" },
+        { en: "dungeon theme", jp: "ダンジョン曲" },
+        { en: "victory fanfare", jp: "勝利ファンファーレ" },
+        { en: "title screen theme", jp: "タイトル画面" },
+        { en: "retro video game music", jp: "レトロゲーム音楽" },
+      ]},
+    ]
+  },
+  {
+    id: "instrument",
+    icon: "🎹",
+    title: "楽器",
+    subcategories: [
+      { label: "鍵盤", tags: [
+        { en: "piano", jp: "ピアノ" },
+        { en: "electric piano", jp: "エレピ" },
+        { en: "harpsichord", jp: "チェンバロ" },
+        { en: "organ", jp: "オルガン" },
+        { en: "synthesizer", jp: "シンセサイザー" },
+        { en: "music box", jp: "オルゴール" },
+        { en: "celesta", jp: "チェレスタ" },
+        { en: "accordion", jp: "アコーディオン" },
+      ]},
+      { label: "弦楽器", tags: [
+        { en: "strings", jp: "弦楽" },
+        { en: "string ensemble", jp: "弦楽アンサンブル" },
+        { en: "violin", jp: "ヴァイオリン" },
+        { en: "viola", jp: "ヴィオラ" },
+        { en: "cello", jp: "チェロ" },
+        { en: "double bass", jp: "コントラバス" },
+        { en: "harp", jp: "ハープ" },
+        { en: "acoustic guitar", jp: "アコギ" },
+        { en: "electric guitar", jp: "エレキ" },
+        { en: "bass guitar", jp: "ベース" },
+        { en: "ukulele", jp: "ウクレレ" },
+        { en: "banjo", jp: "バンジョー" },
+        { en: "mandolin", jp: "マンドリン" },
+        { en: "koto", jp: "琴" },
+        { en: "shamisen", jp: "三味線" },
+        { en: "erhu", jp: "二胡" },
+      ]},
+      { label: "管楽器", tags: [
+        { en: "trumpet", jp: "トランペット" },
+        { en: "French horn", jp: "ホルン" },
+        { en: "trombone", jp: "トロンボーン" },
+        { en: "tuba", jp: "チューバ" },
+        { en: "brass ensemble", jp: "金管アンサンブル" },
+        { en: "flute", jp: "フルート" },
+        { en: "piccolo", jp: "ピッコロ" },
+        { en: "clarinet", jp: "クラリネット" },
+        { en: "oboe", jp: "オーボエ" },
+        { en: "bassoon", jp: "ファゴット" },
+        { en: "saxophone", jp: "サックス" },
+        { en: "recorder", jp: "リコーダー" },
+        { en: "shakuhachi", jp: "尺八" },
+        { en: "ocarina", jp: "オカリナ" },
+        { en: "pan flute", jp: "パンフルート" },
+      ]},
+      { label: "打楽器", tags: [
+        { en: "drums", jp: "ドラム" },
+        { en: "percussion", jp: "パーカッション" },
+        { en: "timpani", jp: "ティンパニ" },
+        { en: "snare drum", jp: "スネア" },
+        { en: "taiko", jp: "太鼓" },
+        { en: "xylophone", jp: "木琴" },
+        { en: "glockenspiel", jp: "鉄琴" },
+        { en: "marimba", jp: "マリンバ" },
+        { en: "vibraphone", jp: "ヴィブラフォン" },
+        { en: "tambourine", jp: "タンバリン" },
+        { en: "triangle", jp: "トライアングル" },
+        { en: "hand claps", jp: "ハンドクラップ" },
+        { en: "bongo", jp: "ボンゴ" },
+        { en: "congas", jp: "コンガ" },
+      ]},
+      { label: "その他", tags: [
+        { en: "choir", jp: "合唱" },
+        { en: "voice pad", jp: "ボイスパッド" },
+        { en: "ambient pads", jp: "アンビエントパッド" },
+        { en: "bell", jp: "ベル" },
+        { en: "wind chimes", jp: "ウィンドチャイム" },
+        { en: "sound effects", jp: "効果音" },
+      ]},
+    ]
+  },
+  {
+    id: "mood",
+    icon: "💫",
+    title: "ムード / 感情",
+    subcategories: [
+      { label: "ポジティブ", tags: [
+        { en: "cheerful", jp: "陽気" },
+        { en: "joyful", jp: "喜び" },
+        { en: "uplifting", jp: "高揚" },
+        { en: "hopeful", jp: "希望的" },
+        { en: "triumphant", jp: "勝利" },
+        { en: "playful", jp: "おどけた" },
+        { en: "whimsical", jp: "ファンタジー" },
+        { en: "warm", jp: "温かい" },
+        { en: "cozy", jp: "まったり" },
+        { en: "nostalgic", jp: "懐かしい" },
+        { en: "romantic", jp: "ロマンチック" },
+        { en: "dreamy", jp: "夢想的" },
+      ]},
+      { label: "シリアス / ダーク", tags: [
+        { en: "dark", jp: "ダーク" },
+        { en: "melancholic", jp: "メランコリー" },
+        { en: "sad", jp: "悲しい" },
+        { en: "ominous", jp: "不穏" },
+        { en: "menacing", jp: "脅威" },
+        { en: "sinister", jp: "不気味" },
+        { en: "mysterious", jp: "ミステリアス" },
+        { en: "eerie", jp: "不思議" },
+        { en: "haunting", jp: "幽玄" },
+        { en: "somber", jp: "厳粛" },
+        { en: "tragic", jp: "悲劇的" },
+      ]},
+      { label: "エネルギー", tags: [
+        { en: "energetic", jp: "エネルギッシュ" },
+        { en: "intense", jp: "激しい" },
+        { en: "aggressive", jp: "攻撃的" },
+        { en: "fierce", jp: "猛烈" },
+        { en: "driving", jp: "駆動感" },
+        { en: "powerful", jp: "力強い" },
+        { en: "epic", jp: "壮大" },
+        { en: "heroic", jp: "英雄的" },
+        { en: "majestic", jp: "荘厳" },
+        { en: "dramatic", jp: "ドラマチック" },
+        { en: "cinematic", jp: "映画的" },
+      ]},
+      { label: "穏やか / リラックス", tags: [
+        { en: "calm", jp: "穏やか" },
+        { en: "peaceful", jp: "平和" },
+        { en: "serene", jp: "静寂" },
+        { en: "gentle", jp: "優しい" },
+        { en: "tender", jp: "柔らかい" },
+        { en: "soothing", jp: "癒し" },
+        { en: "relaxing", jp: "リラックス" },
+        { en: "meditative", jp: "瞑想的" },
+        { en: "ethereal", jp: "幻想的" },
+        { en: "floating", jp: "浮遊感" },
+        { en: "pastoral", jp: "田園的" },
+      ]},
+      { label: "テンション / 緊張", tags: [
+        { en: "suspenseful", jp: "サスペンス" },
+        { en: "tense", jp: "緊張" },
+        { en: "anxious", jp: "不安" },
+        { en: "urgent", jp: "切迫" },
+        { en: "restless", jp: "落ち着かない" },
+        { en: "building tension", jp: "高まる緊張" },
+      ]},
+    ]
+  },
+  {
+    id: "tempo",
+    icon: "⏱",
+    title: "テンポ / リズム",
+    subcategories: [
+      { label: "速度", tags: [
+        { en: "very slow tempo", jp: "超低速" },
+        { en: "slow tempo", jp: "ゆっくり" },
+        { en: "moderate tempo", jp: "中速" },
+        { en: "upbeat", jp: "アップテンポ" },
+        { en: "fast tempo", jp: "速い" },
+        { en: "very fast tempo", jp: "超高速" },
+      ]},
+      { label: "リズム感", tags: [
+        { en: "steady rhythm", jp: "安定リズム" },
+        { en: "syncopated", jp: "シンコペーション" },
+        { en: "swinging", jp: "スウィング" },
+        { en: "groovy", jp: "グルーヴィ" },
+        { en: "marching", jp: "行進調" },
+        { en: "waltz", jp: "ワルツ" },
+        { en: "shuffle", jp: "シャッフル" },
+        { en: "free rhythm", jp: "自由拍子" },
+      ]},
+    ]
+  },
+  {
+    id: "texture",
+    icon: "🎨",
+    title: "テクスチャ / 奏法",
+    subcategories: [
+      { label: "音のテクスチャ", tags: [
+        { en: "lush", jp: "豊か" },
+        { en: "sparse", jp: "まばら" },
+        { en: "layered", jp: "重厚" },
+        { en: "minimalist", jp: "ミニマル" },
+        { en: "dense arrangement", jp: "密なアレンジ" },
+        { en: "thin texture", jp: "薄い" },
+        { en: "wall of sound", jp: "音の壁" },
+        { en: "spacious", jp: "広がり" },
+      ]},
+      { label: "奏法 / ニュアンス", tags: [
+        { en: "pizzicato strings", jp: "ピチカート" },
+        { en: "staccato", jp: "スタッカート" },
+        { en: "legato", jp: "レガート" },
+        { en: "tremolo", jp: "トレモロ" },
+        { en: "arpeggiated", jp: "アルペジオ" },
+        { en: "fingerpicking", jp: "フィンガーピッキング" },
+        { en: "strumming", jp: "ストラム" },
+        { en: "ostinato", jp: "オスティナート" },
+        { en: "glissando", jp: "グリッサンド" },
+        { en: "vibrato", jp: "ビブラート" },
+        { en: "muted", jp: "ミュート" },
+        { en: "distorted", jp: "歪み" },
+      ]},
+      { label: "ダイナミクス", tags: [
+        { en: "soft dynamics", jp: "静かに" },
+        { en: "loud dynamics", jp: "大音量" },
+        { en: "dynamic range", jp: "強弱の幅" },
+        { en: "crescendo", jp: "クレッシェンド" },
+        { en: "fade in", jp: "フェードイン" },
+        { en: "fade out", jp: "フェードアウト" },
+      ]},
+    ]
+  },
+  {
+    id: "production",
+    icon: "🎛",
+    title: "音質 / プロダクション",
+    subcategories: [
+      { label: "音質キーワード（推奨）", tags: [
+        { en: "professional studio recording", jp: "スタジオ録音" },
+        { en: "high-fidelity production", jp: "高音質" },
+        { en: "polished production", jp: "洗練された制作" },
+        { en: "crystal clear mix", jp: "クリアなミックス" },
+        { en: "warm analog mix", jp: "温かいアナログ" },
+      ]},
+      { label: "空間・エフェクト", tags: [
+        { en: "warm reverb", jp: "暖かいリバーブ" },
+        { en: "large hall reverb", jp: "大ホールリバーブ" },
+        { en: "intimate room sound", jp: "親密な空間" },
+        { en: "wide stereo image", jp: "広いステレオ" },
+        { en: "spatial depth", jp: "空間の奥行き" },
+        { en: "echo", jp: "エコー" },
+        { en: "delay", jp: "ディレイ" },
+      ]},
+      { label: "音域の特徴", tags: [
+        { en: "rich low-end", jp: "豊かな低音" },
+        { en: "full bass", jp: "太いベース" },
+        { en: "rich mid-range", jp: "豊かな中域" },
+        { en: "crisp highs", jp: "鮮明な高音" },
+        { en: "smooth highs", jp: "滑らかな高音" },
+        { en: "silky smooth highs", jp: "絹のような高音" },
+        { en: "bright", jp: "明るい音" },
+        { en: "dark tone", jp: "暗い音色" },
+        { en: "mellow tone", jp: "まろやかな音" },
+        { en: "warm tone", jp: "暖かい音色" },
+      ]},
+      { label: "アレンジ", tags: [
+        { en: "detailed arrangement", jp: "緻密なアレンジ" },
+        { en: "complex harmonies", jp: "複雑なハーモニー" },
+        { en: "layered instrumentation", jp: "重層的な楽器編成" },
+        { en: "rich orchestration", jp: "豊かな管弦楽法" },
+        { en: "simple arrangement", jp: "シンプルな編曲" },
+      ]},
+    ]
+  },
+  {
+    id: "vocal",
+    icon: "🎤",
+    title: "ボーカル（歌もの用）",
+    subcategories: [
+      { label: "声質", tags: [
+        { en: "clear male vocalist", jp: "クリアな男声" },
+        { en: "deep male voice", jp: "低い男声" },
+        { en: "clear female vocalist", jp: "クリアな女声" },
+        { en: "breathy female vocal", jp: "ブレス感のある女声" },
+        { en: "powerful voice", jp: "パワフル" },
+        { en: "soft voice", jp: "ソフト" },
+        { en: "raspy voice", jp: "ハスキー" },
+        { en: "high-pitched", jp: "高音" },
+        { en: "baritone", jp: "バリトン" },
+        { en: "soprano", jp: "ソプラノ" },
+        { en: "a cappella", jp: "アカペラ" },
+      ]},
+    ]
+  },
+];
+
+// ===== STATE =====
+let activeTagsSet = new Set();
+let customTags = [];
+let openCategoryIds = new Set(['base']);
+
+// ===== RENDER =====
+function render() {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+
+  CATEGORIES.forEach(cat => {
+    const isOpen = openCategoryIds.has(cat.id);
+    const catEl = document.createElement('div');
+    catEl.className = `category${isOpen ? ' open' : ''}`;
+    catEl.dataset.id = cat.id;
+
+    const activeInCat = countActiveInCategory(cat);
+
+    catEl.innerHTML = `
+      <div class="category-header" onclick="toggleCategory('${cat.id}')">
+        <span class="category-icon">${cat.icon}</span>
+        <span class="category-title">${cat.title}</span>
+        <span class="category-count ${activeInCat > 0 ? 'has-active' : ''}">${activeInCat > 0 ? activeInCat : ''}</span>
+        <span class="category-chevron">▼</span>
+      </div>
+      <div class="category-body">
+        ${cat.subcategories.map(sub => `
+          <div class="subcategory-label">${sub.label}</div>
+          <div class="chips">
+            ${sub.tags.map(tag => `
+              <div class="chip ${activeTagsSet.has(tag.en) ? 'on' : ''}"
+                   onclick="toggleTag('${escapeAttr(tag.en)}')"
+                   data-en="${escapeAttr(tag.en)}">
+                ${tag.en}${tag.jp ? `<span class="jp">${tag.jp}</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+        ${cat.id === 'base' ? `
+          <div class="subcategory-label">カスタムタグを追加</div>
+          <div class="custom-input-row">
+            <input class="custom-input" type="text" placeholder="自由にタグを入力…" id="customInput"
+                   onkeydown="if(event.key==='Enter')addCustomTag()">
+            <button class="custom-add-btn" onclick="addCustomTag()">追加</button>
+          </div>
+          ${customTags.length > 0 ? `
+            <div class="chips" style="margin-top:8px">
+              ${customTags.map(t => `
+                <div class="chip on" onclick="removeCustomTag('${escapeAttr(t)}')" data-en="${escapeAttr(t)}">
+                  ${t} <span style="margin-left:4px;opacity:0.5">✕</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        ` : ''}
+      </div>
+    `;
+
+    container.appendChild(catEl);
+  });
+
+  updateOutput();
+}
+
+function escapeAttr(s) {
+  return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function countActiveInCategory(cat) {
+  let count = 0;
+  cat.subcategories.forEach(sub => {
+    sub.tags.forEach(tag => {
+      if (activeTagsSet.has(tag.en)) count++;
+    });
+  });
+  return count;
+}
+
+// ===== INTERACTIONS =====
+function toggleCategory(id) {
+  if (openCategoryIds.has(id)) {
+    openCategoryIds.delete(id);
+  } else {
+    openCategoryIds.add(id);
+  }
+  const el = document.querySelector(`.category[data-id="${id}"]`);
+  el.classList.toggle('open');
+}
+
+function toggleTag(en) {
+  // Unescape
+  en = en.replace(/\\'/g, "'");
+  if (activeTagsSet.has(en)) {
+    activeTagsSet.delete(en);
+  } else {
+    activeTagsSet.add(en);
+  }
+  render();
+}
+
+function addCustomTag() {
+  const input = document.getElementById('customInput');
+  const val = input.value.trim();
+  if (val && !customTags.includes(val)) {
+    customTags.push(val);
+    render();
+  }
+}
+
+function removeCustomTag(tag) {
+  tag = tag.replace(/\\'/g, "'");
+  customTags = customTags.filter(t => t !== tag);
+  render();
+}
+
+function clearAll() {
+  activeTagsSet.clear();
+  customTags = [];
+  render();
+}
+
+function updateOutput() {
+  const outputEl = document.getElementById('outputText');
+  const countEl = document.getElementById('wordCount');
+  const allTags = [...activeTagsSet, ...customTags];
+
+  if (allTags.length === 0) {
+    outputEl.textContent = 'タグを選択するとここにプロンプトが表示されます';
+    outputEl.className = 'output-text empty';
+    countEl.textContent = '';
+  } else {
+    const prompt = allTags.join(', ');
+    outputEl.textContent = prompt;
+    outputEl.className = 'output-text';
+    countEl.textContent = `${allTags.length} tags · ${prompt.length} chars`;
+  }
+
+  // Update all category counts
+  CATEGORIES.forEach(cat => {
+    const el = document.querySelector(`.category[data-id="${cat.id}"] .category-count`);
+    if (el) {
+      const c = countActiveInCategory(cat);
+      el.textContent = c > 0 ? c : '';
+      el.className = `category-count ${c > 0 ? 'has-active' : ''}`;
+    }
+  });
+}
+
+function copyPrompt() {
+  const allTags = [...activeTagsSet, ...customTags];
+  if (allTags.length === 0) return;
+  const prompt = allTags.join(', ');
+
+  // Fallback: textarea method (works in sandboxed iframes)
+  const textarea = document.createElement('textarea');
+  textarea.value = prompt;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showToast();
+  } catch (e) {
+    // Last resort: prompt user to copy manually
+    window.prompt('コピーしてください:', prompt);
+  }
+  document.body.removeChild(textarea);
+}
+
+function showToast() {
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+// ===== SEARCH =====
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase().trim();
+  document.querySelectorAll('.chip').forEach(chip => {
+    const en = (chip.dataset.en || '').toLowerCase();
+    const text = chip.textContent.toLowerCase();
+    if (!q || en.includes(q) || text.includes(q)) {
+      chip.style.display = '';
+    } else {
+      chip.style.display = 'none';
+    }
+  });
+  // Auto-open categories with matches
+  if (q) {
+    document.querySelectorAll('.category').forEach(cat => {
+      const hasVisible = cat.querySelectorAll('.chip:not([style*="display: none"])').length > 0;
+      if (hasVisible) cat.classList.add('open');
+    });
+  }
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
