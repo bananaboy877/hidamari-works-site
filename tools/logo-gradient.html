@@ -3,25 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ロゴ グラデーション＆外縁生成</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>ロゴクリエイター＆グラデーション生成</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700;900&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Noto Sans JP',sans-serif;background:#08080e;color:#e0e0e8;min-height:100vh}
   .app{max-width:1200px;margin:0 auto;padding:16px 14px 50px}
   header{text-align:center;margin-bottom:18px}
-  header h1{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-  header p{font-size:.75rem;color:#555;margin-top:3px}
+  header h1{font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  header p{font-size:.9rem;color:#555;margin-top:5px}
+  .mode-tabs{display:flex;gap:0;margin-bottom:16px;border-radius:10px;overflow:hidden;border:1px solid #1a1a2e}
+  .mode-tab{flex:1;padding:12px;text-align:center;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;background:#0a0a14;color:#666;border:none;font-family:inherit}
+  .mode-tab:hover{color:#aaa;background:#0f0f1a}
+  .mode-tab.active{background:#1a1a30;color:#fff}
+  .mode-panel{display:none}.mode-panel.active{display:block}
   .upload-zone{border:2px dashed #2a2a40;border-radius:14px;padding:40px 16px;text-align:center;cursor:pointer;transition:all .25s;margin-bottom:16px;position:relative;background:#0c0c14}
   .upload-zone:hover,.upload-zone.dragover{border-color:#4d96ff;background:#0e0e1a}
   .upload-zone.has-image{padding:10px;cursor:default}
   .upload-zone input{display:none}
-  .re-btn{position:absolute;top:6px;left:6px;z-index:10;padding:5px 12px;border-radius:7px;border:1px solid #333;background:rgba(10,10,20,.85);color:#aaa;font-size:.65rem;cursor:pointer;font-family:inherit;display:none}
+  .re-btn{position:absolute;top:6px;left:6px;z-index:10;padding:5px 12px;border-radius:7px;border:1px solid #333;background:rgba(10,10,20,.85);color:#aaa;font-size:.8rem;cursor:pointer;font-family:inherit;display:none}
   .upload-zone.has-image .re-btn{display:block}
+  .tc-sec{background:#0f0f18;border-radius:10px;padding:14px;border:1px solid #1a1a2e;margin-bottom:10px}
+  .tc-input{width:100%;padding:12px;font-size:1.1rem;font-family:inherit;background:#0a0a14;color:#e0e0e8;border:1px solid #2a2a40;border-radius:8px;margin-bottom:10px}
+  .tc-input::placeholder{color:#444}.tc-input:focus{outline:none;border-color:#4d96ff}
+  .tc-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .tc-row label{font-size:.85rem;color:#888;min-width:80px;flex-shrink:0}
+  .tc-row input[type=range]{flex:1;accent-color:#4d96ff;height:3px;min-width:80px}
+  .tc-row span{font-size:.85rem;color:#aaa;min-width:40px;text-align:right}
+  .tc-row select{background:#0a0a14;color:#ccc;border:1px solid #2a2a40;border-radius:5px;padding:5px 10px;font-size:.85rem;font-family:inherit;flex:1;cursor:pointer;min-width:120px}
+  .tc-row input[type=number]{width:60px;padding:4px 6px;background:#0a0a14;color:#ccc;border:1px solid #2a2a40;border-radius:5px;font-size:.85rem;font-family:inherit;text-align:center}
+  .tc-row input[type=file]{font-size:.8rem;color:#888}
+  .tc-preview{background:#fff;border-radius:8px;padding:20px;text-align:center;margin-bottom:10px;min-height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .tc-preview canvas{max-width:100%;height:auto}
+  .tc-chars{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .tc-char{background:#0a0a14;border:1px solid #222;border-radius:6px;padding:6px 4px;text-align:center;min-width:48px}
+  .tc-char:hover{border-color:#4d96ff}
+  .tc-char .ch{font-size:.9rem;color:#ccc;margin-bottom:3px;font-weight:600}
+  .tc-char input{width:42px;padding:2px;background:#111;color:#aaa;border:1px solid #2a2a40;border-radius:3px;font-size:.75rem;text-align:center;font-family:inherit}
+  .tc-char-label{font-size:.6rem;color:#555}
+  .tc-btn{padding:10px 20px;border-radius:8px;border:none;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
+  .tc-btn-primary{background:linear-gradient(135deg,#4d96ff,#6b5bff);color:#fff}
+  .tc-btn-primary:hover{transform:translateY(-1px)}
+  .tc-font-preview{padding:8px 12px;background:#111;border-radius:6px;font-size:1rem;color:#ccc;text-align:center;margin-top:6px;min-height:36px;display:flex;align-items:center;justify-content:center}
+  .wave-presets{display:flex;gap:4px;flex-wrap:wrap}
+  .wave-presets button{padding:4px 10px;border-radius:5px;border:1px solid #222;background:#0a0a12;color:#888;font-size:.75rem;cursor:pointer;font-family:inherit}
+  .wave-presets button:hover{background:#161625;color:#fff}
+  .wave-presets button.active{background:#222240;color:#fff;border-color:#4d96ff}
+  .tc-xbtn{padding:5px 10px;border-radius:5px;border:1px solid #222;background:#0a0a12;color:#888;font-size:.75rem;cursor:pointer;font-family:inherit;transition:all .15s}
+  .tc-xbtn:hover{background:#161625;color:#fff}
+  .tc-body{transition:all .3s}.tc-collapsed{display:none}
   .preview-area{position:relative;border-radius:12px;overflow:hidden;margin-bottom:14px;border:1px solid #1a1a2e;display:none}
   .preview-area.visible{display:block}
   .bg-row{position:absolute;top:8px;right:8px;z-index:10;display:flex;gap:4px}
-  .bg-b{width:26px;height:26px;border-radius:5px;border:2px solid #333;cursor:pointer;transition:border-color .2s}
+  .bg-b{width:28px;height:28px;border-radius:5px;border:2px solid #333;cursor:pointer;transition:border-color .2s}
   .bg-b:hover,.bg-b.active{border-color:#4d96ff}
   .bg-b.bw{background:#fff}.bg-b.bd{background:#1a1a2e}
   .bg-b.bc{background-image:linear-gradient(45deg,#ccc 25%,transparent 25%),linear-gradient(-45deg,#ccc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ccc 75%),linear-gradient(-45deg,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0px}
@@ -31,488 +67,1078 @@
   .c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}
   @media(max-width:860px){.c3{grid-template-columns:1fr 1fr}.c2{grid-template-columns:1fr}}
   @media(max-width:600px){.c3{grid-template-columns:1fr}}
-  .sec{background:#0f0f18;border-radius:10px;padding:12px;border:1px solid #1a1a2e;margin-bottom:10px}
-  .st{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:8px}
-  .r{display:flex;align-items:center;gap:7px;margin-bottom:7px}
-  .r label{font-size:.7rem;color:#888;min-width:52px;flex-shrink:0}
+  .sec{background:#0f0f18;border-radius:10px;padding:14px;border:1px solid #1a1a2e;margin-bottom:10px}
+  .st{font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:10px}
+  .r{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+  .r label{font-size:.85rem;color:#888;min-width:60px;flex-shrink:0}
   .r input[type=range]{flex:1;accent-color:#4d96ff;height:3px}
-  .r span{font-size:.7rem;color:#aaa;min-width:34px;text-align:right;flex-shrink:0}
-  .r input[type=color]{width:30px;height:22px;border:none;border-radius:4px;cursor:pointer;background:transparent;padding:0;flex-shrink:0}
+  .r span{font-size:.85rem;color:#aaa;min-width:38px;text-align:right;flex-shrink:0}
+  .r input[type=color]{width:30px;height:24px;border:none;border-radius:4px;cursor:pointer;background:transparent;padding:0;flex-shrink:0}
   .r input[type=color]::-webkit-color-swatch-wrapper{padding:1px}
   .r input[type=color]::-webkit-color-swatch{border-radius:3px;border:none}
-  .r select{background:#0a0a14;color:#ccc;border:1px solid #2a2a40;border-radius:5px;padding:4px 8px;font-size:.7rem;font-family:inherit;flex:1;cursor:pointer}
-  .ck{display:flex;align-items:center;gap:5px;margin-bottom:6px}
-  .ck label{font-size:.7rem;color:#aaa;cursor:pointer}.ck input{accent-color:#4d96ff;cursor:pointer}
-  .thr{display:flex;gap:6px;margin-top:6px}.tc{border-radius:5px;border:1px solid #222;max-width:100%;height:auto}
-  .tl{font-size:.58rem;color:#555;text-align:center;margin-top:1px}
-  .eg{background:#0a0a12;border-radius:7px;padding:9px;margin-bottom:7px;border:1px solid #161622}
-  .egt{font-size:.65rem;font-weight:600;color:#777;margin-bottom:5px}
-  .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:4px}
-  .pb{position:relative;height:38px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .15s;overflow:hidden}
+  .r select{background:#0a0a14;color:#ccc;border:1px solid #2a2a40;border-radius:5px;padding:5px 10px;font-size:.85rem;font-family:inherit;flex:1;cursor:pointer}
+  .ck{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+  .ck label{font-size:.85rem;color:#aaa;cursor:pointer}.ck input{accent-color:#4d96ff;cursor:pointer;width:16px;height:16px}
+  .thr{display:flex;gap:6px;margin-top:6px}.tc-mask{border-radius:5px;border:1px solid #222;max-width:100%;height:auto}
+  .eg{background:#0a0a12;border-radius:7px;padding:10px;margin-bottom:8px;border:1px solid #161622}
+  .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:5px}
+  .pb{position:relative;height:42px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .15s;overflow:hidden}
   .pb:hover{transform:translateY(-1px)}.pb.active{border-color:#fff}
-  .pl{position:absolute;bottom:1px;left:0;right:0;text-align:center;font-size:.48rem;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9);pointer-events:none}
-  .ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
-  .ab{position:relative;height:44px;border-radius:8px;border:2px solid transparent;cursor:pointer;transition:all .15s;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px}
+  .pl{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:.65rem;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9);pointer-events:none}
+  .ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+  .ab{position:relative;height:48px;border-radius:8px;border:2px solid transparent;cursor:pointer;transition:all .15s;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px}
   .ab:hover{transform:translateY(-1px)}.ab.active{border-color:#fff}
   .ab canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:6px}
-  .ab .al{position:relative;z-index:1;font-size:.54rem;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none}
-  .asb{display:inline-flex;align-items:center;gap:3px;padding:4px 12px;border-radius:6px;border:1px solid #ff4444;background:transparent;color:#ff6666;font-family:inherit;font-size:.68rem;cursor:pointer;margin-bottom:8px}
+  .ab .al{position:relative;z-index:1;font-size:.7rem;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none}
+  .asb{display:inline-flex;align-items:center;gap:3px;padding:5px 14px;border-radius:6px;border:1px solid #ff4444;background:transparent;color:#ff6666;font-family:inherit;font-size:.85rem;cursor:pointer;margin-bottom:8px}
   .asb.hid{display:none}
   .dg{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
-  .db{padding:5px 2px;border-radius:5px;border:1px solid #222;background:#0a0a12;color:#888;font-size:.62rem;cursor:pointer;text-align:center}
+  .db{padding:6px 3px;border-radius:5px;border:1px solid #222;background:#0a0a12;color:#888;font-size:.8rem;cursor:pointer;text-align:center}
   .db:hover{background:#161625;color:#fff}.db.active{background:#222240;color:#fff;border-color:#4d96ff}
-  .dlb{display:inline-flex;align-items:center;gap:5px;padding:9px 20px;border-radius:7px;border:none;background:linear-gradient(135deg,#4d96ff,#6b5bff);color:#fff;font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;margin-top:12px}
+  .dlb{display:inline-flex;align-items:center;gap:5px;padding:10px 24px;border-radius:7px;border:none;background:linear-gradient(135deg,#4d96ff,#6b5bff);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:12px}
   .dlb:hover{transform:translateY(-1px)}.dlb:disabled{opacity:.3;cursor:default;transform:none}
-  .note{font-size:.6rem;color:#444;margin-top:3px;text-align:center}
+  .note{font-size:.75rem;color:#444;margin-top:5px;text-align:center}
+  .guide{background:#0d0d16;border:1px solid #1a1a2e;border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .guide-toggle{width:100%;padding:14px 18px;background:none;border:none;color:#bbb;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+  .guide-toggle:hover{color:#fff}
+  .guide-toggle .arrow{transition:transform .25s;font-size:.85rem}
+  .guide-toggle.open .arrow{transform:rotate(180deg)}
+  .guide-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+  .guide-body.open{max-height:4000px}
+  .guide-inner{padding:0 18px 18px}
+  .flow{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+  .flow-step{flex:1;min-width:120px;background:#111120;border-radius:9px;padding:14px;border:1px solid #1e1e35;position:relative}
+  .flow-step::after{content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:#333;font-size:1.2rem;font-weight:700}
+  .flow-step:last-child::after{display:none}
+  @media(max-width:700px){.flow-step::after{display:none}}
+  .flow-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4d96ff,#6b5bff);color:#fff;font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+  .flow-title{font-size:.95rem;font-weight:600;color:#ccc;margin-bottom:4px}
+  .flow-desc{font-size:.8rem;color:#777;line-height:1.6}
+  .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:12px}
+  .ex-card{background:#0a0a14;border-radius:10px;padding:14px;border:1px solid #1a1a2e;display:flex;gap:12px}
+  .ex-vis{width:72px;height:48px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:900;overflow:hidden}
+  .ex-info{flex:1}.ex-tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.7rem;font-weight:600;margin-bottom:5px}
+  .ex-tag.yt{background:#ff000022;color:#ff4444}.ex-tag.game{background:#00ff8822;color:#44cc88}
+  .ex-tag.txt{background:#ffaa0022;color:#ddaa33}
+  .ex-name{font-size:.9rem;font-weight:600;color:#ccc;margin-bottom:5px}
+  .ex-recipe{font-size:.78rem;color:#666;line-height:1.6}
+  .ex-recipe b{color:#999}
+  .tips{margin-top:16px;background:#111120;border-radius:8px;padding:12px 14px;border:1px solid #1e1e35}
+  .tips-title{font-size:.88rem;font-weight:600;color:#888;margin-bottom:8px}
+  .tips-list{font-size:.8rem;color:#666;line-height:1.8}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <h1>ロゴ グラデーション＆外縁生成</h1>
-    <p>グラデーション＋二重縁取り＋グロー＋外縁アルゴリズム（モルフォロジー閉鎖/凸包/αシェイプ）</p>
-  </header>
-
-  <div class="upload-zone" id="uz">
-    <button class="re-btn" id="reb">🔄 変更</button>
-    <input type="file" id="fi" accept="image/*">
-    <div id="up"><div style="font-size:2rem;margin-bottom:6px">🖼️</div><div style="font-size:.85rem;color:#888">クリック or ドラッグ＆ドロップ</div><div style="font-size:.65rem;color:#555;margin-top:3px">PNG推奨</div></div>
-    <canvas id="st" style="display:none;max-width:100%;height:auto;border-radius:7px"></canvas>
-  </div>
-
-  <!-- Binarization + Gradient -->
-  <div class="cols c2">
-    <div class="sec" id="sBin" style="display:none">
-      <div class="st">前景検出</div>
-      <div class="r"><label>明度閾値</label><input type="range" id="thr" min="10" max="250" value="128"><span id="thrV">128</span></div>
-      <div class="ck"><input type="checkbox" id="inv"><label for="inv">反転（明るい部分を前景にする）</label></div>
-      <div style="font-size:.6rem;color:#555;margin-bottom:3px">マスクプレビュー:</div>
-      <div class="thr">
-        <div style="flex:1"><canvas id="mTh" class="tc"></canvas></div>
-      </div>
+  <header><h1>ロゴクリエイター＆グラデーション生成</h1><p>テキストからロゴ作成 → グラデーション＋縁取り＋グロー＋外縁 → PNG出力</p></header>
+  <div class="guide"><button class="guide-toggle" id="guideToggle"><span>📖 使い方ガイド＆作例</span><span class="arrow">▼</span></button><div class="guide-body" id="guideBody"><div class="guide-inner">
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-title">ロゴを用意</div><div class="flow-desc">「テキスト作成」でフォント・配置を設定するか、「画像読込」で既存ロゴを読み込み。</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-title">前景を調整</div><div class="flow-desc">閾値でロゴ部分を検出。マスクプレビューで確認。</div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-title">装飾</div><div class="flow-desc">グラデーション・縁取り・グロー・外縁を組み合わせ。</div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-title">PNG保存</div><div class="flow-desc">透過PNGでダウンロード。</div></div>
     </div>
-    <div class="sec" id="sGrad" style="display:none">
-      <div class="st">グラデーション</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>
-          <div class="r"><label>カラー1</label><input type="color" id="c1" value="#ff4500"></div>
-          <div class="r"><label>カラー2</label><input type="color" id="c2" value="#ff8c00"></div>
-          <div class="r"><label>カラー3</label><input type="color" id="c3" value="#ffd700"></div>
-        </div>
-        <div>
-          <div style="font-size:.65rem;color:#666;margin-bottom:3px">方向</div>
-          <div class="dg" id="dg">
-            <button class="db" data-d="to right">→</button><button class="db active" data-d="to bottom right">↘</button>
-            <button class="db" data-d="to bottom">↓</button><button class="db" data-d="to bottom left">↙</button>
-            <button class="db" data-d="to left">←</button><button class="db" data-d="to top left">↖</button>
-            <button class="db" data-d="to top">↑</button><button class="db" data-d="to top right">↗</button>
+    <div style="font-size:.95rem;font-weight:600;color:#999">🎯 こんなものが作れます</div>
+    <div class="ex-grid">
+      <div class="ex-card"><div class="ex-vis" style="background:linear-gradient(135deg,#ff4500,#ffd700);box-shadow:0 0 0 3px #fff,0 0 0 6px #000"><span style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)">Aa</span></div><div class="ex-info"><span class="ex-tag yt">YouTube</span><div class="ex-name">🔥 サムネ用ロゴ</div><div class="ex-recipe">プリセット「炎」→ 縁取り: 白4px + 黒6px</div></div></div>
+      <div class="ex-card"><div class="ex-vis" style="background:linear-gradient(135deg,#b8860b,#ffd700,#fffacd);box-shadow:0 0 0 2px #fff,0 0 0 5px #222"><span style="color:#fff;text-shadow:0 0 8px rgba(255,200,0,.8)">龍</span></div><div class="ex-info"><span class="ex-tag game">ゲーム</span><div class="ex-name">🐉 タイトルロゴ</div><div class="ex-recipe">プリセット「金」→ 外縁 → アニメ「龍」</div></div></div>
+      <div class="ex-card"><div class="ex-vis" style="background:#0a0a1a;box-shadow:0 0 15px 3px rgba(0,255,255,.5)"><span style="background:linear-gradient(90deg,#ff00ff,#00ffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Ne</span></div><div class="ex-info"><span class="ex-tag game">SNS</span><div class="ex-name">✨ ネオン風</div><div class="ex-recipe">プリセット「ネオン」→ グロー: シアン</div></div></div>
+      <div class="ex-card"><div class="ex-vis" style="background:linear-gradient(135deg,#ff6b81,#fff0f3);font-style:italic;letter-spacing:-2px"><span style="color:#cc2255">Abc</span></div><div class="ex-info"><span class="ex-tag txt">テキスト作成</span><div class="ex-name">🎨 フォント＋ウェーブ</div><div class="ex-recipe">Google Fonts → ウェーブ配置 → グラデ → 縁取り</div></div></div>
+    </div>
+    <div class="tips"><div class="tips-title">💡 Tips</div><div class="tips-list">・テキスト作成ではGoogle Fontsの日本語/英語フォントを自由に使えます<br>・一文字ごとにY座標をずらしてダイナミックな配置が可能<br>・カスタムフォント（.ttf/.otf/.woff）もアップロード可<br>・すべてブラウザ内で完結。サーバーに送信されません 🔒</div></div>
+  </div></div></div>
+
+  <div class="mode-tabs"><button class="mode-tab active" data-mode="text">✏️ テキスト作成</button><button class="mode-tab" data-mode="upload">🖼️ 画像読込</button></div>
+
+  <div class="mode-panel active" id="panelText">
+    <div class="tc-sec"><div class="st">✏️ テキスト入力</div>
+      <input class="tc-input" id="txMain" placeholder="メインテキスト（例: オリモンテイマーズ）">
+      <input class="tc-input" id="txSub" placeholder="サブテキスト（例: Orimon Tamers）省略可" style="font-size:.9rem">
+      <div class="tc-row"><label>行間</label><input type="range" id="txLead" min="-50" max="60" value="10"><span id="txLeadV">10px</span></div>
+      <div class="tc-row"><label>余白</label><input type="range" id="txPad" min="0" max="80" value="20"><span id="txPadV">20px</span></div>
+    </div>
+
+    <!-- MAIN TEXT SETTINGS -->
+    <div class="tc-sec"><div class="st" style="cursor:pointer" onclick="this.parentElement.querySelector('.tc-body').classList.toggle('tc-collapsed')">📝 メイン文字設定 <span style="float:right;font-size:.7rem">▼</span></div>
+      <div class="tc-body">
+        <div class="cols c2">
+          <div><div class="tc-row"><label>フォント元</label><select id="fontSrc_m"><option value="google">Google Fonts</option><option value="custom">カスタム</option></select></div>
+            <div id="gfUI_m"><div class="tc-row"><label>カテゴリ</label><select id="fontCat_m"><option value="jp">日本語</option><option value="display">Display</option><option value="sans">Sans</option><option value="serif">Serif</option><option value="handwriting">手書き</option><option value="mono">Mono</option></select></div>
+            <div class="tc-row"><label>フォント</label><select id="fontSel_m"></select></div></div>
+            <div id="cfUI_m" style="display:none"><div class="tc-row"><label>ファイル</label><input type="file" id="fontFile_m" accept=".ttf,.otf,.woff,.woff2"></div></div>
+            <div class="tc-row"><label>ウェイト</label><select id="fontWt_m"><option value="400">Regular</option><option value="500">Medium</option><option value="600">SemiBold</option><option value="700" selected>Bold</option><option value="800">ExtraBold</option><option value="900">Black</option></select></div>
+            <div class="tc-row"><label>イタリック</label><input type="checkbox" id="fontIt_m" style="width:16px;height:16px;accent-color:#4d96ff"></div>
+          </div>
+          <div><div class="tc-row"><label>文字サイズ</label><input type="range" id="txSize_m" min="20" max="300" value="120"><span id="txSize_mV">120px</span></div>
+            <div class="tc-row"><label>字間</label><input type="range" id="txKern_m" min="-20" max="60" value="0"><span id="txKern_mV">0px</span></div>
           </div>
         </div>
+        <details><summary style="font-size:.8rem;color:#888;cursor:pointer;margin-bottom:6px">🎢 Y座標オフセット</summary>
+          <div class="tc-row"><label>パターン</label><div class="wave-presets" id="wavePre_m"><button class="active" data-w="none">なし</button><button data-w="wave">ウェーブ</button><button data-w="arc">アーチ</button><button data-w="random">ランダム</button><button data-w="stair">階段</button><button data-w="manual">手動</button></div></div>
+          <div class="tc-row" id="waveAmtRow_m" style="display:none"><label>振幅</label><input type="range" id="waveAmt_m" min="1" max="50" value="10"><span id="waveAmt_mV">10px</span></div>
+          <div id="charOff_m" class="tc-chars"></div>
+        </details>
+        <details><summary style="font-size:.8rem;color:#888;cursor:pointer;margin-bottom:6px">🔄 変形</summary>
+          <div class="tc-row"><label>台形（上下）</label><input type="range" id="tfTrap_m" min="-100" max="100" value="0"><span id="tfTrap_mV">0</span></div>
+          <div class="tc-row"><label>台形（左右）</label><input type="range" id="tfTrapLR_m" min="-100" max="100" value="0"><span id="tfTrapLR_mV">0</span></div>
+          <div class="tc-row"><label>上辺アーチ</label><input type="range" id="tfArchTop_m" min="-80" max="80" value="0"><span id="tfArchTop_mV">0px</span></div>
+          <div class="tc-row"><label>下辺アーチ</label><input type="range" id="tfArchBot_m" min="-80" max="80" value="0"><span id="tfArchBot_mV">0px</span></div>
+          <div class="tc-row"><label>膨張</label><input type="range" id="tfBulge_m" min="-80" max="80" value="0"><span id="tfBulge_mV">0</span></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"><button class="tc-xbtn" data-tf="reset" data-s="_m">リセット</button><button class="tc-xbtn" data-tf="flag" data-s="_m">🚩旗</button><button class="tc-xbtn" data-tf="bridge" data-s="_m">🌉橋</button><button class="tc-xbtn" data-tf="wedge" data-s="_m">◣くさび</button><button class="tc-xbtn" data-tf="barrel" data-s="_m">🛢樽</button><button class="tc-xbtn" data-tf="pinch" data-s="_m">💎ピンチ</button></div>
+        </details>
       </div>
+    </div>
+
+    <!-- SUB TEXT SETTINGS -->
+    <div class="tc-sec"><div class="st" style="cursor:pointer" onclick="this.parentElement.querySelector('.tc-body').classList.toggle('tc-collapsed')">📝 サブ文字設定 <span style="float:right;font-size:.7rem">▼</span></div>
+      <div class="tc-body">
+        <div class="cols c2">
+          <div><div class="tc-row"><label>フォント元</label><select id="fontSrc_s"><option value="google">Google Fonts</option><option value="custom">カスタム</option></select></div>
+            <div id="gfUI_s"><div class="tc-row"><label>カテゴリ</label><select id="fontCat_s"><option value="jp">日本語</option><option value="display">Display</option><option value="sans">Sans</option><option value="serif">Serif</option><option value="handwriting">手書き</option><option value="mono">Mono</option></select></div>
+            <div class="tc-row"><label>フォント</label><select id="fontSel_s"></select></div></div>
+            <div id="cfUI_s" style="display:none"><div class="tc-row"><label>ファイル</label><input type="file" id="fontFile_s" accept=".ttf,.otf,.woff,.woff2"></div></div>
+            <div class="tc-row"><label>ウェイト</label><select id="fontWt_s"><option value="400">Regular</option><option value="500">Medium</option><option value="600">SemiBold</option><option value="700" selected>Bold</option><option value="800">ExtraBold</option><option value="900">Black</option></select></div>
+            <div class="tc-row"><label>イタリック</label><input type="checkbox" id="fontIt_s" style="width:16px;height:16px;accent-color:#4d96ff"></div>
+          </div>
+          <div><div class="tc-row"><label>文字サイズ</label><input type="range" id="txSize_s" min="10" max="200" value="40"><span id="txSize_sV">40px</span></div>
+            <div class="tc-row"><label>字間</label><input type="range" id="txKern_s" min="-20" max="60" value="0"><span id="txKern_sV">0px</span></div>
+          </div>
+        </div>
+        <details><summary style="font-size:.8rem;color:#888;cursor:pointer;margin-bottom:6px">🎢 Y座標オフセット</summary>
+          <div class="tc-row"><label>パターン</label><div class="wave-presets" id="wavePre_s"><button class="active" data-w="none">なし</button><button data-w="wave">ウェーブ</button><button data-w="arc">アーチ</button><button data-w="random">ランダム</button><button data-w="stair">階段</button><button data-w="manual">手動</button></div></div>
+          <div class="tc-row" id="waveAmtRow_s" style="display:none"><label>振幅</label><input type="range" id="waveAmt_s" min="1" max="50" value="8"><span id="waveAmt_sV">8px</span></div>
+          <div id="charOff_s" class="tc-chars"></div>
+        </details>
+        <details><summary style="font-size:.8rem;color:#888;cursor:pointer;margin-bottom:6px">🔄 変形</summary>
+          <div class="tc-row"><label>台形（上下）</label><input type="range" id="tfTrap_s" min="-100" max="100" value="0"><span id="tfTrap_sV">0</span></div>
+          <div class="tc-row"><label>台形（左右）</label><input type="range" id="tfTrapLR_s" min="-100" max="100" value="0"><span id="tfTrapLR_sV">0</span></div>
+          <div class="tc-row"><label>上辺アーチ</label><input type="range" id="tfArchTop_s" min="-80" max="80" value="0"><span id="tfArchTop_sV">0px</span></div>
+          <div class="tc-row"><label>下辺アーチ</label><input type="range" id="tfArchBot_s" min="-80" max="80" value="0"><span id="tfArchBot_sV">0px</span></div>
+          <div class="tc-row"><label>膨張</label><input type="range" id="tfBulge_s" min="-80" max="80" value="0"><span id="tfBulge_sV">0</span></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"><button class="tc-xbtn" data-tf="reset" data-s="_s">リセット</button><button class="tc-xbtn" data-tf="flag" data-s="_s">🚩旗</button><button class="tc-xbtn" data-tf="bridge" data-s="_s">🌉橋</button><button class="tc-xbtn" data-tf="wedge" data-s="_s">◣くさび</button><button class="tc-xbtn" data-tf="barrel" data-s="_s">🛢樽</button><button class="tc-xbtn" data-tf="pinch" data-s="_s">💎ピンチ</button></div>
+        </details>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:14px"><button class="tc-btn tc-btn-primary" id="tcApply">🎨 この設定でロゴを生成 →</button></div>
+    <div class="tc-sec"><div class="st">プレビュー</div><div class="tc-preview"><canvas id="tcCanvas"></canvas></div></div>
+  </div>
+
+  <div class="mode-panel" id="panelUpload">
+    <div class="upload-zone" id="uz"><button class="re-btn" id="reb">🔄 変更</button><input type="file" id="fi" accept="image/*">
+      <div id="up"><div style="font-size:2.5rem;margin-bottom:8px">🖼️</div><div style="font-size:1rem;color:#888">クリック or ドラッグ＆ドロップ</div><div style="font-size:.8rem;color:#555;margin-top:4px">PNG推奨</div></div>
+      <canvas id="stC" style="display:none;max-width:100%;height:auto;border-radius:7px"></canvas>
     </div>
   </div>
 
-  <!-- Outline Algorithm + Double Outline + Glow -->
+  <div class="sec" id="sLogoEx" style="display:none">
+    <div class="st">🔬 ロゴ塗り抽出</div>
+    <div style="font-size:.78rem;color:#888;margin-bottom:8px;line-height:1.5">
+      ① 英字テキスト部分を矩形選択 → ② 実行で背景黒化＋反転→塗り部分を自動抽出
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px" id="leSelBtn">📐 矩形選択</button>
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px" id="leRunBtn" disabled>▶ 塗り抽出実行</button>
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px;display:none" id="leFixBtn">🖱 スポット修正</button>
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px;display:none" id="leResetBtn">↩ リセット</button>
+    </div>
+    <div class="r"><label>背景判定閾値</label><input type="range" id="leThr" min="128" max="255" value="240"><span id="leThrV">240</span></div>
+    <div class="r"><label>AA除去強度</label><input type="range" id="leAA" min="0" max="200" value="60"><span id="leAAV">60</span></div>
+    <div class="r"><label>ゴミ除去(px²)</label><input type="range" id="leDespeck" min="0" max="500" value="50"><span id="leDespeckV">50</span></div>
+    <div style="font-size:.78rem;color:#666;margin-top:4px">状態: <span id="leStatus" style="color:#f80">未選択</span></div>
+    <div style="margin-top:8px">
+      <div style="font-size:.8rem;color:#555;margin-bottom:4px">プレビュー:</div>
+      <canvas id="lePreview" style="max-width:100%;height:auto;border:1px solid #444;border-radius:4px;display:none"></canvas>
+    </div>
+  </div>
+
+  <div class="cols c2">
+    <div class="sec" id="sBin" style="display:none"><div class="st">前景検出</div>
+      <div class="r"><label>明度閾値</label><input type="range" id="thr" min="10" max="250" value="128"><span id="thrV">128</span></div>
+      <div class="ck"><input type="checkbox" id="inv"><label for="inv">反転（明るい部分を前景にする）</label></div>
+      <div style="font-size:.8rem;color:#555;margin-bottom:4px">マスクプレビュー:</div>
+      <div class="thr"><div style="flex:1"><canvas id="mTh" class="tc-mask"></canvas></div></div>
+    </div>
+    <div class="sec" id="sGrad" style="display:none"><div class="st">グラデーション</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>
+        <div class="r"><label>カラー1</label><input type="color" id="c1" value="#ff4500"></div>
+        <div class="r"><label>カラー2</label><input type="color" id="c2" value="#ff8c00"></div>
+        <div class="r"><label>カラー3</label><input type="color" id="c3" value="#ffd700"></div>
+      </div><div><div style="font-size:.85rem;color:#666;margin-bottom:4px">方向</div>
+        <div class="dg" id="dg"><button class="db" data-d="to right">→</button><button class="db active" data-d="to bottom right">↘</button><button class="db" data-d="to bottom">↓</button><button class="db" data-d="to bottom left">↙</button><button class="db" data-d="to left">←</button><button class="db" data-d="to top left">↖</button><button class="db" data-d="to top">↑</button><button class="db" data-d="to top right">↗</button></div>
+      </div></div>
+    </div>
+  </div>
   <div class="cols c3">
-    <div class="sec" id="sAlgo" style="display:none">
-      <div class="st">🔬 外縁アルゴリズム</div>
+    <div class="sec" id="sAlgo" style="display:none"><div class="st">🔬 外縁アルゴリズム</div>
       <div class="ck"><input type="checkbox" id="algoOn"><label for="algoOn"><b>外縁を有効にする</b></label></div>
       <div class="r"><label>方式</label><select id="algoSel"><option value="morph">モルフォロジー閉鎖</option><option value="convex">凸包</option><option value="alpha">αシェイプ</option></select></div>
-      <div id="morphParams">
-        <div class="r"><label>閉鎖半径</label><input type="range" id="morphR" min="1" max="60" value="20"><span id="morphRV">20px</span></div>
-      </div>
-      <div id="alphaParams" style="display:none">
-        <div class="r"><label>α半径</label><input type="range" id="alphaR" min="2" max="80" value="15"><span id="alphaRV">15px</span></div>
-      </div>
-      <div class="r"><label>オフセット</label><input type="range" id="algoOff" min="0" max="50" value="10"><span id="algoOffV">10px</span></div>
-      <div class="r"><label>平滑化</label><input type="range" id="algoSmooth" min="0" max="30" value="5"><span id="algoSmoothV">5px</span></div>
-      <div class="r"><label>線の太さ</label><input type="range" id="algoStroke" min="1" max="20" value="3"><span id="algoStrokeV">3px</span></div>
+      <div id="morphParams"><div class="r"><label>閉鎖半径</label><input type="range" id="morphR" min="1" max="120" value="20"><span id="morphRV">20px</span></div></div>
+      <div id="alphaParams" style="display:none"><div class="r"><label>α半径</label><input type="range" id="alphaR" min="2" max="160" value="15"><span id="alphaRV">15px</span></div></div>
+      <div class="r"><label>オフセット</label><input type="range" id="algoOff" min="0" max="100" value="10"><span id="algoOffV">10px</span></div>
+      <div class="r"><label>平滑化</label><input type="range" id="algoSmooth" min="0" max="60" value="5"><span id="algoSmoothV">5px</span></div>
+      <div class="r"><label>線の太さ</label><input type="range" id="algoStroke" min="1" max="40" value="3"><span id="algoStrokeV">3px</span></div>
       <div class="r"><label>カラー</label><input type="color" id="algoColor" value="#000000"></div>
       <div class="r"><label>不透明度</label><input type="range" id="algoAlpha" min="10" max="100" value="100"><span id="algoAlphaV">100%</span></div>
       <div class="ck"><input type="checkbox" id="algoPad" checked><label for="algoPad">余白自動付与</label></div>
     </div>
-    <div class="sec" id="sOl" style="display:none">
-      <div class="st">🖊️ 二重縁取り</div>
-      <div class="eg">
-        <div class="ck"><input type="checkbox" id="o1On" checked><label for="o1On"><b>縁取り1</b></label></div>
-        <div class="r"><label>太さ</label><input type="range" id="o1T" min="1" max="40" value="4"><span id="o1TV">4px</span></div>
+    <div class="sec" id="sOl" style="display:none"><div class="st">🖊️ 二重縁取り</div>
+      <div class="eg"><div class="ck"><input type="checkbox" id="o1On" checked><label for="o1On"><b>縁取り1</b></label></div>
+        <div class="r"><label>太さ</label><input type="range" id="o1T" min="1" max="80" value="4"><span id="o1TV">4px</span></div>
         <div class="r"><label>色</label><input type="color" id="o1C" value="#ffffff"></div>
-        <div class="r"><label>不透明度</label><input type="range" id="o1A" min="10" max="100" value="100"><span id="o1AV">100%</span></div>
-      </div>
-      <div class="eg">
-        <div class="ck"><input type="checkbox" id="o2On"><label for="o2On"><b>縁取り2</b></label></div>
-        <div class="r"><label>太さ</label><input type="range" id="o2T" min="1" max="40" value="6"><span id="o2TV">6px</span></div>
+        <div class="r"><label>不透明度</label><input type="range" id="o1A" min="10" max="100" value="100"><span id="o1AV">100%</span></div></div>
+      <div class="eg"><div class="ck"><input type="checkbox" id="o2On"><label for="o2On"><b>縁取り2</b></label></div>
+        <div class="r"><label>太さ</label><input type="range" id="o2T" min="1" max="80" value="6"><span id="o2TV">6px</span></div>
         <div class="r"><label>色</label><input type="color" id="o2C" value="#000000"></div>
-        <div class="r"><label>不透明度</label><input type="range" id="o2A" min="10" max="100" value="100"><span id="o2AV">100%</span></div>
-      </div>
+        <div class="r"><label>不透明度</label><input type="range" id="o2A" min="10" max="100" value="100"><span id="o2AV">100%</span></div></div>
     </div>
-    <div class="sec" id="sGlow" style="display:none">
-      <div class="st">✨ グロー（光彩）</div>
+    <div class="sec" id="sGlow" style="display:none"><div class="st">✨ グロー（光彩）</div>
       <div class="ck"><input type="checkbox" id="glOn"><label for="glOn"><b>グロー有効</b></label></div>
-      <div class="r"><label>半径</label><input type="range" id="glR" min="2" max="80" value="20"><span id="glRV">20px</span></div>
+      <div class="r"><label>半径</label><input type="range" id="glR" min="2" max="160" value="20"><span id="glRV">20px</span></div>
       <div class="r"><label>色</label><input type="color" id="glC" value="#ff8800"></div>
       <div class="r"><label>不透明度</label><input type="range" id="glA" min="10" max="100" value="60"><span id="glAV">60%</span></div>
     </div>
   </div>
-
-  <div class="preview-area" id="pa">
-    <div class="bg-row"><div class="bg-b bw active" data-b="#ffffff"></div><div class="bg-b bd" data-b="#1a1a2e"></div><div class="bg-b bc" data-b="checker"></div></div>
-    <div class="cw" id="cw"><canvas id="resultCanvas"></canvas></div>
-  </div>
-
-  <div class="sec" id="sPre" style="display:none">
-    <div class="st">🎨 プリセット</div><div class="pg" id="pGrid"></div>
-  </div>
-  <div class="sec" id="sAnim" style="display:none">
-    <div class="st">✨ アニメーション</div>
-    <button class="asb hid" id="aStop">⏹ 停止</button>
-    <div class="ag" id="aGrid"></div>
-    <div class="r" style="margin-top:6px"><label>速度</label><input type="range" id="aSpd" min="0.2" max="4" step="0.1" value="1"><span id="aSpdV">1.0x</span></div>
-  </div>
+  <div class="preview-area" id="pa"><div class="bg-row"><div class="bg-b bw active" data-b="#ffffff"></div><div class="bg-b bd" data-b="#1a1a2e"></div><div class="bg-b bc" data-b="checker"></div></div><div class="cw" id="cw"><canvas id="resultCanvas"></canvas></div></div>
+  <div class="sec" id="sPre" style="display:none"><div class="st">🎨 プリセット</div><div class="pg" id="pGrid"></div></div>
+  <div class="sec" id="sAnim" style="display:none"><div class="st">✨ アニメーション</div><button class="asb hid" id="aStop">⏹ 停止</button><div class="ag" id="aGrid"></div><div class="r" style="margin-top:6px"><label>速度</label><input type="range" id="aSpd" min="0.2" max="4" step="0.1" value="1"><span id="aSpdV">1.0x</span></div></div>
   <div style="text-align:center"><button class="dlb" id="dlBtn" disabled>⬇ PNG ダウンロード</button><div class="note">※アニメ中は現在フレームを保存</div></div>
+  <div class="sec" id="sSvg" style="display:none">
+    <div class="st">📐 SVG ベクター出力</div>
+    <div style="font-size:.78rem;color:#888;margin-bottom:8px;line-height:1.5">
+      マスクをベクターパスに変換し、グラデーション付きSVGを生成
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px" id="svgTraceBtn" disabled>🔄 トレース実行</button>
+    </div>
+    <div class="r"><label>パス簡略化</label><input type="range" id="svgSimp" min="0.3" max="5" step="0.1" value="1.0"><span id="svgSimpV">1.0</span></div>
+    <div class="r"><label>スムージング</label><input type="range" id="svgSmooth" min="0" max="100" step="5" value="50"><span id="svgSmoothV">50%</span></div>
+    <div style="font-size:.78rem;color:#666;margin-top:4px">パス数: <span id="svgPathCount">-</span> / 頂点数: <span id="svgVertCount">-</span></div>
+    <div style="margin-top:8px">
+      <div style="font-size:.8rem;color:#555;margin-bottom:4px">プレビュー:</div>
+      <div id="svgPreviewWrap" style="max-width:100%;border:1px solid #444;border-radius:4px;background:#fff;display:none;overflow:hidden"></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px" id="svgDlSvg" disabled>⬇ SVG ダウンロード</button>
+      <button class="dlb" style="font-size:.85rem;padding:6px 14px" id="svgDlPng" disabled>⬇ 高解像度PNG</button>
+      <select id="svgPngScale" style="background:#333;color:#eee;border:1px solid #555;border-radius:4px;padding:4px">
+        <option value="2">2x</option><option value="3">3x</option><option value="4" selected>4x</option><option value="6">6x</option><option value="8">8x</option>
+      </select>
+    </div>
+  </div>
 </div>
-
+<script src="data:text/javascript,void(0)"></script>
 <script>
-/* ===== Util ===== */
-const C=(v,a,b)=>Math.max(a,Math.min(b,v));
-const Lr=(a,b,t)=>a+(b-a)*t;
+const C=(v,a,b)=>Math.max(a,Math.min(b,v)),Lr=(a,b,t)=>a+(b-a)*t;
 function h2r(h,s,l){h=((h%360)+360)%360/360;s=C(s,0,100)/100;l=C(l,0,100)/100;if(!s){const v=Math.round(l*255);return[v,v,v]}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,f=(p,q,t)=>{t=((t%1)+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p};return[f(p,q,h+1/3),f(p,q,h),f(p,q,h-1/3)].map(v=>Math.round(v*255))}
 function hx2(h){if(typeof h!=='string')return[0,0,0];const m=h.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);return m?[+('0x'+m[1]),+('0x'+m[2]),+('0x'+m[3])]:[0,0,0]}
 function r2h(r,g,b){return'#'+[r,g,b].map(v=>C(Math.round(v||0),0,255).toString(16).padStart(2,'0')).join('')}
 function sPal(c,p){if(!c||!c.length)return[0,0,0];if(c.length===1)return hx2(c[0]);p=C(p,0,1);const s=p*(c.length-1),lo=Math.floor(s),hi=Math.min(lo+1,c.length-1),f=s-lo,a=hx2(c[lo]),b=hx2(c[hi]);return[C(Math.round(Lr(a[0],b[0],f)),0,255),C(Math.round(Lr(a[1],b[1],f)),0,255),C(Math.round(Lr(a[2],b[2],f)),0,255)]}
+function computeDF(mask,w,h){const n=w*h,df=new Float32Array(n),INF=1e8,DG=1.4142;for(let i=0;i<n;i++)df[i]=mask[i]?0:INF;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(mask[i])continue;let d=df[i];if(y>0)d=Math.min(d,df[i-w]+1);if(x>0)d=Math.min(d,df[i-1]+1);if(y>0&&x>0)d=Math.min(d,df[i-w-1]+DG);if(y>0&&x<w-1)d=Math.min(d,df[i-w+1]+DG);df[i]=d}for(let y=h-1;y>=0;y--)for(let x=w-1;x>=0;x--){const i=y*w+x;if(mask[i])continue;let d=df[i];if(y<h-1)d=Math.min(d,df[i+w]+1);if(x<w-1)d=Math.min(d,df[i+1]+1);if(y<h-1&&x<w-1)d=Math.min(d,df[i+w+1]+DG);if(y<h-1&&x>0)d=Math.min(d,df[i+w-1]+DG);df[i]=d}return df}
+function computeInternalDF(mask,w,h){const inv=new Uint8Array(w*h);for(let i=0;i<w*h;i++)inv[i]=mask[i]?0:1;return computeDF(inv,w,h)}
+function convexHull(points){if(points.length<3)return points.slice();points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lower=[];for(const p of points){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p)}const upper=[];for(let i=points.length-1;i>=0;i--){const p=points[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p)}lower.pop();upper.pop();return lower.concat(upper)}
 
-/* ===== Distance Field (Chamfer 2-pass) ===== */
-function computeDF(mask,w,h){
-  const n=w*h,df=new Float32Array(n),INF=1e8,DG=1.4142;
-  for(let i=0;i<n;i++)df[i]=mask[i]?0:INF;
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(mask[i])continue;let d=df[i];if(y>0)d=Math.min(d,df[i-w]+1);if(x>0)d=Math.min(d,df[i-1]+1);if(y>0&&x>0)d=Math.min(d,df[i-w-1]+DG);if(y>0&&x<w-1)d=Math.min(d,df[i-w+1]+DG);df[i]=d}
-  for(let y=h-1;y>=0;y--)for(let x=w-1;x>=0;x--){const i=y*w+x;if(mask[i])continue;let d=df[i];if(y<h-1)d=Math.min(d,df[i+w]+1);if(x<w-1)d=Math.min(d,df[i+1]+1);if(y<h-1&&x<w-1)d=Math.min(d,df[i+w+1]+DG);if(y<h-1&&x>0)d=Math.min(d,df[i+w-1]+DG);df[i]=d}
-  return df;
-}
-/** DF from interior: distance of each 1-pixel to nearest 0-pixel */
-function computeInternalDF(mask,w,h){
-  const inv=new Uint8Array(w*h);
-  for(let i=0;i<w*h;i++)inv[i]=mask[i]?0:1;
-  return computeDF(inv,w,h);
-}
-
-/* ===== Convex Hull (Graham Scan) ===== */
-function convexHull(points){
-  if(points.length<3)return points.slice();
-  points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
-  const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
-  const lower=[];
-  for(const p of points){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p)}
-  const upper=[];
-  for(let i=points.length-1;i>=0;i--){const p=points[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p)}
-  lower.pop();upper.pop();
-  return lower.concat(upper);
-}
-
-/* ===== Data ===== */
-const PRESETS=[
-  {n:"炎",c:["#ff4500","#ff8c00","#ffd700"]},{n:"海",c:["#0077b6","#00b4d8","#90e0ef"]},
-  {n:"桜",c:["#ff6b81","#ffb3c1","#fff0f3"]},{n:"夕焼",c:["#ff006e","#fb5607","#ffbe0b"]},
-  {n:"森",c:["#1b4332","#40916c","#95d5b2"]},{n:"虹",c:["#ff0000","#ff8800","#ffff00","#00cc00","#0066ff","#8800ff"]},
-  {n:"金",c:["#b8860b","#ffd700","#fffacd"]},{n:"銀",c:["#4a4a5a","#a8a8b8","#e8e8f0"]},
-  {n:"紫雲",c:["#240046","#7b2cbf","#e0aaff"]},{n:"氷",c:["#a2d2ff","#bde0fe","#ffffff"]},
-  {n:"溶岩",c:["#4a0000","#cc0000","#ff6600","#ffcc00"]},{n:"電撃",c:["#000033","#0055ff","#00eeff","#ffffff"]},
-  {n:"毒",c:["#1a002e","#7700aa","#cc00ff","#ff44ff"]},{n:"ネオン",c:["#ff00ff","#00ffff"]},
-  {n:"深海",c:["#000428","#004e92","#00d4ff"]},{n:"秋",c:["#8b0000","#d2691e","#daa520","#556b2f"]},
-  {n:"パステル",c:["#ffc8dd","#bde0fe","#a2d2ff","#cdb4db"]},{n:"鋼",c:["#2c3e50","#4ca1af","#c4e0e5"]},
-  {n:"青龍",c:["#000066","#0044cc","#00ccff","#ccffff"]},{n:"赤龍",c:["#330000","#990000","#ff3300","#ffcc00"]},
-  {n:"翡翠",c:["#004d40","#00796b","#80cbc4"]},{n:"桃",c:["#ee9ca7","#ffdde1"]},
-  {n:"星雲",c:["#1a0033","#cc00ff","#0088ff","#00ffcc"]},
-  {n:"ホロ",c:["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"]},{n:"黒",c:["#000000","#000000"]},
-];
-const ANIMS=[
-  {n:"🔥 炎",t:"hr",bh:15,s:100,lr:[35,60]},{n:"🌊 波",t:"sw",c:["#003366","#0077b6","#00ccff","#aaeeff","#0077b6","#003366"]},
-  {n:"⚡ 電撃",t:"pu",c:["#000033","#0044ff","#00eeff","#ffffff"]},{n:"🌈 虹",t:"rb",s:90,l:50},
-  {n:"✨ ゴールド",t:"sh",b:[45,80,45],h:[50,100,80]},{n:"💜 ネオン",t:"br",c:["#ff00ff","#8800ff","#0044ff","#00ffff"]},
-  {n:"🐉 龍",t:"sw",c:["#000000","#220000","#ff3300","#ffcc00","#ffffff","#ffcc00","#ff3300","#220000","#000000"]},
-  {n:"🌸 桜",t:"hr",bh:340,s:70,lr:[70,90]},{n:"💎 水晶",t:"sh",b:[200,40,60],h:[195,100,95]},
-  {n:"🔮 魔法",t:"sw",c:["#0a001a","#3300aa","#aa00ff","#ff44ff","#ffffff","#ff44ff","#aa00ff","#3300aa","#0a001a"]},
-  {n:"☀️ 日出",t:"sw",c:["#1a0033","#660033","#ff4500","#ff8c00","#ffd700","#fffacd","#ffd700","#ff8c00","#ff4500","#660033","#1a0033"]},
-];
+const PRESETS=[{n:"炎",c:["#ff4500","#ff8c00","#ffd700"]},{n:"海",c:["#0077b6","#00b4d8","#90e0ef"]},{n:"桜",c:["#ff6b81","#ffb3c1","#fff0f3"]},{n:"夕焼",c:["#ff006e","#fb5607","#ffbe0b"]},{n:"森",c:["#1b4332","#40916c","#95d5b2"]},{n:"虹",c:["#ff0000","#ff8800","#ffff00","#00cc00","#0066ff","#8800ff"]},{n:"金",c:["#b8860b","#ffd700","#fffacd"]},{n:"銀",c:["#4a4a5a","#a8a8b8","#e8e8f0"]},{n:"紫雲",c:["#240046","#7b2cbf","#e0aaff"]},{n:"氷",c:["#a2d2ff","#bde0fe","#ffffff"]},{n:"溶岩",c:["#4a0000","#cc0000","#ff6600","#ffcc00"]},{n:"電撃",c:["#000033","#0055ff","#00eeff","#ffffff"]},{n:"毒",c:["#1a002e","#7700aa","#cc00ff","#ff44ff"]},{n:"ネオン",c:["#ff00ff","#00ffff"]},{n:"深海",c:["#000428","#004e92","#00d4ff"]},{n:"秋",c:["#8b0000","#d2691e","#daa520","#556b2f"]},{n:"パステル",c:["#ffc8dd","#bde0fe","#a2d2ff","#cdb4db"]},{n:"鋼",c:["#2c3e50","#4ca1af","#c4e0e5"]},{n:"青龍",c:["#000066","#0044cc","#00ccff","#ccffff"]},{n:"赤龍",c:["#330000","#990000","#ff3300","#ffcc00"]},{n:"翡翠",c:["#004d40","#00796b","#80cbc4"]},{n:"桃",c:["#ee9ca7","#ffdde1"]},{n:"星雲",c:["#1a0033","#cc00ff","#0088ff","#00ffcc"]},{n:"ホロ",c:["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"]},{n:"黒",c:["#000000","#000000"]}];
+const ANIMS=[{n:"🔥 炎",t:"hr",bh:15,s:100,lr:[35,60]},{n:"🌊 波",t:"sw",c:["#003366","#0077b6","#00ccff","#aaeeff","#0077b6","#003366"]},{n:"⚡ 電撃",t:"pu",c:["#000033","#0044ff","#00eeff","#ffffff"]},{n:"🌈 虹",t:"rb",s:90,l:50},{n:"✨ ゴールド",t:"sh",b:[45,80,45],h:[50,100,80]},{n:"💜 ネオン",t:"br",c:["#ff00ff","#8800ff","#0044ff","#00ffff"]},{n:"🐉 龍",t:"sw",c:["#000000","#220000","#ff3300","#ffcc00","#ffffff","#ffcc00","#ff3300","#220000","#000000"]},{n:"🌸 桜",t:"hr",bh:340,s:70,lr:[70,90]},{n:"💎 水晶",t:"sh",b:[200,40,60],h:[195,100,95]},{n:"🔮 魔法",t:"sw",c:["#0a001a","#3300aa","#aa00ff","#ff44ff","#ffffff","#ff44ff","#aa00ff","#3300aa","#0a001a"]},{n:"☀️ 日出",t:"sw",c:["#1a0033","#660033","#ff4500","#ff8c00","#ffd700","#fffacd","#ffd700","#ff8c00","#ff4500","#660033","#1a0033"]}];
 const DM={"to right":[0,.5,1,.5],"to bottom right":[0,0,1,1],"to bottom":[.5,0,.5,1],"to bottom left":[1,0,0,1],"to left":[1,.5,0,.5],"to top left":[1,1,0,0],"to top":[.5,1,.5,0],"to top right":[0,1,1,0]};
+const GFONTS={jp:["Noto Sans JP","Noto Serif JP","M PLUS 1p","M PLUS Rounded 1c","Kosugi Maru","Sawarabi Gothic","Sawarabi Mincho","Zen Maru Gothic","Zen Kaku Gothic New","Dela Gothic One","Hachi Maru Pop","Reggae One","RocknRoll One","Stick","DotGothic16","Rampart One","Train One","Hina Mincho"],display:["Bungee","Bungee Shade","Permanent Marker","Russo One","Orbitron","Righteous","Monoton","Fugaz One","Press Start 2P","Faster One","Black Ops One"],sans:["Inter","Roboto","Open Sans","Lato","Montserrat","Poppins","Oswald","Raleway","Nunito","Work Sans"],serif:["Playfair Display","Merriweather","Lora","PT Serif","Noto Serif","Libre Baskerville","EB Garamond","Cormorant Garamond"],handwriting:["Dancing Script","Pacifico","Caveat","Sacramento","Great Vibes","Satisfy","Indie Flower","Patrick Hand"],mono:["Fira Code","JetBrains Mono","Source Code Pro","Space Mono","IBM Plex Mono","Ubuntu Mono"]};
 
-/* ===== State ===== */
-let sImg,sW=0,sH=0,lumD,maskA,distF;
-let algoShapeMask=null; // Uint8Array for algo outline shape
-let algoShapeDF=null;   // DF of algo shape (for stroke rendering)
-let glowCV=null,glowPd=0;
+let sW=0,sH=0,lumD,maskA,distF,algoShapeMask=null,algoShapeDF=null,glowCV=null,glowPd=0;
 let cPre=0,cDir="to bottom right",anOn=false,anId=null,anIdx=-1,anSpd=1;
+let origImgCV=null,imgScale=1; /* original full-res image + display scale */
+let leMode=false,leRect=null,leStart=null; /* logo extract selection state */
+let leFixMode=false,leWorkCV=null; /* spot fix state + working canvas */
+let fontFamily={_m:"Noto Sans JP",_s:"Noto Sans JP"};
+let customFN={_m:null,_s:null};
+let charYOff={_m:[],_s:[]};
+let waveMode_={_m:"none",_s:"none"};
 const cv=document.getElementById("resultCanvas"),cx=cv.getContext("2d");
+const $=id=>document.getElementById(id);
 
-/* ===== Upload ===== */
-const uz=document.getElementById("uz"),fi=document.getElementById("fi"),reb=document.getElementById("reb");
+/* Google Fonts - robust loading for canvas */
+const loadedCSS=new Set();
+function addFontLink(href){
+  const link=document.createElement("link");link.rel="stylesheet";link.href=href;
+  document.head.appendChild(link);
+  return new Promise(r=>{link.onload=()=>r(true);link.onerror=()=>r(false)});
+}
+async function addFontCSS(name,weight){
+  const k1=name+":"+weight;
+  if(loadedCSS.has(k1))return;
+  loadedCSS.add(k1);
+  const base="https://fonts.googleapis.com/css2?family="+encodeURIComponent(name);
+  /* Try with weight; also add without weight as fallback for single-weight fonts */
+  const k0=name+":base";
+  const p1=addFontLink(base+":wght@"+weight+"&display=swap");
+  let p2=Promise.resolve(true);
+  if(!loadedCSS.has(k0)){loadedCSS.add(k0);p2=addFontLink(base+"&display=swap")}
+  await Promise.all([p1,p2]);
+}
+/* Hidden prober: place actual text in DOM → browser auto-downloads unicode-range subsets */
+const _probeEl=(()=>{const el=document.createElement("span");el.style.cssText="position:absolute;left:-9999px;top:-9999px;visibility:hidden;pointer-events:none;white-space:nowrap;font-size:48px;";document.body.appendChild(el);return el})();
+async function ensureFontForText(name,weight,style,text){
+  if(!name||name.startsWith("CF"))return;
+  await addFontCSS(name,weight);
+  if(!text)text="ABCabc あいう";
+  /* 1) Place text in hidden DOM element to trigger unicode-range downloads */
+  _probeEl.style.fontFamily='"'+name+'",sans-serif';
+  _probeEl.style.fontWeight=weight;
+  _probeEl.style.fontStyle=style;
+  _probeEl.textContent=text;
+  await document.fonts.ready;
+  /* 2) Explicit Font Loading API call with text */
+  try{await document.fonts.load(style+" "+weight+' 48px "'+name+'"',text)}catch(e){}
+  try{await document.fonts.load(weight+' 48px "'+name+'"',text)}catch(e){}
+  await document.fonts.ready;
+  /* 3) Small extra wait for rendering engine to register the font */
+  await new Promise(r=>setTimeout(r,50));
+}
+function populateFonts(s){const cat=$("fontCat"+s).value,sel=$("fontSel"+s);sel.innerHTML="";(GFONTS[cat]||[]).forEach(f=>{const o=document.createElement("option");o.value=f;o.textContent=f;sel.appendChild(o)});onFontChange(s)}
+async function onFontChange(s){
+  if($("fontSrc"+s).value==="custom"&&customFN[s]){fontFamily[s]=customFN[s]}
+  else{const name=$("fontSel"+s).value;if(!name)return;fontFamily[s]=name}
+  await refreshPreview();
+}
+["_m","_s"].forEach(s=>{
+  $("fontFile"+s).onchange=async function(){const f=this.files[0];if(!f)return;const buf=await f.arrayBuffer();customFN[s]="CF"+s+"_"+Date.now();const face=new FontFace(customFN[s],buf);await face.load();document.fonts.add(face);fontFamily[s]=customFN[s];updateTextPreview()};
+});
+
+/* Wave per line */
+function computeWave(s){const text=s==="_m"?$("txMain").value:$("txSub").value;if(!text.length){charYOff[s]=[];return}const amt=+$("waveAmt"+s).value,n=text.length,wm=waveMode_[s];charYOff[s]=new Array(n).fill(0);if(wm==="none")return;if(wm==="wave")for(let i=0;i<n;i++)charYOff[s][i]=Math.round(Math.sin(i*Math.PI/2.5)*amt);else if(wm==="arc")for(let i=0;i<n;i++){const t=n>1?(i/(n-1)*2-1):0;charYOff[s][i]=Math.round(-amt*(1-t*t))}else if(wm==="random")for(let i=0;i<n;i++)charYOff[s][i]=Math.round((Math.random()*2-1)*amt);else if(wm==="stair")for(let i=0;i<n;i++)charYOff[s][i]=Math.round((i%2)*amt)}
+function buildCharUI(s){const cont=$("charOff"+s),text=s==="_m"?$("txMain").value:$("txSub").value;cont.innerHTML="";if(waveMode_[s]!=="manual"||!text.length)return;while(charYOff[s].length<text.length)charYOff[s].push(0);charYOff[s].length=text.length;text.split("").forEach((ch,i)=>{const d=document.createElement("div");d.className="tc-char";d.innerHTML='<div class="ch">'+ch+'</div><div class="tc-char-label">Y</div><input type="number" value="'+charYOff[s][i]+'" data-i="'+i+'" min="-80" max="80">';d.querySelector("input").oninput=function(){charYOff[s][+this.dataset.i]=+this.value;updateTextPreview()};cont.appendChild(d)})}
+
+/* Render single line */
+function renderLine(text,s){
+  if(!text)return null;
+  const size=+$("txSize"+s).value,kern=+$("txKern"+s).value;
+  const wt=$("fontWt"+s).value,it=$("fontIt"+s).checked?"italic":"normal";
+  const font=it+" "+wt+" "+size+'px "'+fontFamily[s]+'",sans-serif';
+  const tmp=document.createElement("canvas").getContext("2d");tmp.font=font;
+  let totalW=0;const cw=[];const chars=text.split("");
+  chars.forEach(ch=>{const m=tmp.measureText(ch);cw.push(m.width);totalW+=m.width});
+  totalW+=Math.max(0,(chars.length-1))*kern;
+  const offsets=charYOff[s].length>=chars.length?charYOff[s]:new Array(chars.length).fill(0);
+  let minOff=0,maxOff=0;offsets.forEach(o=>{if(o<minOff)minOff=o;if(o>maxOff)maxOff=o});
+  const pd=4,w=Math.ceil(totalW+pd*2),h=Math.ceil(size+Math.abs(minOff)+maxOff+pd*2);
+  const c=document.createElement("canvas");c.width=w;c.height=h;
+  const ctx=c.getContext("2d");ctx.fillStyle="#ffffff";ctx.fillRect(0,0,w,h);
+  ctx.fillStyle="#000000";ctx.textBaseline="top";ctx.font=font;
+  let x=pd;const baseY=pd+Math.abs(minOff);
+  chars.forEach((ch,i)=>{ctx.fillText(ch,x,baseY+(offsets[i]||0));x+=cw[i]+kern});
+  return c;
+}
+
+/* Transform canvas with suffix s */
+function transformCanvas(src,s){
+  const trap=+$("tfTrap"+s).value/100,trapLR=+$("tfTrapLR"+s).value/100;
+  const archTop=+$("tfArchTop"+s).value,archBot=+$("tfArchBot"+s).value;
+  const bulge=+$("tfBulge"+s).value/100;
+  if(!trap&&!trapLR&&!archTop&&!archBot&&!bulge)return src;
+  const sw=src.width,sh=src.height;
+  const sctx=src.getContext("2d"),sd=sctx.getImageData(0,0,sw,sh);
+  const padH=Math.ceil(Math.abs(trap)*sw/2)+Math.ceil(Math.abs(trapLR)*sh/2)+Math.ceil(Math.abs(bulge)*sw/2)+4;
+  const padV=Math.max(Math.abs(archTop),Math.abs(archBot))+Math.ceil(Math.abs(bulge)*sh/2)+Math.ceil(Math.abs(trapLR)*sh/2)+4;
+  const dw=sw+padH*2,dh=sh+padV*2;
+  const dst=document.createElement("canvas");dst.width=dw;dst.height=dh;
+  const dctx=dst.getContext("2d");const dd=dctx.createImageData(dw,dh);
+  for(let i=0;i<dd.data.length;i+=4){dd.data[i]=255;dd.data[i+1]=255;dd.data[i+2]=255;dd.data[i+3]=255}
+  for(let dy=0;dy<dh;dy++){for(let dx=0;dx<dw;dx++){
+    let nx=(dx-padH-sw/2)/(sw/2),ny=(dy-padV-sh/2)/(sh/2);
+    if(bulge){const r2=nx*nx+ny*ny;const f=1+bulge*r2;if(f<0.01)continue;nx/=f;ny/=f}
+    if(trap){const sc=1-trap*ny;if(sc<0.01)continue;nx/=sc}
+    if(trapLR){const sc=1-trapLR*nx;if(sc<0.01)continue;ny/=sc}
+    let sx=nx*(sw/2)+sw/2,sy=ny*(sh/2)+sh/2;
+    const nxC=C(sx/sw,0,1),para=1-(2*nxC-1)*(2*nxC-1);
+    const topD=-archTop*para,botD=archBot*para;
+    const span=sh+botD-topD;if(span<1)continue;
+    sy=(sy-topD)/span*sh;
+    if(sx<0||sx>=sw-1||sy<0||sy>=sh-1)continue;
+    const fx=Math.floor(sx),fy=Math.floor(sy),tx=sx-fx,ty=sy-fy;
+    const i00=(fy*sw+fx)*4,i10=i00+4,i01=i00+sw*4,i11=i01+4;
+    if(i11+3>=sd.data.length)continue;
+    const di=(dy*dw+dx)*4;
+    for(let c=0;c<4;c++){dd.data[di+c]=C(Math.round(sd.data[i00+c]*(1-tx)*(1-ty)+sd.data[i10+c]*tx*(1-ty)+sd.data[i01+c]*(1-tx)*ty+sd.data[i11+c]*tx*ty),0,255)}
+  }}
+  dctx.putImageData(dd,0,0);return autoCrop(dst);
+}
+function autoCrop(cv2){const w=cv2.width,h=cv2.height,ctx=cv2.getContext("2d"),d=ctx.getImageData(0,0,w,h);let t=h,b=0,l=w,r=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(d.data[i]<250||d.data[i+1]<250||d.data[i+2]<250){if(y<t)t=y;if(y>b)b=y;if(x<l)l=x;if(x>r)r=x}}if(b<=t||r<=l)return cv2;const p=4;t=Math.max(0,t-p);b=Math.min(h-1,b+p);l=Math.max(0,l-p);r=Math.min(w-1,r+p);const cw2=r-l+1,ch=b-t+1;const out=document.createElement("canvas");out.width=cw2;out.height=ch;const oc=out.getContext("2d");oc.fillStyle="#ffffff";oc.fillRect(0,0,cw2,ch);oc.drawImage(cv2,l,t,cw2,ch,0,0,cw2,ch);return out}
+
+/* Composite main + sub */
+function renderTextToCanvas(){
+  const mainText=$("txMain").value||"",subText=$("txSub").value||"";
+  if(!mainText&&!subText)return null;
+  const lead=+$("txLead").value,pad=+$("txPad").value;
+  let mainC=null,subC=null;
+  if(mainText){const raw=renderLine(mainText,"_m");if(raw)mainC=transformCanvas(raw,"_m")}
+  if(subText){const raw=renderLine(subText,"_s");if(raw)subC=transformCanvas(raw,"_s")}
+  if(!mainC&&!subC)return null;
+  const mw=mainC?mainC.width:0,mh=mainC?mainC.height:0;
+  const sw2=subC?subC.width:0,sh2=subC?subC.height:0;
+  const gap=(mainC&&subC)?lead:0;
+  const totalW=Math.max(mw,sw2)+pad*2;
+  const totalH=mh+sh2+gap+pad*2;
+  const c=document.createElement("canvas");c.width=Math.ceil(totalW);c.height=Math.ceil(totalH);
+  const ctx=c.getContext("2d");ctx.fillStyle="#ffffff";ctx.fillRect(0,0,c.width,c.height);
+  if(mainC)ctx.drawImage(mainC,pad+Math.floor((totalW-pad*2-mw)/2),pad);
+  if(subC)ctx.drawImage(subC,pad+Math.floor((totalW-pad*2-sw2)/2),pad+mh+gap);
+  return c;
+}
+let _prevVer=0;
+async function refreshPreview(){
+  const ver=++_prevVer;
+  const mainText=$("txMain").value||"",subText=$("txSub").value||"";
+  if(mainText){
+    const wt=$("fontWt_m").value,it=$("fontIt_m").checked?"italic":"normal";
+    await ensureFontForText(fontFamily._m,wt,it,mainText);
+  }
+  if(ver!==_prevVer)return;
+  if(subText){
+    const wt=$("fontWt_s").value,it=$("fontIt_s").checked?"italic":"normal";
+    await ensureFontForText(fontFamily._s,wt,it,subText);
+  }
+  if(ver!==_prevVer)return;
+  const c=renderTextToCanvas();const prev=$("tcCanvas");
+  if(!c){prev.width=1;prev.height=1;return}
+  prev.width=c.width;prev.height=c.height;prev.getContext("2d").drawImage(c,0,0);
+}
+function updateTextPreview(){refreshPreview()}
+async function applyTextAsSource(){
+  const mainText=$("txMain").value||"",subText=$("txSub").value||"";
+  if(mainText){const wt=$("fontWt_m").value,it=$("fontIt_m").checked?"italic":"normal";await ensureFontForText(fontFamily._m,wt,it,mainText)}
+  if(subText){const wt=$("fontWt_s").value,it=$("fontIt_s").checked?"italic":"normal";await ensureFontForText(fontFamily._s,wt,it,subText)}
+  const c=renderTextToCanvas();if(!c)return;sW=c.width;sH=c.height;const ctx=c.getContext("2d"),d=ctx.getImageData(0,0,sW,sH);lumD=new Float32Array(sW*sH);for(let i=0;i<sW*sH;i++){if(d.data[i*4+3]<10){lumD[i]=255;continue}lumD[i]=.299*d.data[i*4]+.587*d.data[i*4+1]+.114*d.data[i*4+2]}showUI();rebuildAll()
+}
+
+/* Upload */
+const uz=$("uz"),fi=$("fi"),reb=$("reb");
 uz.onclick=e=>{if(e.target!==reb&&!reb.contains(e.target)&&!uz.classList.contains("has-image"))fi.click()};
-reb.onclick=()=>fi.click();
-uz.ondragover=e=>{e.preventDefault();uz.classList.add("dragover")};
-uz.ondragleave=()=>uz.classList.remove("dragover");
-uz.ondrop=e=>{e.preventDefault();uz.classList.remove("dragover");if(e.dataTransfer.files.length)loadF(e.dataTransfer.files[0])};
-fi.onchange=()=>{if(fi.files.length)loadF(fi.files[0])};
-function loadF(f){if(!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{sImg=img;sW=img.naturalWidth;sH=img.naturalHeight;buildLum();showUI();rebuildAll()};img.src=ev.target.result};r.readAsDataURL(f)}
-function buildLum(){const o=document.createElement("canvas");o.width=sW;o.height=sH;const c=o.getContext("2d");c.drawImage(sImg,0,0);const d=c.getImageData(0,0,sW,sH);lumD=new Float32Array(sW*sH);for(let i=0;i<sW*sH;i++){if(d.data[i*4+3]<10){lumD[i]=255;continue}lumD[i]=.299*d.data[i*4]+.587*d.data[i*4+1]+.114*d.data[i*4+2]}}
-function showUI(){uz.classList.add("has-image");document.getElementById("up").style.display="none";
-  const s=document.getElementById("st");s.style.display="block";const sc=Math.min(1,(Math.min(uz.clientWidth-30,800))/sW);
-  s.width=Math.round(sW*sc);s.height=Math.round(sH*sc);s.getContext("2d").drawImage(sImg,0,0,s.width,s.height);
-  ["sBin","sGrad","sAlgo","sOl","sGlow"].forEach(i=>document.getElementById(i).style.display="");
-  document.getElementById("pa").classList.add("visible");
-  ["sPre","sAnim"].forEach(i=>document.getElementById(i).style.display="");
-  document.getElementById("dlBtn").disabled=false}
+reb.onclick=()=>fi.click();uz.ondragover=e=>{e.preventDefault();uz.classList.add("dragover")};uz.ondragleave=()=>uz.classList.remove("dragover");uz.ondrop=e=>{e.preventDefault();uz.classList.remove("dragover");if(e.dataTransfer.files.length)loadF(e.dataTransfer.files[0])};fi.onchange=()=>{if(fi.files.length)loadF(fi.files[0])};
+function loadF(f){if(!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{sW=img.naturalWidth;sH=img.naturalHeight;origImgCV=document.createElement("canvas");origImgCV.width=sW;origImgCV.height=sH;origImgCV.getContext("2d").drawImage(img,0,0);const d=origImgCV.getContext("2d").getImageData(0,0,sW,sH);lumD=new Float32Array(sW*sH);for(let i=0;i<sW*sH;i++){if(d.data[i*4+3]<10){lumD[i]=255;continue}lumD[i]=.299*d.data[i*4]+.587*d.data[i*4+1]+.114*d.data[i*4+2]}uz.classList.add("has-image");$("up").style.display="none";const s=$("stC");s.style.display="block";imgScale=Math.min(1,(Math.min(uz.clientWidth-30,800))/sW);s.width=Math.round(sW*imgScale);s.height=Math.round(sH*imgScale);s.getContext("2d").drawImage(img,0,0,s.width,s.height);leRect=null;leMode=false;$("sLogoEx").style.display="";$("leStatus").textContent="未選択";$("leRunBtn").disabled=true;$("leResetBtn").style.display="none";showUI();rebuildAll()};img.src=ev.target.result};r.readAsDataURL(f)}
+function showUI(){$("guideToggle").classList.remove("open");$("guideBody").classList.remove("open");["sBin","sGrad","sAlgo","sOl","sGlow"].forEach(i=>$(i).style.display="");$("pa").classList.add("visible");["sPre","sAnim","sSvg"].forEach(i=>$(i).style.display="");$("dlBtn").disabled=false;$("svgTraceBtn").disabled=false}
 
-/* ===== Mask ===== */
-function rebuildMask(){
-  if(!lumD)return;const th=+$("thr").value,inv=$("inv").checked,n=sW*sH;
-  maskA=new Uint8Array(n);for(let i=0;i<n;i++){let d=lumD[i]<th;if(inv)d=!d;maskA[i]=d?1:0}
-  distF=computeDF(maskA,sW,sH);
-  // mask thumb
-  const mt=$("mTh"),ts=Math.min(1,280/sW);
-  mt.width=Math.round(sW*ts);mt.height=Math.round(sH*ts);
-  const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;
-  const tc=tmp.getContext("2d"),id=tc.createImageData(sW,sH);
-  for(let i=0;i<n;i++){const v=maskA[i]?0:255;id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}
-  tc.putImageData(id,0,0);mt.getContext("2d").drawImage(tmp,0,0,mt.width,mt.height);
+/* === Logo Extract: rect selection + fill extraction pipeline === */
+function leDrawOverlay(){
+  const s=$("stC"),ctx=s.getContext("2d");
+  /* Redraw original image */
+  if(origImgCV)ctx.drawImage(origImgCV,0,0,s.width,s.height);
+  if(!leRect)return;
+  const r=leRect, sc=imgScale;
+  const dx=Math.round(r.x*sc),dy=Math.round(r.y*sc),dw=Math.round(r.w*sc),dh=Math.round(r.h*sc);
+  ctx.strokeStyle="#00ccff";ctx.lineWidth=2;ctx.setLineDash([6,4]);
+  ctx.strokeRect(dx,dy,dw,dh);ctx.setLineDash([]);
+  ctx.fillStyle="rgba(0,200,255,0.12)";ctx.fillRect(dx,dy,dw,dh);
+  /* Label */
+  ctx.fillStyle="#00ccff";ctx.font="bold 12px sans-serif";ctx.fillText("選択範囲",dx+4,dy-4);
 }
-
-/* ===== Outline Algorithm ===== */
-function rebuildAlgoShape(){
-  if(!maskA)return;
-  const on=$("algoOn").checked;
-  if(!on){algoShapeMask=null;algoShapeDF=null;return}
-  const algo=$("algoSel").value;
-  let shape;
-
-  if(algo==="morph"){
-    // Morphological closing: dilate → erode
-    const R=+$("morphR").value;
-    // 1) Dilate: all pixels where distF ≤ R
-    const dilated=new Uint8Array(sW*sH);
-    for(let i=0;i<sW*sH;i++) dilated[i]=(maskA[i]||distF[i]<=R)?1:0;
-    // 2) Erode: compute internal DF of dilated, remove pixels with intDF < R
-    const intDF=computeInternalDF(dilated,sW,sH);
-    shape=new Uint8Array(sW*sH);
-    for(let i=0;i<sW*sH;i++) shape[i]=(dilated[i]&&intDF[i]>=R)?1:0;
-  }
-  else if(algo==="convex"){
-    // Convex hull of foreground pixels
-    const pts=[];
-    // Sample boundary pixels for performance
-    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
-      const i=y*sW+x;
-      if(!maskA[i])continue;
-      // Check if boundary pixel
-      let isBnd=false;
-      if(x===0||x===sW-1||y===0||y===sH-1)isBnd=true;
-      else if(!maskA[i-1]||!maskA[i+1]||!maskA[i-sW]||!maskA[i+sW])isBnd=true;
-      if(isBnd)pts.push([x,y]);
-    }
-    if(pts.length<3){algoShapeMask=null;algoShapeDF=null;return}
-    const hull=convexHull(pts);
-    // Fill hull polygon
-    const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;
-    const tc=tmp.getContext("2d");tc.fillStyle="#fff";
-    tc.beginPath();tc.moveTo(hull[0][0],hull[0][1]);
-    for(let i=1;i<hull.length;i++)tc.lineTo(hull[i][0],hull[i][1]);
-    tc.closePath();tc.fill();
-    const id=tc.getImageData(0,0,sW,sH);
-    shape=new Uint8Array(sW*sH);
-    for(let i=0;i<sW*sH;i++)shape[i]=id.data[i*4]>128?1:0;
-  }
-  else if(algo==="alpha"){
-    // Alpha shape approximation: grid-based
-    const alpha=+$("alphaR").value;
-    const gw=Math.ceil(sW/alpha),gh=Math.ceil(sH/alpha);
-    const grid=new Uint8Array(gw*gh);
-    // Mark grid cells containing foreground pixels
-    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
-      if(!maskA[y*sW+x])continue;
-      const gx=Math.floor(x/alpha),gy=Math.floor(y/alpha);
-      grid[gy*gw+gx]=1;
-    }
-    // Fill grid holes via morphological closing at grid level (radius 1)
-    const gdf=computeDF(grid,gw,gh);
-    const gdil=new Uint8Array(gw*gh);
-    for(let i=0;i<gw*gh;i++)gdil[i]=(grid[i]||gdf[i]<=1.5)?1:0;
-    const gidf=computeInternalDF(gdil,gw,gh);
-    const gclosed=new Uint8Array(gw*gh);
-    for(let i=0;i<gw*gh;i++)gclosed[i]=(gdil[i]&&gidf[i]>=1)?1:0;
-    // Upscale to full resolution
-    shape=new Uint8Array(sW*sH);
-    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
-      const gx=C(Math.floor(x/alpha),0,gw-1),gy=C(Math.floor(y/alpha),0,gh-1);
-      shape[y*sW+x]=gclosed[gy*gw+gx];
-    }
-  }
-
-  if(!shape){algoShapeMask=null;algoShapeDF=null;return}
-
-  // Offset: dilate shape
-  const off=+$("algoOff").value;
-  if(off>0){
-    const shapeDF=computeDF(shape,sW,sH);
-    for(let i=0;i<sW*sH;i++){if(!shape[i]&&shapeDF[i]<=off)shape[i]=1}
-  }
-
-  // Smoothing via blur
-  const sm=+$("algoSmooth").value;
-  if(sm>0){
-    const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;
-    const tc=tmp.getContext("2d"),id=tc.createImageData(sW,sH);
-    for(let i=0;i<sW*sH;i++){const v=shape[i]?255:0;id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}
-    tc.putImageData(id,0,0);
-    const tmp2=document.createElement("canvas");tmp2.width=sW;tmp2.height=sH;
-    const tc2=tmp2.getContext("2d");
-    tc2.filter=`blur(${sm}px)`;tc2.drawImage(tmp,0,0);
-    const blurred=tc2.getImageData(0,0,sW,sH);
-    for(let i=0;i<sW*sH;i++)shape[i]=blurred.data[i*4]>128?1:0;
-  }
-
-  algoShapeMask=shape;
-  // DF for stroke rendering
-  algoShapeDF=computeDF(shape,sW,sH);
-  // Also need internal DF for stroke
-  algoShapeDF._int=computeInternalDF(shape,sW,sH);
-}
-
-/* ===== Glow ===== */
-function rebuildGlow(){
-  if(!maskA||!distF)return;
-  if(!$("glOn").checked){glowCV=null;return}
-  const rad=+$("glR").value,col=hx2($("glC").value);
-  const o1T=$("o1On").checked?+$("o1T").value:0;
-  const o2T=$("o2On").checked?+$("o2T").value:0;
-  const totalT=o1T+o2T;
-  const sh=document.createElement("canvas");sh.width=sW;sh.height=sH;
-  const sc=sh.getContext("2d"),sid=sc.createImageData(sW,sH);
-  for(let i=0;i<sW*sH;i++){if(maskA[i]||distF[i]<=totalT){sid.data[i*4]=col[0];sid.data[i*4+1]=col[1];sid.data[i*4+2]=col[2];sid.data[i*4+3]=255}}
-  sc.putImageData(sid,0,0);
-  glowPd=Math.ceil(rad*2.5);
-  glowCV=document.createElement("canvas");glowCV.width=sW+glowPd*2;glowCV.height=sH+glowPd*2;
-  const gc=glowCV.getContext("2d");gc.filter=`blur(${rad}px)`;gc.drawImage(sh,glowPd,glowPd);
-}
-
-function rebuildAll(){rebuildMask();rebuildAlgoShape();rebuildGlow();if(!anOn)render()}
-
-/* ===== Render ===== */
-function dc(d,w,h){const v=DM[d]||[0,0,1,1];return[v[0]*w,v[1]*h,v[2]*w,v[3]*h]}
-
-function renderFrame(hc,dir){
-  if(!maskA||!distF||!hc||hc.length<2)return;
-  const w=sW,h=sH,th=+$("thr").value;
-  const o1On=$("o1On").checked,o1T=o1On?+$("o1T").value:0,o1C=hx2($("o1C").value),o1A=+$("o1A").value/100;
-  const o2On=$("o2On").checked,o2T=o2On?+$("o2T").value:0,o2C=hx2($("o2C").value),o2A=+$("o2A").value/100;
-  const glOn=$("glOn").checked,glA=+$("glA").value/100;
-  const aOn=$("algoOn").checked;
-  const aSt=+$("algoStroke").value,aC=hx2($("algoColor").value),aA=+$("algoAlpha").value/100;
-  const pad=(glOn&&glowCV)?glowPd:0;
-  const apd=aOn&&$("algoPad").checked&&algoShapeMask?Math.max(pad,+$("algoOff").value+$("algoSmooth")?+$("algoSmooth").value:0+aSt+10):pad;
-  const finalPad=Math.max(pad,aOn?apd:0);
-  cv.width=w+finalPad*2;cv.height=h+finalPad*2;
-  cx.clearRect(0,0,cv.width,cv.height);
-
-  // 1) Glow
-  if(glOn&&glowCV){cx.globalAlpha=glA;cx.drawImage(glowCV,finalPad-glowPd,finalPad-glowPd);cx.globalAlpha=1}
-
-  // 2) Algo outline
-  if(aOn&&algoShapeMask&&algoShapeDF){
-    const oid=cx.createImageData(w,h);
-    const intDF=algoShapeDF._int;
-    for(let i=0;i<w*h;i++){
-      // Stroke: pixels that are on the border of the shape within strokeWidth
-      if(algoShapeMask[i]&&intDF[i]<=aSt){
-        const fade=C(intDF[i],0,1); // anti-alias inner edge
-        oid.data[i*4]=aC[0];oid.data[i*4+1]=aC[1];oid.data[i*4+2]=aC[2];
-        oid.data[i*4+3]=C(Math.round(fade*aA*255),0,255);
-      } else if(!algoShapeMask[i]&&algoShapeDF[i]<=aSt){
-        const fade=C(aSt-algoShapeDF[i]+1,0,1);
-        oid.data[i*4]=aC[0];oid.data[i*4+1]=aC[1];oid.data[i*4+2]=aC[2];
-        oid.data[i*4+3]=C(Math.round(fade*aA*255),0,255);
-      }
-    }
-    const otmp=document.createElement("canvas");otmp.width=w;otmp.height=h;
-    otmp.getContext("2d").putImageData(oid,0,0);
-    cx.drawImage(otmp,finalPad,finalPad);
-  }
-
-  // 3) Double outline + gradient
-  const gt=document.createElement("canvas");gt.width=w;gt.height=h;const gc=gt.getContext("2d");
-  const[x0,y0,x1,y1]=dc(dir,w,h);
-  const gr=gc.createLinearGradient(x0,y0,x1,y1);
-  hc.forEach((c,i)=>gr.addColorStop(i/(hc.length-1),c));
-  gc.fillStyle=gr;gc.fillRect(0,0,w,h);
-  const gd=gc.getImageData(0,0,w,h);
-  const res=cx.createImageData(w,h);const edge=th*.12;
-  for(let i=0;i<w*h;i++){
-    const dist=distF[i];
-    if(maskA[i]){
-      const diff=th-lumD[i],a=edge>0?C(diff/edge,0,1):1;
-      res.data[i*4]=gd.data[i*4];res.data[i*4+1]=gd.data[i*4+1];res.data[i*4+2]=gd.data[i*4+2];
-      res.data[i*4+3]=C(Math.round(a*255),0,255);
-    }else if(o1On&&dist<=o1T){
-      const fade=C(o1T-dist+1,0,1);
-      res.data[i*4]=o1C[0];res.data[i*4+1]=o1C[1];res.data[i*4+2]=o1C[2];res.data[i*4+3]=C(Math.round(fade*o1A*255),0,255);
-    }else if(o2On&&dist<=o1T+o2T){
-      const fade=C(o1T+o2T-dist+1,0,1);
-      res.data[i*4]=o2C[0];res.data[i*4+1]=o2C[1];res.data[i*4+2]=o2C[2];res.data[i*4+3]=C(Math.round(fade*o2A*255),0,255);
-    }
-  }
-  const ctmp=document.createElement("canvas");ctmp.width=w;ctmp.height=h;
-  ctmp.getContext("2d").putImageData(res,0,0);
-  cx.drawImage(ctmp,finalPad,finalPad);
-}
-
-function gCC(){return[$("c1").value,$("c2").value,$("c3").value]}
-function render(){if(!maskA)return;stopAn();const c=(cPre>=0&&PRESETS[cPre])?PRESETS[cPre].c:gCC();renderFrame(c,cDir)}
-function $(id){return document.getElementById(id)}
-
-/* ===== Animation ===== */
-function stopAn(){if(anId){cancelAnimationFrame(anId);anId=null}anOn=false;anIdx=-1;$("aStop").classList.add("hid");document.querySelectorAll(".ab").forEach(b=>b.classList.remove("active"))}
-function startAn(idx){stopAn();document.querySelectorAll(".pb").forEach(b=>b.classList.remove("active"));cPre=-1;anOn=true;anIdx=idx;$("aStop").classList.remove("hid");document.querySelectorAll(".ab")[idx]?.classList.add("active");const ap=ANIMS[idx],st=performance.now();(function tk(now){if(!anOn)return;renderFrame(gAn(ap,((now-st)/1000)*anSpd),cDir);anId=requestAnimationFrame(tk)})(performance.now())}
-function gAn(a,t){
-  const N=7;
-  if(a.t==="hr"){const h=((a.bh||0)+Math.sin(t*1.2)*25+t*15)%360,s=a.s||80,l0=(a.lr||[40,60])[0],l1=(a.lr||[40,60])[1];return[r2h(...h2r(h-10,s,l0)),r2h(...h2r(h,s,(l0+l1)/2)),r2h(...h2r(h+10,s,l1))]}
-  if(a.t==="sw"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const o=((t*.4)%1+1)%1,r=[];for(let i=0;i<N;i++)r.push(r2h(...sPal(b,((i/(N-1)+o)%1+1)%1)));return r}
-  if(a.t==="pu"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const m=.3+.7*(.5+.5*Math.sin(t*2.5));return b.map(c=>{const[r,g,bl]=hx2(c);return r2h(r*m,g*m,bl*m)})}
-  if(a.t==="rb"){const s=a.s||90,l=a.l||50,o=((t*40)%360+360)%360,r=[];for(let i=0;i<N;i++)r.push(r2h(...h2r((o+i*(360/N))%360,s,l)));return r}
-  if(a.t==="sh"){const[bH,bS,bL]=a.b||[0,0,50],[hH,hS,hL]=a.h||[0,100,90],sp=Math.sin(t*1.8)*.5+.5,r=[];for(let i=0;i<9;i++){const x=i/8,int=C(1-Math.abs(x-sp)*3,0,1);r.push(r2h(...h2r(Lr(bH,hH,int),Lr(bS,hS,int),Lr(bL,hL,int))))}return r}
-  if(a.t==="br"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const br=Math.sin(t*1.5)*.5+.5,ph=((t*.3)%1+1)%1;return b.map((c,i)=>{const[r,g,bl]=hx2(c),s=i/b.length+ph,m=.3+.7*(.5+.5*Math.sin((br+s)*Math.PI*2));return r2h(r*m,g*m,bl*m)})}
-  return["#333","#fff"];
-}
-
-/* ===== Build Presets ===== */
 (function(){
-  const g=$("pGrid");PRESETS.forEach((p,i)=>{const b=document.createElement("button");b.className="pb"+(i===0?" active":"");
-    const st=p.c.map((c,j)=>`${c} ${(j/(p.c.length-1)*100).toFixed(0)}%`).join(",");
-    b.style.background=`linear-gradient(135deg,${st})`;b.innerHTML=`<span class="pl">${p.n}</span>`;
-    b.onclick=()=>{stopAn();g.querySelectorAll(".pb").forEach(x=>x.classList.remove("active"));b.classList.add("active");cPre=i;
-      const c=p.c;$("c1").value=c[0];$("c2").value=c[Math.floor(c.length/2)];$("c3").value=c[c.length-1];render()};
-    g.appendChild(b)});
-})();
-(function(){
-  const g=$("aGrid");ANIMS.forEach((a,i)=>{const b=document.createElement("button");b.className="ab";
-    const c=document.createElement("canvas");c.width=120;c.height=44;b.appendChild(c);
-    const l=document.createElement("span");l.className="al";l.textContent=a.n;b.appendChild(l);
-    b.onclick=()=>{if(maskA)startAn(i)};g.appendChild(b);
-    const mc=c.getContext("2d"),s=performance.now();
-    (function mt(now){const cols=gAn(a,((now-s)/1000)*.8);if(cols.length>=2){const gr=mc.createLinearGradient(0,0,120,44);cols.forEach((c,j)=>gr.addColorStop(j/(cols.length-1),c));mc.fillStyle=gr;mc.fillRect(0,0,120,44)}requestAnimationFrame(mt)})(performance.now());
+  const stC=$("stC");
+  stC.addEventListener("mousedown",e=>{
+    if(leFixMode){
+      e.preventDefault();
+      const rect=stC.getBoundingClientRect();
+      const mx=(e.clientX-rect.left)/imgScale, my=(e.clientY-rect.top)/imgScale;
+      leSpotFix(mx,my);return;
+    }
+    if(!leMode)return;e.preventDefault();
+    const rect=stC.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)/imgScale, my=(e.clientY-rect.top)/imgScale;
+    leStart={x:mx,y:my};leRect={x:mx,y:my,w:0,h:0};
+  });
+  stC.addEventListener("mousemove",e=>{
+    if(!leMode||!leStart)return;e.preventDefault();
+    const rect=stC.getBoundingClientRect();
+    const mx=C((e.clientX-rect.left)/imgScale,0,sW), my=C((e.clientY-rect.top)/imgScale,0,sH);
+    leRect={x:Math.min(leStart.x,mx),y:Math.min(leStart.y,my),w:Math.abs(mx-leStart.x),h:Math.abs(my-leStart.y)};
+    leDrawOverlay();
+  });
+  stC.addEventListener("mouseup",e=>{
+    if(!leMode||!leStart)return;
+    leStart=null;
+    if(leRect&&leRect.w>5&&leRect.h>5){
+      leMode=false;stC.style.cursor="default";
+      $("leSelBtn").textContent="📐 矩形選択";$("leSelBtn").style.background="";
+      $("leRunBtn").disabled=false;
+      $("leStatus").textContent="選択済み ("+Math.round(leRect.w)+"×"+Math.round(leRect.h)+"px)";
+      $("leStatus").style.color="#0c0";
+    }
+  });
+  /* Touch support */
+  stC.addEventListener("touchstart",e=>{
+    if(leFixMode){
+      e.preventDefault();
+      const t=e.touches[0],rect=stC.getBoundingClientRect();
+      const mx=(t.clientX-rect.left)/imgScale, my=(t.clientY-rect.top)/imgScale;
+      leSpotFix(mx,my);return;
+    }
+    if(!leMode)return;e.preventDefault();
+    const t=e.touches[0],rect=stC.getBoundingClientRect();
+    const mx=(t.clientX-rect.left)/imgScale, my=(t.clientY-rect.top)/imgScale;
+    leStart={x:mx,y:my};leRect={x:mx,y:my,w:0,h:0};
+  },{passive:false});
+  stC.addEventListener("touchmove",e=>{
+    if(!leMode||!leStart)return;e.preventDefault();
+    const t=e.touches[0],rect=stC.getBoundingClientRect();
+    const mx=C((t.clientX-rect.left)/imgScale,0,sW), my=C((t.clientY-rect.top)/imgScale,0,sH);
+    leRect={x:Math.min(leStart.x,mx),y:Math.min(leStart.y,my),w:Math.abs(mx-leStart.x),h:Math.abs(my-leStart.y)};
+    leDrawOverlay();
+  },{passive:false});
+  stC.addEventListener("touchend",e=>{
+    if(!leMode||!leStart)return;
+    leStart=null;
+    if(leRect&&leRect.w>5&&leRect.h>5){
+      leMode=false;stC.style.cursor="default";
+      $("leSelBtn").textContent="📐 矩形選択";$("leSelBtn").style.background="";
+      $("leRunBtn").disabled=false;
+      $("leStatus").textContent="選択済み ("+Math.round(leRect.w)+"×"+Math.round(leRect.h)+"px)";
+      $("leStatus").style.color="#0c0";
+    }
   });
 })();
 
-/* ===== Events ===== */
-// Mask
-$("thr").oninput=function(){$("thrV").textContent=this.value;rebuildAll()};
-$("inv").onchange=rebuildAll;
-
-// Algo
-$("algoSel").onchange=function(){
-  $("morphParams").style.display=this.value==="morph"?"":"none";
-  $("alphaParams").style.display=this.value==="alpha"?"":"none";
-  rebuildAlgoShape();rebuildGlow();if(!anOn)render();
+$("leSelBtn").onclick=function(){
+  if(!origImgCV)return;
+  leFixMode=false;$("leFixBtn").style.background="";
+  leMode=!leMode;
+  if(leMode){
+    this.textContent="🔴 選択中… (ドラッグ)";this.style.background="#665500";
+    $("stC").style.cursor="crosshair";
+    leRect=null;$("leRunBtn").disabled=true;
+    $("leStatus").textContent="ドラッグで矩形を描画";$("leStatus").style.color="#ff0";
+    leDrawOverlay();
+  }else{
+    this.textContent="📐 矩形選択";this.style.background="";
+    $("stC").style.cursor="default";
+  }
 };
-$("algoOn").onchange=()=>{rebuildAlgoShape();if(!anOn)render()};
-$("algoPad").onchange=()=>{rebuildAlgoShape();if(!anOn)render()};
+
+/* Flood fill from edges: fill connected "white-ish" pixels with black */
+function floodFillEdges(imgData,w,h,thr){
+  const d=imgData.data,n=w*h;
+  const visited=new Uint8Array(n);
+  /* Use typed array as ring buffer queue for performance on large images */
+  const q=new Int32Array(n);let qH=0,qT=0;
+  const enq=v=>{if(!visited[v]){q[qT++]=v;visited[v]=1}};
+  /* Seed: all edge pixels that are above threshold (white-ish) */
+  for(let x=0;x<w;x++){
+    const ti=x,bi=(h-1)*w+x;
+    const tl=.299*d[ti*4]+.587*d[ti*4+1]+.114*d[ti*4+2];
+    const bl=.299*d[bi*4]+.587*d[bi*4+1]+.114*d[bi*4+2];
+    if(tl>=thr)enq(ti);if(bl>=thr)enq(bi);
+  }
+  for(let y=1;y<h-1;y++){
+    const li=y*w,ri=y*w+w-1;
+    const ll=.299*d[li*4]+.587*d[li*4+1]+.114*d[li*4+2];
+    const rl=.299*d[ri*4]+.587*d[ri*4+1]+.114*d[ri*4+2];
+    if(ll>=thr)enq(li);if(rl>=thr)enq(ri);
+  }
+  /* BFS flood fill */
+  while(qH<qT){
+    const idx=q[qH++];
+    const lum=.299*d[idx*4]+.587*d[idx*4+1]+.114*d[idx*4+2];
+    if(lum<thr)continue;
+    d[idx*4]=0;d[idx*4+1]=0;d[idx*4+2]=0;d[idx*4+3]=255;
+    const x=idx%w,y=(idx/w)|0;
+    if(x>0)enq(idx-1);
+    if(x<w-1)enq(idx+1);
+    if(y>0)enq(idx-w);
+    if(y<h-1)enq(idx+w);
+  }
+}
+
+$("leRunBtn").onclick=leRunExtract;
+let _leTimer=null;
+function leDebouncedRun(){clearTimeout(_leTimer);_leTimer=setTimeout(leRunExtract,120)}
+$("leThr").oninput=function(){$("leThrV").textContent=this.value;if(leRect&&leRect.w>5)leDebouncedRun()};
+$("leAA").oninput=function(){$("leAAV").textContent=this.value;if(leRect&&leRect.w>5)leDebouncedRun()};
+$("leDespeck").oninput=function(){$("leDespeckV").textContent=this.value;if(leRect&&leRect.w>5)leDebouncedRun()};
+
+function leRunExtract(){
+  if(!origImgCV||!leRect)return;
+  const r=leRect,thr=+$("leThr").value,aaThr=+$("leAA").value,despeckMin=+$("leDespeck").value;
+  const rx=Math.round(r.x),ry=Math.round(r.y),rw=Math.round(r.w),rh=Math.round(r.h);
+
+  /* Step 1: Copy ORIGINAL image to working canvas (always fresh) */
+  const wc=document.createElement("canvas");wc.width=sW;wc.height=sH;
+  const wctx=wc.getContext("2d");
+  wctx.drawImage(origImgCV,0,0);
+
+  /* Step 2: Save selected rect content */
+  const savedRect=wctx.getImageData(rx,ry,rw,rh);
+
+  /* Step 3: Erase selected rect (fill white) */
+  wctx.fillStyle="#ffffff";wctx.fillRect(rx,ry,rw,rh);
+
+  /* Step 4: Flood fill background (white connected to edges → black) */
+  const imgData=wctx.getImageData(0,0,sW,sH);
+  floodFillEdges(imgData,sW,sH,thr);
+  /* Step 4.5: Dilate flood fill to catch anti-aliased fringe pixels */
+  const fd=imgData.data;
+  const filled=new Uint8Array(sW*sH);
+  for(let i=0;i<sW*sH;i++){if(fd[i*4]===0&&fd[i*4+1]===0&&fd[i*4+2]===0)filled[i]=1}
+  const sofThr=Math.max(20,thr-aaThr);
+  for(let pass=0;pass<3;pass++){
+    for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){
+      const i=y*sW+x;if(filled[i])continue;
+      const px=i%sW,py=(i/sW)|0;
+      if(px>=rx&&px<rx+rw&&py>=ry&&py<ry+rh)continue;
+      let adj=false;
+      if(x>0&&filled[i-1])adj=true;
+      if(x<sW-1&&filled[i+1])adj=true;
+      if(y>0&&filled[i-sW])adj=true;
+      if(y<sH-1&&filled[i+sW])adj=true;
+      if(!adj)continue;
+      const lum=.299*fd[i*4]+.587*fd[i*4+1]+.114*fd[i*4+2];
+      if(lum>=sofThr){fd[i*4]=0;fd[i*4+1]=0;fd[i*4+2]=0;filled[i]=1}
+    }
+  }
+  wctx.putImageData(imgData,0,0);
+
+  /* Step 5: Invert black ↔ white */
+  const invData=wctx.getImageData(0,0,sW,sH);
+  for(let i=0;i<sW*sH;i++){
+    invData.data[i*4]=255-invData.data[i*4];
+    invData.data[i*4+1]=255-invData.data[i*4+1];
+    invData.data[i*4+2]=255-invData.data[i*4+2];
+  }
+  wctx.putImageData(invData,0,0);
+
+  /* Step 5.5: Clean remaining anti-aliased remnants after inversion.
+     aaThr controls how aggressively gray remnants are removed.
+     Higher value = more aggressive cleanup (more gray pushed to white). */
+  const cleanData=wctx.getImageData(0,0,sW,sH);
+  const cd=cleanData.data;
+  for(let i=0;i<sW*sH;i++){
+    const px=i%sW,py=(i/sW)|0;
+    if(px>=rx&&px<rx+rw&&py>=ry&&py<ry+rh)continue;
+    const lum=.299*cd[i*4]+.587*cd[i*4+1]+.114*cd[i*4+2];
+    if(lum<aaThr){cd[i*4]=0;cd[i*4+1]=0;cd[i*4+2]=0}
+    else{cd[i*4]=255;cd[i*4+1]=255;cd[i*4+2]=255}
+  }
+  wctx.putImageData(cleanData,0,0);
+
+  /* Step 5.6: Despeckle — remove small isolated black pixel clusters */
+  if(despeckMin>0){
+    const dsData=wctx.getImageData(0,0,sW,sH);
+    const dd=dsData.data;
+    const label=new Int32Array(sW*sH); /* 0=unvisited */
+    let nextLabel=1;
+    const compSizes=[];/* compSizes[label-1] = pixel count */
+    for(let i=0;i<sW*sH;i++){
+      const px=i%sW,py=(i/sW)|0;
+      if(px>=rx&&px<rx+rw&&py>=ry&&py<ry+rh)continue;
+      if(label[i]||dd[i*4]>128)continue;/* skip white or already labeled */
+      /* BFS to find connected black component */
+      const curLabel=nextLabel++;
+      const bq=[i];let bqH=0;let sz=0;
+      label[i]=curLabel;
+      while(bqH<bq.length){
+        const ci=bq[bqH++];sz++;
+        const cx=ci%sW,cy=(ci/sW)|0;
+        const nb=[];
+        if(cx>0)nb.push(ci-1);
+        if(cx<sW-1)nb.push(ci+1);
+        if(cy>0)nb.push(ci-sW);
+        if(cy<sH-1)nb.push(ci+sW);
+        /* 8-connectivity for better island detection */
+        if(cx>0&&cy>0)nb.push(ci-sW-1);
+        if(cx<sW-1&&cy>0)nb.push(ci-sW+1);
+        if(cx>0&&cy<sH-1)nb.push(ci+sW-1);
+        if(cx<sW-1&&cy<sH-1)nb.push(ci+sW+1);
+        for(const ni of nb){
+          if(label[ni])continue;
+          const npx=ni%sW,npy=(ni/sW)|0;
+          if(npx>=rx&&npx<rx+rw&&npy>=ry&&npy<ry+rh)continue;
+          if(dd[ni*4]>128)continue;
+          label[ni]=curLabel;bq.push(ni);
+        }
+      }
+      compSizes.push(sz);
+    }
+    /* Remove components smaller than threshold */
+    for(let i=0;i<sW*sH;i++){
+      if(!label[i])continue;
+      if(compSizes[label[i]-1]<despeckMin){
+        dd[i*4]=255;dd[i*4+1]=255;dd[i*4+2]=255;
+      }
+    }
+    wctx.putImageData(dsData,0,0);
+  }
+
+  /* Step 6: Restore selected rect */
+  wctx.putImageData(savedRect,rx,ry);
+
+  /* Update source data (lumD) for gradient pipeline */
+  const finalData=wctx.getImageData(0,0,sW,sH);
+  lumD=new Float32Array(sW*sH);
+  for(let i=0;i<sW*sH;i++){
+    if(finalData.data[i*4+3]<10){lumD[i]=255;continue}
+    lumD[i]=.299*finalData.data[i*4]+.587*finalData.data[i*4+1]+.114*finalData.data[i*4+2];
+  }
+
+  /* Show preview */
+  const lp=$("lePreview");lp.style.display="block";
+  const psc=Math.min(1,400/sW);
+  lp.width=Math.round(sW*psc);lp.height=Math.round(sH*psc);
+  lp.getContext("2d").drawImage(wc,0,0,lp.width,lp.height);
+
+  /* Also update the stC display */
+  const stC=$("stC");stC.getContext("2d").drawImage(wc,0,0,stC.width,stC.height);
+
+  /* Save working canvas for spot fix */
+  leWorkCV=document.createElement("canvas");leWorkCV.width=sW;leWorkCV.height=sH;
+  leWorkCV.getContext("2d").drawImage(wc,0,0);
+
+  /* NOTE: Do NOT overwrite origImgCV — keep original for re-runs */
+
+  $("leStatus").textContent="✅ 抽出完了！ スポット修正で微調整可";$("leStatus").style.color="#0f0";
+  $("leResetBtn").style.display="";
+  $("leFixBtn").style.display="";
+  leFixMode=false;$("leFixBtn").style.background="";
+  rebuildAll();
+}
+
+$("leResetBtn").onclick=function(){
+  if(!origImgCV)return;
+  const d=origImgCV.getContext("2d").getImageData(0,0,sW,sH);
+  lumD=new Float32Array(sW*sH);
+  for(let i=0;i<sW*sH;i++){
+    if(d.data[i*4+3]<10){lumD[i]=255;continue}
+    lumD[i]=.299*d.data[i*4]+.587*d.data[i*4+1]+.114*d.data[i*4+2];
+  }
+  const stC=$("stC");stC.getContext("2d").drawImage(origImgCV,0,0,stC.width,stC.height);
+  if(leRect)leDrawOverlay();
+  $("lePreview").style.display="none";
+  $("leFixBtn").style.display="none";leFixMode=false;leWorkCV=null;
+  $("leStatus").textContent="リセット済み（選択範囲は保持）";$("leStatus").style.color="#f80";
+  rebuildAll();
+};
+
+/* Spot fix: click to invert a connected region */
+$("leFixBtn").onclick=function(){
+  leFixMode=!leFixMode;leMode=false;
+  $("leSelBtn").style.background="";
+  this.style.background=leFixMode?"#f06":"";
+  $("leStatus").textContent=leFixMode?"🖱 画像上の修正したい領域をクリック":"スポット修正OFF";
+  $("leStatus").style.color=leFixMode?"#ff0":"#0f0";
+  if(leFixMode)$("stC").style.cursor="crosshair";
+  else $("stC").style.cursor="";
+};
+
+function leSpotFix(mx,my){
+  if(!leWorkCV)return;
+  const ix=Math.round(mx),iy=Math.round(my);
+  if(ix<0||ix>=sW||iy<0||iy>=sH)return;
+  const wctx=leWorkCV.getContext("2d");
+  const imgData=wctx.getImageData(0,0,sW,sH);
+  const dd=imgData.data;
+  const startIdx=iy*sW+ix;
+  const startLum=dd[startIdx*4]; /* 0=black, 255=white */
+  const isBlack=startLum<128;
+
+  /* BFS flood fill the connected same-color region and invert it */
+  const visited=new Uint8Array(sW*sH);
+  const queue=[startIdx];visited[startIdx]=1;
+  const pixels=[];
+  while(queue.length>0){
+    const ci=queue.shift();
+    pixels.push(ci);
+    const cx=ci%sW,cy=(ci/sW)|0;
+    const nb=[];
+    if(cx>0)nb.push(ci-1);
+    if(cx<sW-1)nb.push(ci+1);
+    if(cy>0)nb.push(ci-sW);
+    if(cy<sH-1)nb.push(ci+sW);
+    if(cx>0&&cy>0)nb.push(ci-sW-1);
+    if(cx<sW-1&&cy>0)nb.push(ci-sW+1);
+    if(cx>0&&cy<sH-1)nb.push(ci+sW-1);
+    if(cx<sW-1&&cy<sH-1)nb.push(ci+sW+1);
+    for(const ni of nb){
+      if(visited[ni])continue;
+      const nLum=dd[ni*4];
+      if(isBlack?(nLum<128):(nLum>=128)){
+        visited[ni]=1;queue.push(ni);
+      }
+    }
+  }
+
+  /* Invert all pixels in the region */
+  const nv=isBlack?255:0;
+  for(const pi of pixels){
+    dd[pi*4]=nv;dd[pi*4+1]=nv;dd[pi*4+2]=nv;
+  }
+  wctx.putImageData(imgData,0,0);
+
+  /* Update lumD */
+  lumD=new Float32Array(sW*sH);
+  const fd=wctx.getImageData(0,0,sW,sH).data;
+  for(let i=0;i<sW*sH;i++){
+    if(fd[i*4+3]<10){lumD[i]=255;continue}
+    lumD[i]=.299*fd[i*4]+.587*fd[i*4+1]+.114*fd[i*4+2];
+  }
+
+  /* Update displays */
+  const stC=$("stC");stC.getContext("2d").drawImage(leWorkCV,0,0,stC.width,stC.height);
+  const lp=$("lePreview");
+  if(lp.style.display!=="none"){
+    lp.getContext("2d").drawImage(leWorkCV,0,0,lp.width,lp.height);
+  }
+  $("leStatus").textContent="🖱 修正済み("+pixels.length+"px) — 続けてクリック可";
+  $("leStatus").style.color="#ff0";
+  rebuildAll();
+}
+
+/* ========== SVG Vector Trace Engine ========== */
+let svgPaths=null, svgStr="";
+
+/* Correct Marching Squares lookup table.
+   TBL[cellConfig][entryFrom] = exitDirection (-1 = no exit)
+   Directions: 0=Right, 1=Down, 2=Left, 3=Up
+   Cell config bits: TL(3) TR(2) BR(1) BL(0)
+   Edge exists at R if TR≠BR, D if BL≠BR, L if TL≠BL, U if TL≠TR */
+const _MS_TBL=[
+/*0 */[-1,-1,-1,-1],/*1  D,L*/[-1, 2, 1,-1],/*2  R,D*/[ 1, 0,-1,-1],/*3  R,L*/[ 2,-1, 0,-1],
+/*4  R,U*/[ 3,-1,-1, 0],/*5  saddle*/[ 3, 2, 1, 0],/*6  D,U*/[-1, 3,-1, 1],/*7  L,U*/[-1,-1, 3, 2],
+/*8  L,U*/[-1,-1, 3, 2],/*9  D,U*/[-1, 3,-1, 1],/*10 saddle*/[ 1, 0, 3, 2],/*11 R,U*/[ 3,-1,-1, 0],
+/*12 R,L*/[ 2,-1, 0,-1],/*13 R,D*/[ 1, 0,-1,-1],/*14 D,L*/[-1, 2, 1,-1],/*15*/[-1,-1,-1,-1]
+];
+const _MS_DX=[1,0,-1,0],_MS_DY=[0,1,0,-1];
+
+function traceContours(mask,w,h){
+  function s(x,y){return(x>=0&&x<w&&y>=0&&y<h&&mask[y*w+x])?1:0}
+  function cell(gx,gy){return(s(gx-1,gy-1)<<3)|(s(gx,gy-1)<<2)|(s(gx,gy)<<1)|s(gx-1,gy)}
+  const W1=w+1;
+  const edgeVis=new Uint8Array(W1*(h+1)*4);
+
+  function markEdge(x,y,dir){
+    edgeVis[(y*W1+x)*4+dir]=1;
+    const nx=x+_MS_DX[dir],ny=y+_MS_DY[dir];
+    if(nx>=0&&nx<=w&&ny>=0&&ny<=h)edgeVis[(ny*W1+nx)*4+((dir+2)&3)]=1;
+  }
+
+  function follow(sx,sy,sdir){
+    const pts=[];
+    let x=sx,y=sy,dir=sdir;
+    const limit=(w+h)*8;
+    for(let i=0;i<limit;i++){
+      const ek=(y*W1+x)*4+dir;
+      if(edgeVis[ek]){if(i>0)break;return[]}
+      markEdge(x,y,dir);
+      pts.push([x,y]);
+      const nx=x+_MS_DX[dir],ny=y+_MS_DY[dir];
+      if(nx<0||nx>w||ny<0||ny>h)break;
+      const c=cell(nx,ny);
+      if(c===0||c===15)break;
+      const nd=_MS_TBL[c][(dir+2)&3];
+      if(nd<0)break;
+      x=nx;y=ny;dir=nd;
+    }
+    return pts;
+  }
+
+  const contours=[];
+  for(let gy=0;gy<=h;gy++)for(let gx=0;gx<=w;gx++){
+    const c=cell(gx,gy);
+    if(c===0||c===15)continue;
+    for(let ef=0;ef<4;ef++){
+      const ed=_MS_TBL[c][ef];
+      if(ed<0)continue;
+      if(edgeVis[(gy*W1+gx)*4+ed])continue;
+      const pts=follow(gx,gy,ed);
+      if(pts.length>=3)contours.push(pts);
+    }
+  }
+  return contours;
+}
+
+/* Iterative Douglas-Peucker (stack-safe) */
+function simplifyDP(pts,eps){
+  const n=pts.length;if(n<=2)return pts;
+  const keep=new Uint8Array(n);keep[0]=1;keep[n-1]=1;
+  const stack=[[0,n-1]];
+  while(stack.length){
+    const[a,b]=stack.pop();if(b-a<2)continue;
+    let maxD=0,idx=a;
+    const sx=pts[a][0],sy=pts[a][1],ex=pts[b][0],ey=pts[b][1];
+    const ddx=ex-sx,ddy=ey-sy,len2=ddx*ddx+ddy*ddy,len=Math.sqrt(len2);
+    for(let i=a+1;i<b;i++){
+      const d=len<.5?Math.sqrt((pts[i][0]-sx)**2+(pts[i][1]-sy)**2)
+        :Math.abs(ddy*pts[i][0]-ddx*pts[i][1]+ex*sy-ey*sx)/len;
+      if(d>maxD){maxD=d;idx=i}
+    }
+    if(maxD>eps){keep[idx]=1;stack.push([a,idx],[idx,b])}
+  }
+  const r=[];for(let i=0;i<n;i++)if(keep[i])r.push(pts[i]);return r;
+}
+
+function simplifyContour(pts,eps){
+  if(pts.length<=4)return pts;
+  let maxD=0,si=0;
+  for(let i=1;i<pts.length;i++){
+    const d=(pts[i][0]-pts[0][0])**2+(pts[i][1]-pts[0][1])**2;
+    if(d>maxD){maxD=d;si=i}
+  }
+  const s1=simplifyDP(pts.slice(0,si+1),eps);
+  const s2=simplifyDP(pts.slice(si).concat([pts[0]]),eps);
+  return s1.slice(0,-1).concat(s2.slice(0,-1));
+}
+
+/* Polyline → smooth cubic bezier SVG path (Catmull-Rom) */
+function toBezierSVG(pts,smooth){
+  if(pts.length<3)return"";
+  const t=smooth/100,n=pts.length,f=v=>v.toFixed(1);
+  if(t<0.01){
+    let d="M"+f(pts[0][0])+","+f(pts[0][1]);
+    for(let i=1;i<n;i++)d+="L"+f(pts[i][0])+","+f(pts[i][1]);
+    return d+"Z";
+  }
+  function tg(i){
+    const p0=pts[(i-1+n)%n],p2=pts[(i+1)%n];
+    return[(p2[0]-p0[0])*t/3,(p2[1]-p0[1])*t/3];
+  }
+  let d="M"+f(pts[0][0])+","+f(pts[0][1]);
+  for(let i=0;i<n;i++){
+    const p1=pts[i],p2=pts[(i+1)%n],t1=tg(i),t2=tg((i+1)%n);
+    d+="C"+f(p1[0]+t1[0])+","+f(p1[1]+t1[1])+" "+f(p2[0]-t2[0])+","+f(p2[1]-t2[1])+" "+f(p2[0])+","+f(p2[1]);
+  }
+  return d+"Z";
+}
+
+function buildSVGPaths(contours,eps,smooth){
+  const simp=contours.map(c=>simplifyContour(c,eps)).filter(c=>c.length>=3);
+  let verts=0,d="";
+  for(const pts of simp){d+=toBezierSVG(pts,smooth)+" ";verts+=pts.length}
+  return{d:d.trim(),pathCount:simp.length,vertCount:verts};
+}
+
+function generateSVG(){
+  if(!maskA||!svgPaths)return"";
+  const w=sW,h=sH;
+  const colors=(cPre>=0&&PRESETS[cPre])?PRESETS[cPre].c:gCC();
+  const[x0,y0,x1,y1]=dc(cDir,w,h);
+  const o1On=$("o1On").checked,o1T=o1On?+$("o1T").value:0,o1C=$("o1C").value,o1A=+$("o1A").value/100;
+  const o2On=$("o2On").checked,o2T=o2On?+$("o2T").value:0,o2C=$("o2C").value,o2A=+$("o2A").value/100;
+  const glOn=$("glOn").checked,glR=+$("glR").value,glC=$("glC").value,glA=+$("glA").value/100;
+  const aOn=$("algoOn").checked,aSt=+$("algoStroke").value,aC=$("algoColor").value,aA=+$("algoAlpha").value/100;
+  const tOL=o1T+o2T;
+  const pad=Math.max(glOn?(glR*3):0,tOL+10,aOn?aSt+20:0);
+  const svgW=w+pad*2,svgH=h+pad*2,pathD=svgPaths.d;
+
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}">\n<defs>\n`;
+  const gx0=(x0+pad)/svgW*100,gy0=(y0+pad)/svgH*100,gx1=(x1+pad)/svgW*100,gy1=(y1+pad)/svgH*100;
+  svg+=`  <linearGradient id="grad" x1="${gx0.toFixed(1)}%" y1="${gy0.toFixed(1)}%" x2="${gx1.toFixed(1)}%" y2="${gy1.toFixed(1)}%">\n`;
+  colors.forEach((c,i)=>{svg+=`    <stop offset="${(i/(colors.length-1)*100).toFixed(0)}%" stop-color="${c}"/>\n`});
+  svg+=`  </linearGradient>\n`;
+  if(glOn){svg+=`  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="${glR}"/></filter>\n`}
+  svg+=`</defs>\n<g transform="translate(${pad},${pad})">\n`;
+  if(glOn){svg+=`  <path d="${pathD}" fill="${glC}" fill-rule="evenodd" filter="url(#glow)" opacity="${glA.toFixed(2)}"${o1T>0?` stroke="${glC}" stroke-width="${tOL}"`:""}/>` + "\n"}
+  if(aOn&&algoShapeMask){svg+=`  <path d="${pathD}" fill="none" fill-rule="evenodd" stroke="${aC}" stroke-width="${aSt*2+tOL*2}" stroke-linejoin="round" opacity="${aA.toFixed(2)}"/>\n`}
+  if(o2On&&o2T>0){svg+=`  <path d="${pathD}" fill="${o2C}" fill-rule="evenodd" stroke="${o2C}" stroke-width="${(o1T+o2T)*2}" stroke-linejoin="round" opacity="${o2A.toFixed(2)}"/>\n`}
+  if(o1On&&o1T>0){svg+=`  <path d="${pathD}" fill="${o1C}" fill-rule="evenodd" stroke="${o1C}" stroke-width="${o1T*2}" stroke-linejoin="round" opacity="${o1A.toFixed(2)}"/>\n`}
+  svg+=`  <path d="${pathD}" fill="url(#grad)" fill-rule="evenodd"/>\n`;
+  svg+=`</g>\n</svg>`;
+  return svg;
+}
+
+function runTrace(){
+  if(!maskA)return;
+  const eps=+$("svgSimp").value,smooth=+$("svgSmooth").value;
+  $("svgTraceBtn").textContent="⏳ 処理中...";
+  setTimeout(()=>{
+    try{
+      const t0=performance.now();
+      const contours=traceContours(maskA,sW,sH);
+      svgPaths=buildSVGPaths(contours,eps,smooth);
+      const ms=(performance.now()-t0).toFixed(0);
+      $("svgPathCount").textContent=svgPaths.pathCount+" ("+ms+"ms)";
+      $("svgVertCount").textContent=svgPaths.vertCount;
+      svgStr=generateSVG();
+      const wrap=$("svgPreviewWrap");wrap.style.display="block";
+      wrap.innerHTML=svgStr;
+      const el=wrap.querySelector("svg");if(el){el.style.width="100%";el.style.height="auto"}
+      $("svgDlSvg").disabled=false;$("svgDlPng").disabled=false;
+    }catch(e){$("svgPathCount").textContent="Error";$("svgVertCount").textContent=e.message}
+    $("svgTraceBtn").textContent="🔄 トレース実行";
+  },30);
+}
+$("svgTraceBtn").onclick=runTrace;
+let _svgTimer=null;
+function svgDebouncedTrace(){clearTimeout(_svgTimer);_svgTimer=setTimeout(()=>{if(svgPaths)runTrace()},200)}
+$("svgSimp").oninput=function(){$("svgSimpV").textContent=this.value;svgDebouncedTrace()};
+$("svgSmooth").oninput=function(){$("svgSmoothV").textContent=this.value+"%";svgDebouncedTrace()};
+
+$("svgDlSvg").onclick=function(){
+  if(!svgStr)return;
+  svgStr=generateSVG(); /* regenerate with latest settings */
+  const blob=new Blob([svgStr],{type:"image/svg+xml"});
+  const a=document.createElement("a");a.download="logo.svg";a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
+};
+$("svgDlPng").onclick=function(){
+  if(!svgStr)return;
+  svgStr=generateSVG(); /* regenerate with latest settings */
+  const scale=+$("svgPngScale").value;
+  const blob=new Blob([svgStr],{type:"image/svg+xml"});
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  img.onload=function(){
+    const c=document.createElement("canvas");c.width=img.naturalWidth*scale;c.height=img.naturalHeight*scale;
+    const ctx=c.getContext("2d");ctx.scale(scale,scale);ctx.drawImage(img,0,0);
+    const a=document.createElement("a");a.download="logo_"+scale+"x.png";a.href=c.toDataURL("image/png");a.click();URL.revokeObjectURL(url);
+  };
+  img.src=url;
+};
+
+/* Mask */
+function rebuildMask(){if(!lumD)return;const th=+$("thr").value,inv=$("inv").checked,n=sW*sH;maskA=new Uint8Array(n);for(let i=0;i<n;i++){let d=lumD[i]<th;if(inv)d=!d;maskA[i]=d?1:0}distF=computeDF(maskA,sW,sH);const mt=$("mTh"),ts=Math.min(1,280/sW);mt.width=Math.round(sW*ts);mt.height=Math.round(sH*ts);const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;const tc=tmp.getContext("2d"),id=tc.createImageData(sW,sH);for(let i=0;i<n;i++){const v=maskA[i]?0:255;id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}tc.putImageData(id,0,0);mt.getContext("2d").drawImage(tmp,0,0,mt.width,mt.height)}
+
+/* Algo */
+function rebuildAlgoShape(){if(!maskA)return;if(!$("algoOn").checked){algoShapeMask=null;algoShapeDF=null;return}const algo=$("algoSel").value;let shape;if(algo==="morph"){const R=+$("morphR").value;const dilated=new Uint8Array(sW*sH);for(let i=0;i<sW*sH;i++)dilated[i]=(maskA[i]||distF[i]<=R)?1:0;const intDF=computeInternalDF(dilated,sW,sH);shape=new Uint8Array(sW*sH);for(let i=0;i<sW*sH;i++)shape[i]=(dilated[i]&&intDF[i]>=R)?1:0}else if(algo==="convex"){const pts=[];for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){const i=y*sW+x;if(!maskA[i])continue;let isBnd=x===0||x===sW-1||y===0||y===sH-1;if(!isBnd&&(!maskA[i-1]||!maskA[i+1]||!maskA[i-sW]||!maskA[i+sW]))isBnd=true;if(isBnd)pts.push([x,y])}if(pts.length<3){algoShapeMask=null;algoShapeDF=null;return}const hull=convexHull(pts);const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;const tc=tmp.getContext("2d");tc.fillStyle="#fff";tc.beginPath();tc.moveTo(hull[0][0],hull[0][1]);for(let i=1;i<hull.length;i++)tc.lineTo(hull[i][0],hull[i][1]);tc.closePath();tc.fill();const id=tc.getImageData(0,0,sW,sH);shape=new Uint8Array(sW*sH);for(let i=0;i<sW*sH;i++)shape[i]=id.data[i*4]>128?1:0}else if(algo==="alpha"){const alpha=+$("alphaR").value;const gw=Math.ceil(sW/alpha),gh=Math.ceil(sH/alpha);const grid=new Uint8Array(gw*gh);for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){if(!maskA[y*sW+x])continue;grid[Math.floor(y/alpha)*gw+Math.floor(x/alpha)]=1}const gdf=computeDF(grid,gw,gh);const gdil=new Uint8Array(gw*gh);for(let i=0;i<gw*gh;i++)gdil[i]=(grid[i]||gdf[i]<=1.5)?1:0;const gidf=computeInternalDF(gdil,gw,gh);const gclosed=new Uint8Array(gw*gh);for(let i=0;i<gw*gh;i++)gclosed[i]=(gdil[i]&&gidf[i]>=1)?1:0;shape=new Uint8Array(sW*sH);for(let y=0;y<sH;y++)for(let x=0;x<sW;x++){const gx=C(Math.floor(x/alpha),0,gw-1),gy=C(Math.floor(y/alpha),0,gh-1);shape[y*sW+x]=gclosed[gy*gw+gx]}}if(!shape){algoShapeMask=null;algoShapeDF=null;return}const off=+$("algoOff").value;if(off>0){const shapeDF=computeDF(shape,sW,sH);for(let i=0;i<sW*sH;i++){if(!shape[i]&&shapeDF[i]<=off)shape[i]=1}}const sm=+$("algoSmooth").value;if(sm>0){const tmp=document.createElement("canvas");tmp.width=sW;tmp.height=sH;const tc=tmp.getContext("2d"),id=tc.createImageData(sW,sH);for(let i=0;i<sW*sH;i++){const v=shape[i]?255:0;id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}tc.putImageData(id,0,0);const tmp2=document.createElement("canvas");tmp2.width=sW;tmp2.height=sH;const tc2=tmp2.getContext("2d");tc2.filter="blur("+sm+"px)";tc2.drawImage(tmp,0,0);const blurred=tc2.getImageData(0,0,sW,sH);for(let i=0;i<sW*sH;i++)shape[i]=blurred.data[i*4]>128?1:0}algoShapeMask=shape;algoShapeDF=computeDF(shape,sW,sH);algoShapeDF._int=computeInternalDF(shape,sW,sH)}
+
+/* Glow */
+function rebuildGlow(){if(!maskA||!distF)return;if(!$("glOn").checked){glowCV=null;return}const rad=+$("glR").value,col=hx2($("glC").value);const o1T=$("o1On").checked?+$("o1T").value:0,o2T=$("o2On").checked?+$("o2T").value:0,totalT=o1T+o2T;const sh=document.createElement("canvas");sh.width=sW;sh.height=sH;const sc=sh.getContext("2d"),sid=sc.createImageData(sW,sH);for(let i=0;i<sW*sH;i++){if(maskA[i]||distF[i]<=totalT){sid.data[i*4]=col[0];sid.data[i*4+1]=col[1];sid.data[i*4+2]=col[2];sid.data[i*4+3]=255}}sc.putImageData(sid,0,0);glowPd=Math.ceil(rad*2.5);glowCV=document.createElement("canvas");glowCV.width=sW+glowPd*2;glowCV.height=sH+glowPd*2;const gc=glowCV.getContext("2d");gc.filter="blur("+rad+"px)";gc.drawImage(sh,glowPd,glowPd)}
+function rebuildAll(){rebuildMask();rebuildAlgoShape();rebuildGlow();if(!anOn)render()}
+
+/* Render */
+function dc(d,w,h){const v=DM[d]||[0,0,1,1];return[v[0]*w,v[1]*h,v[2]*w,v[3]*h]}
+function renderFrame(hc,dir){if(!maskA||!distF||!hc||hc.length<2)return;const w=sW,h=sH,th=+$("thr").value;const o1On=$("o1On").checked,o1T=o1On?+$("o1T").value:0,o1C=hx2($("o1C").value),o1A=+$("o1A").value/100;const o2On=$("o2On").checked,o2T=o2On?+$("o2T").value:0,o2C=hx2($("o2C").value),o2A=+$("o2A").value/100;const glOn=$("glOn").checked,glA=+$("glA").value/100;const aOn=$("algoOn").checked,aSt=+$("algoStroke").value,aC=hx2($("algoColor").value),aA=+$("algoAlpha").value/100;const pad=(glOn&&glowCV)?glowPd:0;const apd=aOn&&$("algoPad").checked&&algoShapeMask?Math.max(pad,+$("algoOff").value+(+$("algoSmooth").value)+aSt+10):pad;const finalPad=Math.max(pad,aOn?apd:0);cv.width=w+finalPad*2;cv.height=h+finalPad*2;cx.clearRect(0,0,cv.width,cv.height);if(glOn&&glowCV){cx.globalAlpha=glA;cx.drawImage(glowCV,finalPad-glowPd,finalPad-glowPd);cx.globalAlpha=1}if(aOn&&algoShapeMask&&algoShapeDF){const oid=cx.createImageData(w,h);const intDF=algoShapeDF._int;for(let i=0;i<w*h;i++){if(algoShapeMask[i]&&intDF[i]<=aSt){const fade=C(intDF[i],0,1);oid.data[i*4]=aC[0];oid.data[i*4+1]=aC[1];oid.data[i*4+2]=aC[2];oid.data[i*4+3]=C(Math.round(fade*aA*255),0,255)}else if(!algoShapeMask[i]&&algoShapeDF[i]<=aSt){const fade=C(aSt-algoShapeDF[i]+1,0,1);oid.data[i*4]=aC[0];oid.data[i*4+1]=aC[1];oid.data[i*4+2]=aC[2];oid.data[i*4+3]=C(Math.round(fade*aA*255),0,255)}}const otmp=document.createElement("canvas");otmp.width=w;otmp.height=h;otmp.getContext("2d").putImageData(oid,0,0);cx.drawImage(otmp,finalPad,finalPad)}const gt=document.createElement("canvas");gt.width=w;gt.height=h;const gc=gt.getContext("2d");const[x0,y0,x1,y1]=dc(dir,w,h);const gr=gc.createLinearGradient(x0,y0,x1,y1);hc.forEach((c,i)=>gr.addColorStop(i/(hc.length-1),c));gc.fillStyle=gr;gc.fillRect(0,0,w,h);const gd=gc.getImageData(0,0,w,h),res=cx.createImageData(w,h),edge=th*.12;for(let i=0;i<w*h;i++){const dist=distF[i];if(maskA[i]){const diff=th-lumD[i],a=edge>0?C(diff/edge,0,1):1;res.data[i*4]=gd.data[i*4];res.data[i*4+1]=gd.data[i*4+1];res.data[i*4+2]=gd.data[i*4+2];res.data[i*4+3]=C(Math.round(a*255),0,255)}else if(o1On&&dist<=o1T){const fade=C(o1T-dist+1,0,1);res.data[i*4]=o1C[0];res.data[i*4+1]=o1C[1];res.data[i*4+2]=o1C[2];res.data[i*4+3]=C(Math.round(fade*o1A*255),0,255)}else if(o2On&&dist<=o1T+o2T){const fade=C(o1T+o2T-dist+1,0,1);res.data[i*4]=o2C[0];res.data[i*4+1]=o2C[1];res.data[i*4+2]=o2C[2];res.data[i*4+3]=C(Math.round(fade*o2A*255),0,255)}}const ctmp=document.createElement("canvas");ctmp.width=w;ctmp.height=h;ctmp.getContext("2d").putImageData(res,0,0);cx.drawImage(ctmp,finalPad,finalPad)}
+function gCC(){return[$("c1").value,$("c2").value,$("c3").value]}
+function render(){if(!maskA)return;stopAn();const c=(cPre>=0&&PRESETS[cPre])?PRESETS[cPre].c:gCC();renderFrame(c,cDir)}
+
+/* Animation */
+function stopAn(){if(anId){cancelAnimationFrame(anId);anId=null}anOn=false;anIdx=-1;$("aStop").classList.add("hid");document.querySelectorAll(".ab").forEach(b=>b.classList.remove("active"))}
+function startAn(idx){stopAn();document.querySelectorAll(".pb").forEach(b=>b.classList.remove("active"));cPre=-1;anOn=true;anIdx=idx;$("aStop").classList.remove("hid");document.querySelectorAll(".ab")[idx]&&document.querySelectorAll(".ab")[idx].classList.add("active");const ap=ANIMS[idx],st=performance.now();(function tk(now){if(!anOn)return;renderFrame(gAn(ap,((now-st)/1000)*anSpd),cDir);anId=requestAnimationFrame(tk)})(performance.now())}
+function gAn(a,t){const N=7;if(a.t==="hr"){const h=((a.bh||0)+Math.sin(t*1.2)*25+t*15)%360,s=a.s||80,l0=(a.lr||[40,60])[0],l1=(a.lr||[40,60])[1];return[r2h(...h2r(h-10,s,l0)),r2h(...h2r(h,s,(l0+l1)/2)),r2h(...h2r(h+10,s,l1))]}if(a.t==="sw"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const o=((t*.4)%1+1)%1,r=[];for(let i=0;i<N;i++)r.push(r2h(...sPal(b,((i/(N-1)+o)%1+1)%1)));return r}if(a.t==="pu"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const m=.3+.7*(.5+.5*Math.sin(t*2.5));return b.map(c=>{const[r,g,bl]=hx2(c);return r2h(r*m,g*m,bl*m)})}if(a.t==="rb"){const s=a.s||90,l=a.l||50,o=((t*40)%360+360)%360,r=[];for(let i=0;i<N;i++)r.push(r2h(...h2r((o+i*(360/N))%360,s,l)));return r}if(a.t==="sh"){const[bH,bS,bL]=a.b||[0,0,50],[hH,hS,hL]=a.h||[0,100,90],sp=Math.sin(t*1.8)*.5+.5,r=[];for(let i=0;i<9;i++){const x=i/8,int=C(1-Math.abs(x-sp)*3,0,1);r.push(r2h(...h2r(Lr(bH,hH,int),Lr(bS,hS,int),Lr(bL,hL,int))))}return r}if(a.t==="br"){const b=a.c;if(!b||b.length<2)return["#000","#fff"];const br=Math.sin(t*1.5)*.5+.5,ph=((t*.3)%1+1)%1;return b.map((c,i)=>{const[r,g,bl]=hx2(c),s=i/b.length+ph,m=.3+.7*(.5+.5*Math.sin((br+s)*Math.PI*2));return r2h(r*m,g*m,bl*m)})}return["#333","#fff"]}
+
+/* Build Presets */
+(function(){const g=$("pGrid");PRESETS.forEach((p,i)=>{const b=document.createElement("button");b.className="pb"+(i===0?" active":"");const st=p.c.map((c,j)=>c+" "+(j/(p.c.length-1)*100).toFixed(0)+"%").join(",");b.style.background="linear-gradient(135deg,"+st+")";b.innerHTML='<span class="pl">'+p.n+"</span>";b.onclick=()=>{stopAn();g.querySelectorAll(".pb").forEach(x=>x.classList.remove("active"));b.classList.add("active");cPre=i;const c=p.c;$("c1").value=c[0];$("c2").value=c[Math.floor(c.length/2)];$("c3").value=c[c.length-1];render()};g.appendChild(b)})})();
+(function(){const g=$("aGrid");ANIMS.forEach((a,i)=>{const b=document.createElement("button");b.className="ab";const c=document.createElement("canvas");c.width=130;c.height=48;b.appendChild(c);const l=document.createElement("span");l.className="al";l.textContent=a.n;b.appendChild(l);b.onclick=()=>{if(maskA)startAn(i)};g.appendChild(b);const mc=c.getContext("2d"),s=performance.now();(function mt(now){const cols=gAn(a,((now-s)/1000)*.8);if(cols.length>=2){const gr=mc.createLinearGradient(0,0,130,48);cols.forEach((c,j)=>gr.addColorStop(j/(cols.length-1),c));mc.fillStyle=gr;mc.fillRect(0,0,130,48)}requestAnimationFrame(mt)})(performance.now())})})();
+
+/* Events */
+document.querySelectorAll(".mode-tab").forEach(tab=>{tab.onclick=function(){document.querySelectorAll(".mode-tab").forEach(t=>t.classList.remove("active"));this.classList.add("active");const mode=this.dataset.mode;$("panelText").classList.toggle("active",mode==="text");$("panelUpload").classList.toggle("active",mode==="upload")}});
+$("txMain").oninput=()=>{computeWave("_m");buildCharUI("_m");updateTextPreview()};
+$("txSub").oninput=()=>{computeWave("_s");buildCharUI("_s");updateTextPreview()};
+["txLead","txPad"].forEach(id=>{$(id).oninput=function(){$(id+"V").textContent=this.value+"px";updateTextPreview()}});
+["_m","_s"].forEach(s=>{
+  ["txSize"+s,"txKern"+s].forEach(id=>{$(id).oninput=function(){$(id+"V").textContent=this.value+"px";updateTextPreview()}});
+  $("fontSrc"+s).onchange=function(){$("gfUI"+s).style.display=this.value==="google"?"":"none";$("cfUI"+s).style.display=this.value==="custom"?"":"none";onFontChange(s)};
+  $("fontCat"+s).onchange=()=>populateFonts(s);
+  $("fontSel"+s).onchange=()=>onFontChange(s);
+  $("fontWt"+s).onchange=()=>onFontChange(s);
+  $("fontIt"+s).onchange=()=>updateTextPreview();
+  $("waveAmt"+s).oninput=function(){$("waveAmt"+s+"V").textContent=this.value+"px";computeWave(s);buildCharUI(s);updateTextPreview()};
+  $("wavePre"+s).onclick=e=>{const b=e.target.closest("button");if(!b)return;$("wavePre"+s).querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");waveMode_[s]=b.dataset.w;$("waveAmtRow"+s).style.display=waveMode_[s]==="none"?"none":"";computeWave(s);buildCharUI(s);updateTextPreview()};
+  ["tfTrap"+s,"tfTrapLR"+s,"tfArchTop"+s,"tfArchBot"+s,"tfBulge"+s].forEach(id=>{$(id).oninput=function(){const suf=(id.includes("Arch"))?"px":"";$(id+"V").textContent=this.value+suf;updateTextPreview()}});
+});
+$("tcApply").onclick=applyTextAsSource;
+document.querySelectorAll(".tc-xbtn").forEach(b=>{b.onclick=function(){
+  const p={reset:[0,0,0,0,0],flag:[50,0,30,-30,0],bridge:[0,0,-40,-40,0],wedge:[60,0,0,0,0],barrel:[0,0,0,0,50],pinch:[0,0,0,0,-50]};
+  const v=p[this.dataset.tf];if(!v)return;const s=this.dataset.s;
+  ["tfTrap","tfTrapLR","tfArchTop","tfArchBot","tfBulge"].forEach((id,i)=>{$(id+s).value=v[i]});
+  $("tfTrap"+s+"V").textContent=v[0];$("tfTrapLR"+s+"V").textContent=v[1];
+  $("tfArchTop"+s+"V").textContent=v[2]+"px";$("tfArchBot"+s+"V").textContent=v[3]+"px";
+  $("tfBulge"+s+"V").textContent=v[4];updateTextPreview()}});
+$("thr").oninput=function(){$("thrV").textContent=this.value;rebuildAll()};$("inv").onchange=rebuildAll;
+$("algoSel").onchange=function(){$("morphParams").style.display=this.value==="morph"?"":"none";$("alphaParams").style.display=this.value==="alpha"?"":"none";rebuildAlgoShape();rebuildGlow();if(!anOn)render()};
+$("algoOn").onchange=()=>{rebuildAlgoShape();if(!anOn)render()};$("algoPad").onchange=()=>{rebuildAlgoShape();if(!anOn)render()};
 $("morphR").oninput=function(){$("morphRV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
 $("alphaR").oninput=function(){$("alphaRV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
 $("algoOff").oninput=function(){$("algoOffV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
@@ -520,39 +1146,24 @@ $("algoSmooth").oninput=function(){$("algoSmoothV").textContent=this.value+"px";
 $("algoStroke").oninput=function(){$("algoStrokeV").textContent=this.value+"px";rebuildAlgoShape();if(!anOn)render()};
 $("algoColor").oninput=()=>{if(!anOn)render()};
 $("algoAlpha").oninput=function(){$("algoAlphaV").textContent=this.value+"%";if(!anOn)render()};
-
-// Outline
-$("o1On").onchange=()=>{rebuildGlow();if(!anOn)render()};
-$("o2On").onchange=()=>{rebuildGlow();if(!anOn)render()};
+$("o1On").onchange=()=>{rebuildGlow();if(!anOn)render()};$("o2On").onchange=()=>{rebuildGlow();if(!anOn)render()};
 $("o1T").oninput=function(){$("o1TV").textContent=this.value+"px";rebuildGlow();if(!anOn)render()};
 $("o2T").oninput=function(){$("o2TV").textContent=this.value+"px";rebuildGlow();if(!anOn)render()};
-$("o1C").oninput=()=>{if(!anOn)render()};
-$("o2C").oninput=()=>{if(!anOn)render()};
+$("o1C").oninput=()=>{if(!anOn)render()};$("o2C").oninput=()=>{if(!anOn)render()};
 $("o1A").oninput=function(){$("o1AV").textContent=this.value+"%";if(!anOn)render()};
 $("o2A").oninput=function(){$("o2AV").textContent=this.value+"%";if(!anOn)render()};
-
-// Glow
 $("glOn").onchange=()=>{rebuildGlow();if(!anOn)render()};
 $("glR").oninput=function(){$("glRV").textContent=this.value+"px";rebuildGlow();if(!anOn)render()};
 $("glC").oninput=()=>{rebuildGlow();if(!anOn)render()};
 $("glA").oninput=function(){$("glAV").textContent=this.value+"%";if(!anOn)render()};
-
-// Gradient
 ["c1","c2","c3"].forEach(id=>{$(id).oninput=()=>{stopAn();document.querySelectorAll(".pb").forEach(b=>b.classList.remove("active"));cPre=-1;render()}});
 $("dg").onclick=e=>{const b=e.target.closest(".db");if(!b)return;document.querySelectorAll(".db").forEach(x=>x.classList.remove("active"));b.classList.add("active");cDir=b.dataset.d;if(!anOn)render()};
-
-// Anim
 $("aStop").onclick=()=>{stopAn();render()};
 $("aSpd").oninput=function(){anSpd=parseFloat(this.value);$("aSpdV").textContent=anSpd.toFixed(1)+"x"};
-
-// BG
-document.querySelectorAll(".bg-b").forEach(b=>{b.onclick=()=>{document.querySelectorAll(".bg-b").forEach(x=>x.classList.remove("active"));b.classList.add("active");
-  const bg=b.dataset.b,w=$("cw");
-  if(bg==="checker"){w.style.background="";w.style.backgroundImage="linear-gradient(45deg,#ddd 25%,transparent 25%),linear-gradient(-45deg,#ddd 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ddd 75%),linear-gradient(-45deg,transparent 75%,#ddd 75%)";w.style.backgroundSize="20px 20px";w.style.backgroundPosition="0 0,0 10px,10px -10px,-10px 0px"}
-  else{w.style.backgroundImage="none";w.style.background=bg}}});
-
-// Download
+document.querySelectorAll(".bg-b").forEach(b=>{b.onclick=()=>{document.querySelectorAll(".bg-b").forEach(x=>x.classList.remove("active"));b.classList.add("active");const bg=b.dataset.b,w=$("cw");if(bg==="checker"){w.style.background="";w.style.backgroundImage="linear-gradient(45deg,#ddd 25%,transparent 25%),linear-gradient(-45deg,#ddd 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ddd 75%),linear-gradient(-45deg,transparent 75%,#ddd 75%)";w.style.backgroundSize="20px 20px";w.style.backgroundPosition="0 0,0 10px,10px -10px,-10px 0px"}else{w.style.backgroundImage="none";w.style.background=bg}}});
 $("dlBtn").onclick=()=>{if(!maskA)return;const a=document.createElement("a");a.download="logo.png";a.href=cv.toDataURL("image/png");a.click()};
+$("guideToggle").onclick=function(){this.classList.toggle("open");$("guideBody").classList.toggle("open")};
+populateFonts("_m");populateFonts("_s");
 </script>
 </body>
 </html>
