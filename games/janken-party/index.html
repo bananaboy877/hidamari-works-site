@@ -2588,11 +2588,7 @@ registerGame('speed', {
     const container = document.createElement('div');
     container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;';
 
-    // タイトル
-    const titleDiv = document.createElement('div');
-    titleDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#ff9800;z-index:10;';
-    titleDiv.textContent = 'はやおしバトル';
-    container.appendChild(titleDiv);
+    // タイトル（非表示）
 
     // 動物
     const animalDiv = document.createElement('div');
