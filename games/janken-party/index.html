@@ -2533,7 +2533,7 @@ registerGame('speed', {
       { key: 's', label: '✌️', name: 'チョキ', color: '#fbc02d', bg: 'rgba(251,192,45,0.12)' },
       { key: 'd', label: '✋', name: 'パー', color: '#1e88e5', bg: 'rgba(30,136,229,0.12)' },
     ];
-    const TOTAL_QUESTIONS = 100;
+    const TOTAL_QUESTIONS = self.totalQuestions || 100;
     const WAIT_MIN = 1500;
     const WAIT_MAX = 3000;
     const PENALTY_MS = 1000;
@@ -2873,6 +2873,33 @@ registerGame('speed', {
     if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
     onGameKey = null;
   }
+});
+
+// はやおしバトル 1000問・5000問バリアント（init/cleanupはspeedと共有）
+registerGame('speed1000', {
+  name: 'はやおし1000',
+  animal: 'cheetah',
+  description: '1000問の大ボリューム！はやおしバトル！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 60000, silver: 40000, bronze: 0 },
+  totalQuestions: 1000,
+  _timers: [],
+  _destroyed: false,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
+});
+
+registerGame('speed5000', {
+  name: 'はやおし5000',
+  animal: 'cheetah',
+  description: '5000問の超大ボリューム！はやおしバトル！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 300000, silver: 200000, bronze: 0 },
+  totalQuestions: 5000,
+  _timers: [],
+  _destroyed: false,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
 });
 
 registerGame('mole', {
