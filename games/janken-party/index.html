@@ -2563,6 +2563,7 @@ registerGame('speed', {
     let showTime = 0;
     let foulPenalty = 0;
     let gameEnded = false;
+    let timeoutTimer = null; // 現在の問題のタイムアウトタイマー
 
     // 出題シーケンス生成（同じ手が3回連続しないように）
     function generateQuestions() {
@@ -2689,20 +2690,22 @@ registerGame('speed', {
         playAudio(SPEED_HAND_VOICES[handIdx]);
       }, 5000);
 
-      // 60秒以内に押さなかったら自動タイムアウト
-      const t = setTimeout(() => {
+      // 60秒以内に押さなかったら自動タイムアウト（前の問題のタイマーをキャンセル）
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      timeoutTimer = setTimeout(() => {
         if (self._destroyed || gameEnded) return;
         if (phase === 'shown') {
           if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
           handleAnswer(60000);
         }
+        timeoutTimer = null;
       }, 60000);
-      self._timers.push(t);
     }
 
     function handleAnswer(reactionMs) {
       if (self._destroyed || gameEnded) return;
       phase = 'answered';
+      if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
       if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
 
       // ペナルティ加算
@@ -2830,6 +2833,7 @@ registerGame('speed', {
       if (gameEnded) return;
       gameEnded = true;
       onGameKey = null;
+      if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
       if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
       playSE('se_finish.mp3');
 
