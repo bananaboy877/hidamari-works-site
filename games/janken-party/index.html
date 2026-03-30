@@ -462,7 +462,7 @@ body {
       <span class="btn-text">パー</span>
     </div>
   </div>
-  <div class="title-start-hint">どれかボタンを押してスタート！</div>
+  <div class="title-start-hint"><span id="title-start-hand"></span> グーを押してスタート！</div>
 </div>
 
 <!-- ====== イントロ画面 ====== -->
@@ -492,7 +492,7 @@ body {
   <div class="result-rank" id="result-rank"></div>
   <div class="result-medal-earn" id="result-medal-earn"></div>
   <div class="result-buttons">
-    <div class="result-next-hint" id="result-next-hint">どれかボタンを押して次のゲームへ！</div>
+    <div class="result-next-hint" id="result-next-hint"><span id="result-next-hand"></span> グーを押して次のゲームへ！</div>
     <button class="result-end-btn" onclick="goToTitle()">終わる</button>
   </div>
 </div>
@@ -940,7 +940,7 @@ function showIntroReadyHint() {
   if (introReady) return;
   introReady = true;
   const hint = document.getElementById('intro-start-hint');
-  if (hint) hint.textContent = 'どれかボタンを押して始めよう！';
+  if (hint) hint.innerHTML = handImg('rock', 50) + ' グーを押して始めよう！';
   startPromptRepeat('intro');
 }
 
@@ -4583,6 +4583,8 @@ function init() {
   document.getElementById('title-hand-a').innerHTML = handImg('rock', 80);
   document.getElementById('title-hand-s').innerHTML = handImg('scissors', 80);
   document.getElementById('title-hand-d').innerHTML = handImg('paper', 80);
+  document.getElementById('title-start-hand').innerHTML = handImg('rock', 50);
+  document.getElementById('result-next-hand').innerHTML = handImg('rock', 45);
   switchScreen('title');
   addDecorations();
   // 初回表示
