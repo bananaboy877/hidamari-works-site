@@ -1,0 +1,4576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>どうぶつ運動会</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* ========================================
+   リセット & 基本設定
+   ======================================== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 700;
+  color: #3a2a1a;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #87CEEB 0%, #a8e6cf 50%, #6abf69 100%);
+  position: relative;
+}
+
+/* ========================================
+   共通ヘッダー
+   ======================================== */
+#header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  z-index: 1000;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+#header-medal {
+  font-size: 36px;
+  color: #b8860b;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#header-medal .medal-icon {
+  font-size: 44px;
+}
+
+#header-title {
+  font-size: 36px;
+  font-weight: 900;
+  color: #3a2a1a;
+}
+
+#header-back {
+  font-size: 28px;
+  padding: 10px 32px;
+  border: 3px solid #999;
+  border-radius: 16px;
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+#header-back:hover {
+  background: #e0e0e0;
+  border-color: #777;
+}
+
+/* ========================================
+   画面共通
+   ======================================== */
+.screen {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 80px - 100px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ========================================
+   キーヒント（画面下部常時表示）
+   ======================================== */
+#key-hints {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 60px;
+  z-index: 999;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+}
+
+.key-hint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.key-hint .key-label {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.key-hint .key-label.pressed {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 rgba(0,0,0,0.25);
+}
+
+.key-hint .key-label.key-a { background: #e53935; }
+.key-hint .key-label.key-s { background: #fbc02d; color: #5a4a00; }
+.key-hint .key-label.key-d { background: #1e88e5; }
+
+.key-hint .hand-icon {
+  font-size: 44px;
+}
+
+/* ========================================
+   タイトル画面
+   ======================================== */
+#screen-title {
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+}
+
+.title-main {
+  font-size: 96px;
+  font-weight: 900;
+  color: #e53935;
+  text-shadow: 4px 4px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+  margin-bottom: 16px;
+  letter-spacing: 8px;
+}
+
+.title-sub {
+  font-size: 40px;
+  color: #3a6a1a;
+  margin-bottom: 50px;
+}
+
+.title-buttons {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.title-btn {
+  width: 160px;
+  height: 160px;
+  border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 700;
+}
+
+.title-btn .btn-text {
+  font-size: 28px;
+  margin-top: 4px;
+}
+
+.title-btn-a { background: #ef5350; color: #fff; }
+.title-btn-s { background: #ffca28; color: #5a4a00; }
+.title-btn-d { background: #42a5f5; color: #fff; }
+
+.title-btn.bounce {
+  animation: bounce 1.5s ease infinite;
+}
+
+.title-btn:nth-child(2).bounce { animation-delay: 0.3s; }
+.title-btn:nth-child(3).bounce { animation-delay: 0.6s; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.title-start-hint {
+  font-size: 36px;
+  color: #3a2a1a;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ========================================
+   イントロ画面
+   ======================================== */
+#screen-intro {
+  gap: 20px;
+}
+
+.intro-next-label {
+  font-size: 44px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.intro-animal-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 10px;
+}
+
+.intro-game-name {
+  font-size: 64px;
+  font-weight: 900;
+  color: #e53935;
+  text-shadow: 2px 2px 0 #fff;
+}
+
+.intro-description {
+  font-size: 40px;
+  color: #3a2a1a;
+  text-align: center;
+  max-width: 1200px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.intro-start-hint {
+  font-size: 36px;
+  color: #3a6a1a;
+  animation: pulse 2s ease infinite;
+  min-height: 50px;
+}
+
+/* ========================================
+   プレイ画面
+   ======================================== */
+#screen-playing {
+  top: 80px;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+#game-area {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ========================================
+   リザルト画面
+   ======================================== */
+#screen-result {
+  gap: 16px;
+}
+
+.result-title {
+  font-size: 64px;
+  font-weight: 900;
+  color: #e53935;
+  text-shadow: 2px 2px 0 #fff;
+  margin-bottom: 10px;
+}
+
+.result-game-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.result-score {
+  font-size: 56px;
+  font-weight: 900;
+  color: #3a2a1a;
+}
+
+.result-rank {
+  font-size: 52px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.result-rank.gold { color: #daa520; }
+.result-rank.silver { color: #a0a0a0; }
+.result-rank.bronze { color: #cd7f32; }
+
+.result-medal-earn {
+  font-size: 44px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.result-medal-earn .sparkle {
+  position: absolute;
+  animation: sparkle 1.5s ease infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+}
+
+.result-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.result-next-hint {
+  font-size: 36px;
+  color: #3a6a1a;
+  animation: pulse 2s ease infinite;
+}
+
+.result-end-btn {
+  font-size: 28px;
+  padding: 12px 40px;
+  border: 3px solid #999;
+  border-radius: 16px;
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.result-end-btn:hover {
+  background: #e0e0e0;
+  border-color: #777;
+}
+
+/* ========================================
+   全クリア演出
+   ======================================== */
+.all-clear-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.all-clear-overlay.show {
+  opacity: 1;
+}
+
+.all-clear-text {
+  font-size: 80px;
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 3px 3px 0 #b8860b;
+  margin-bottom: 20px;
+}
+
+.all-clear-sub {
+  font-size: 40px;
+  color: #fff;
+}
+
+/* ========================================
+   ボタン押下フィードバック
+   ======================================== */
+.btn-feedback {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+  z-index: 1500;
+  transition: none;
+}
+
+.btn-feedback.show {
+  opacity: 0.4;
+  transform: scale(1.5);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.btn-feedback.fade {
+  opacity: 0;
+  transform: scale(2);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+/* ========================================
+   装飾: 雲
+   ======================================== */
+.cloud {
+  position: fixed;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.6;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+}
+</style>
+</head>
+<body>
+
+<!-- ====== 共通ヘッダー ====== -->
+<div id="header">
+  <div id="header-medal">
+    <span class="medal-icon">🏅</span>
+    <span>メダル: <span id="medal-count">0</span>枚</span>
+  </div>
+  <div id="header-title">どうぶつ運動会</div>
+  <div style="display:flex;gap:12px;">
+    <button id="header-select" onclick="goToSelect()" style="font-family:inherit;font-size:28px;font-weight:700;padding:8px 24px;border-radius:12px;border:2px solid #1e88e5;background:#e3f2fd;color:#1e88e5;cursor:pointer;transition:all 0.2s;">ゲーム選択</button>
+    <button id="header-back" onclick="goToTitle()">戻る</button>
+  </div>
+</div>
+
+<!-- ====== タイトル画面 ====== -->
+<div id="screen-title" class="screen active">
+  <div class="title-main">どうぶつ運動会</div>
+  <div class="title-sub">動物たちと一緒に遊ぼう！</div>
+  <div class="title-buttons">
+    <div class="title-btn title-btn-a bounce" id="title-btn-a">
+      <span>✊</span>
+      <span class="btn-text">グー</span>
+    </div>
+    <div class="title-btn title-btn-s bounce" id="title-btn-s">
+      <span>✌️</span>
+      <span class="btn-text">チョキ</span>
+    </div>
+    <div class="title-btn title-btn-d bounce" id="title-btn-d">
+      <span>✋</span>
+      <span class="btn-text">パー</span>
+    </div>
+  </div>
+  <div class="title-start-hint">どれかボタンを押してスタート！</div>
+</div>
+
+<!-- ====== イントロ画面 ====== -->
+<div id="screen-intro" class="screen">
+  <div class="intro-next-label" id="intro-next-label">次の競技は...</div>
+  <div class="intro-animal-area">
+    <div id="intro-animal-svg"></div>
+  </div>
+  <div class="intro-game-name" id="intro-game-name"></div>
+  <div class="intro-description" id="intro-description"></div>
+  <div class="intro-start-hint" id="intro-start-hint"></div>
+</div>
+
+<!-- ====== プレイ画面 ====== -->
+<div id="screen-playing" class="screen">
+  <div id="game-area"></div>
+</div>
+
+<!-- ====== リザルト画面 ====== -->
+<div id="screen-result" class="screen">
+  <div class="result-title">結果発表！</div>
+  <div class="result-game-info">
+    <span id="result-animal-svg"></span>
+    <span id="result-game-name"></span>
+  </div>
+  <div class="result-score" id="result-score"></div>
+  <div class="result-rank" id="result-rank"></div>
+  <div class="result-medal-earn" id="result-medal-earn"></div>
+  <div class="result-buttons">
+    <div class="result-next-hint" id="result-next-hint">どれかボタンを押して次のゲームへ！</div>
+    <button class="result-end-btn" onclick="goToTitle()">終わる</button>
+  </div>
+</div>
+
+<!-- ====== ゲーム選択画面 ====== -->
+<div id="screen-select" class="screen">
+  <div style="font-size:48px;font-weight:900;color:#3a2a1a;margin-bottom:20px;">ゲーム選択</div>
+  <div id="select-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:90%;max-width:1200px;"></div>
+</div>
+
+<!-- ====== キーヒント ====== -->
+<div id="key-hints">
+  <div class="key-hint">
+    <div class="key-label key-a" id="hint-a">A</div>
+    <span class="hand-icon">✊ グー</span>
+  </div>
+  <div class="key-hint">
+    <div class="key-label key-s" id="hint-s">S</div>
+    <span class="hand-icon">✌️ チョキ</span>
+  </div>
+  <div class="key-hint">
+    <div class="key-label key-d" id="hint-d">D</div>
+    <span class="hand-icon">✋ パー</span>
+  </div>
+</div>
+
+<script>
+/* ========================================================================
+   どうぶつ運動会 - コア基盤
+   ======================================================================== */
+
+// ========================================
+// 状態管理
+// ========================================
+const State = {
+  screen: 'title',
+  totalMedals: 0,
+  playedGames: [],
+  currentGame: null,
+  currentScore: 0,
+  highScores: {},
+};
+
+// localStorage から読み込み
+function loadState() {
+  try {
+    const saved = localStorage.getItem('doubutsu_undoukai');
+    if (saved) {
+      const data = JSON.parse(saved);
+      State.totalMedals = data.totalMedals || 0;
+      State.highScores = data.highScores || {};
+    }
+  } catch (e) {
+    // silently fail
+  }
+  updateMedalDisplay();
+}
+
+// localStorage に保存
+function saveState() {
+  try {
+    localStorage.setItem('doubutsu_undoukai', JSON.stringify({
+      totalMedals: State.totalMedals,
+      highScores: State.highScores,
+    }));
+  } catch (e) {
+    // silently fail
+  }
+}
+
+function updateMedalDisplay() {
+  document.getElementById('medal-count').textContent = State.totalMedals;
+}
+
+// ========================================
+// 効果音システム
+// ========================================
+const AudioCache = {};
+
+function preloadAudio(src) {
+  if (AudioCache[src]) return AudioCache[src];
+  try {
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.src = src;
+    // エラーを握りつぶす
+    audio.addEventListener('error', () => {});
+    AudioCache[src] = audio;
+    return audio;
+  } catch (e) {
+    return null;
+  }
+}
+
+// 再生中の音声を追跡（画面遷移時に停止するため）
+const activeAudios = new Set();
+
+function playAudio(src) {
+  return new Promise((resolve) => {
+    try {
+      const audio = new Audio(src);
+      activeAudios.add(audio);
+      const cleanup = () => { activeAudios.delete(audio); resolve(); };
+      audio.addEventListener('error', cleanup);
+      audio.addEventListener('ended', cleanup);
+      audio.play().catch(cleanup);
+    } catch (e) {
+      resolve();
+    }
+  });
+}
+
+function stopAllAudio() {
+  activeAudios.forEach(audio => {
+    try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+  });
+  activeAudios.clear();
+}
+
+// 効果音プリロード
+const SE_LIST = [
+  'audio/se_button.mp3',
+  'audio/se_correct.mp3',
+  'audio/se_wrong.mp3',
+  'audio/se_gold.mp3',
+  'audio/se_silver.mp3',
+  'audio/se_bronze.mp3',
+  'audio/se_count.mp3',
+  'audio/se_start.mp3',
+  'audio/se_finish.mp3',
+  'audio/se_combo.mp3',
+];
+
+function preloadAllAudio() {
+  SE_LIST.forEach(src => preloadAudio(src));
+}
+
+// 効果音再生ヘルパー
+function playSE(name) {
+  playAudio('audio/' + name);
+}
+
+// ========================================
+// 画面遷移システム
+// ========================================
+function switchScreen(screenId) {
+  stopAllAudio();
+  const screens = document.querySelectorAll('.screen');
+  screens.forEach(s => s.classList.remove('active'));
+
+  // フェードイン遅延
+  setTimeout(() => {
+    const target = document.getElementById('screen-' + screenId);
+    if (target) target.classList.add('active');
+  }, 100);
+
+  State.screen = screenId;
+}
+
+// ========================================
+// 入力システム
+// ========================================
+const KeyState = {
+  a: false,
+  s: false,
+  d: false,
+};
+
+// ゲームプレイ中のキー入力コールバック（各ミニゲームが設定）
+let onGameKey = null;
+
+document.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (key !== 'a' && key !== 's' && key !== 'd') return;
+
+  // キーリピート防止
+  if (KeyState[key]) return;
+  KeyState[key] = true;
+
+  // 視覚フィードバック
+  showKeyFeedback(key);
+  playSE('se_button.mp3');
+
+  // 画面ごとの処理
+  handleKeyPress(key);
+});
+
+document.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase();
+  if (key === 'a' || key === 's' || key === 'd') {
+    KeyState[key] = false;
+    hideKeyFeedback(key);
+  }
+});
+
+function showKeyFeedback(key) {
+  const hint = document.getElementById('hint-' + key);
+  if (hint) hint.classList.add('pressed');
+
+  // タイトル画面のボタン
+  const titleBtn = document.getElementById('title-btn-' + key);
+  if (titleBtn) {
+    titleBtn.style.transform = 'translateY(8px) scale(1.1)';
+    titleBtn.style.boxShadow = '0 0 0 rgba(0,0,0,0.2)';
+  }
+}
+
+function hideKeyFeedback(key) {
+  const hint = document.getElementById('hint-' + key);
+  if (hint) hint.classList.remove('pressed');
+
+  const titleBtn = document.getElementById('title-btn-' + key);
+  if (titleBtn) {
+    titleBtn.style.transform = '';
+    titleBtn.style.boxShadow = '';
+  }
+}
+
+function handleKeyPress(key) {
+  switch (State.screen) {
+    case 'title':
+      handleTitleKey(key);
+      break;
+    case 'intro':
+      handleIntroKey(key);
+      break;
+    case 'playing':
+      if (onGameKey) onGameKey(key);
+      break;
+    case 'result':
+      handleResultKey(key);
+      break;
+  }
+}
+
+// ========================================
+// タイトル画面
+// ========================================
+function handleTitleKey(key) {
+  // 任意のボタンでゲーム選択へ
+  playSE('se_start.mp3');
+  selectNextGame();
+}
+
+function goToTitle() {
+  // 現在のゲームをクリーンアップ
+  if (State.currentGame) {
+    const game = GameRegistry[State.currentGame];
+    if (game && game.cleanup) {
+      try { game.cleanup(); } catch (e) {}
+    }
+  }
+  onGameKey = null;
+  State.currentGame = null;
+  State.currentScore = 0;
+  switchScreen('title');
+  setTimeout(() => playAudio('audio/title.wav'), 300);
+}
+
+// ========================================
+// ゲーム選択画面
+// ========================================
+function goToSelect() {
+  // 現在のゲームをクリーンアップ
+  if (State.currentGame) {
+    const game = GameRegistry[State.currentGame];
+    if (game && game.cleanup) {
+      try { game.cleanup(); } catch (e) {}
+    }
+  }
+  onGameKey = null;
+  State.currentGame = null;
+  State.currentScore = 0;
+
+  const grid = document.getElementById('select-grid');
+  grid.innerHTML = '';
+
+  const allGameIds = Object.keys(GameRegistry);
+  const ANIMAL_COLORS = {
+    panda: '#4caf50', elephant: '#607d8b', cheetah: '#ff9800',
+    mole: '#795548', gorilla: '#4a4a4a', monkey: '#c07040',
+    lion: '#f9a825', owl: '#5c6bc0', rabbit: '#e91e63',
+  };
+
+  allGameIds.forEach(function(id) {
+    const game = GameRegistry[id];
+    const played = State.playedGames.includes(id);
+    const highScore = State.highScores[id];
+    const borderColor = ANIMAL_COLORS[game.animal] || '#999';
+
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border:4px solid ' + borderColor + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);transition:transform 0.15s,box-shadow 0.15s;' + (played ? 'opacity:0.6;' : '');
+    card.onmouseenter = function() { card.style.transform = 'scale(1.05)'; card.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)'; };
+    card.onmouseleave = function() { card.style.transform = 'scale(1)'; card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; };
+    card.onclick = function() { startSelectedGame(id); };
+
+    card.innerHTML =
+      '<div>' + getAnimalSVG(game.animal, 70) + '</div>' +
+      '<div style="font-size:30px;font-weight:900;color:' + borderColor + ';">' + game.name + '</div>' +
+      '<div style="font-size:22px;color:#777;">' + game.description + '</div>' +
+      (highScore !== undefined ? '<div style="font-size:22px;color:#b8860b;font-weight:700;">最高: ' + highScore + '点</div>' : '') +
+      (played ? '<div style="font-size:22px;color:#43a047;">✔ 済</div>' : '');
+
+    grid.appendChild(card);
+  });
+
+  switchScreen('select');
+}
+
+function startSelectedGame(gameId) {
+  State.currentGame = gameId;
+  showIntroScreen(gameId);
+}
+
+// ========================================
+// ゲーム選択ロジック（ランダム）
+// ========================================
+function selectNextGame() {
+  const allGameIds = Object.keys(GameRegistry);
+
+  // 全て遊んだかチェック
+  const unplayed = allGameIds.filter(id => !State.playedGames.includes(id));
+
+  if (unplayed.length === 0) {
+    // 全部遊んだ！演出
+    showAllClearOverlay(() => {
+      State.playedGames = [];
+      selectNextGame();
+    });
+    return;
+  }
+
+  // ランダムに1つ選出
+  const idx = Math.floor(Math.random() * unplayed.length);
+  const gameId = unplayed[idx];
+  State.currentGame = gameId;
+
+  showIntroScreen(gameId);
+}
+
+// 全クリア演出
+function showAllClearOverlay(callback) {
+  const overlay = document.createElement('div');
+  overlay.className = 'all-clear-overlay';
+  overlay.innerHTML = `
+    <div class="all-clear-text">全部遊んだ！</div>
+    <div class="all-clear-sub">すごい！もう一周遊ぼう！</div>
+  `;
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('show');
+  });
+
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    setTimeout(() => {
+      overlay.remove();
+      if (callback) callback();
+    }, 500);
+  }, 3000);
+}
+
+// ========================================
+// イントロ画面
+// ========================================
+let introReady = false;
+
+function showIntroScreen(gameId) {
+  introReady = false;
+  const game = GameRegistry[gameId];
+  if (!game) return;
+
+  // 画面要素を設定
+  document.getElementById('intro-next-label').textContent = '次の競技は...';
+  document.getElementById('intro-animal-svg').innerHTML = getAnimalSVG(game.animal);
+  document.getElementById('intro-game-name').textContent = '「' + game.name + '」';
+  document.getElementById('intro-description').textContent = game.description;
+  document.getElementById('intro-start-hint').textContent = '';
+
+  switchScreen('intro');
+
+  // TTS音声再生
+  if (game.introVoice) {
+    const audioPromise = playAudio(game.introVoice);
+    audioPromise.then(() => {
+      showIntroReadyHint();
+    });
+
+    // 音声ファイルが無い場合のフォールバック: 3秒後にも表示
+    setTimeout(() => {
+      showIntroReadyHint();
+    }, 3000);
+  } else {
+    setTimeout(() => {
+      showIntroReadyHint();
+    }, 2000);
+  }
+}
+
+function showIntroReadyHint() {
+  if (introReady) return;
+  introReady = true;
+  const hint = document.getElementById('intro-start-hint');
+  if (hint) hint.textContent = 'どれかボタンを押して始めよう！';
+}
+
+function handleIntroKey(key) {
+  if (!introReady) return;
+  playSE('se_start.mp3');
+  startCurrentGame();
+}
+
+// ========================================
+// ゲーム開始
+// ========================================
+function startCurrentGame() {
+  const gameId = State.currentGame;
+  const game = GameRegistry[gameId];
+  if (!game) return;
+
+  switchScreen('playing');
+
+  const gameArea = document.getElementById('game-area');
+  gameArea.innerHTML = '';
+
+  // ゲームのinit関数を呼ぶ
+  game.init(gameArea, (score) => {
+    onGameComplete(score);
+  });
+}
+
+// ========================================
+// ゲーム完了 → リザルト画面
+// ========================================
+function onGameComplete(score) {
+  onGameKey = null;
+  const gameId = State.currentGame;
+  const game = GameRegistry[gameId];
+  if (!game) return;
+
+  State.currentScore = score;
+  State.playedGames.push(gameId);
+
+  // ハイスコア更新
+  if (!State.highScores[gameId] || score > State.highScores[gameId]) {
+    State.highScores[gameId] = score;
+  }
+
+  // メダル判定
+  const thresholds = game.medalThresholds;
+  let rank = 'bronze';
+  let medalCount = 1;
+  let rankText = '銅メダル';
+  let rankClass = 'bronze';
+  let seName = 'se_bronze.mp3';
+
+  if (score >= thresholds.gold) {
+    rank = 'gold';
+    medalCount = 3;
+    rankText = '金メダル！';
+    rankClass = 'gold';
+    seName = 'se_gold.mp3';
+  } else if (score >= thresholds.silver) {
+    rank = 'silver';
+    medalCount = 2;
+    rankText = '銀メダル';
+    rankClass = 'silver';
+    seName = 'se_silver.mp3';
+  }
+
+  // メダル加算
+  State.totalMedals += medalCount;
+  saveState();
+  updateMedalDisplay();
+
+  // クリーンアップ
+  if (game.cleanup) {
+    try { game.cleanup(); } catch (e) {}
+  }
+
+  // リザルト表示
+  showResultScreen(game, score, rankText, rankClass, medalCount, seName);
+}
+
+function showResultScreen(game, score, rankText, rankClass, medalCount, seName) {
+  document.getElementById('result-animal-svg').innerHTML = getAnimalSVG(game.animal, 80);
+  document.getElementById('result-game-name').textContent = game.name;
+  document.getElementById('result-score').textContent = 'スコア: ' + score + '点';
+
+  const rankEl = document.getElementById('result-rank');
+  rankEl.className = 'result-rank ' + rankClass;
+
+  const stars = rankClass === 'gold' ? '⭐⭐⭐' : rankClass === 'silver' ? '⭐⭐' : '⭐';
+  rankEl.textContent = 'ランク: ' + stars + ' ' + rankText;
+
+  // メダル獲得演出
+  const medalEarn = document.getElementById('result-medal-earn');
+  let medalIcons = '';
+  for (let i = 0; i < medalCount; i++) {
+    medalIcons += '🏅';
+  }
+  medalEarn.innerHTML = medalIcons + ' +' + medalCount + '枚 ゲット！' + createSparkles();
+
+  switchScreen('result');
+
+  playSE('se_finish.mp3');
+  setTimeout(() => playSE(seName), 500);
+
+  // ずんだもんによる結果読み上げ
+  const resultVoice = rankClass === 'gold' ? 'audio/result_gold.wav'
+    : rankClass === 'silver' ? 'audio/result_silver.wav'
+    : 'audio/result_bronze.wav';
+  setTimeout(() => {
+    playAudio(resultVoice).then(() => {
+      // 結果読み上げ後、「次のゲームへ」を読み上げ
+      playAudio('audio/result_next.wav');
+    });
+  }, 1200);
+}
+
+function createSparkles() {
+  let html = '';
+  for (let i = 0; i < 6; i++) {
+    const x = Math.random() * 300 - 150;
+    const y = Math.random() * 100 - 50;
+    const delay = Math.random() * 1.5;
+    html += `<span class="sparkle" style="left:calc(50% + ${x}px);top:calc(50% + ${y}px);animation-delay:${delay}s;font-size:28px;">✨</span>`;
+  }
+  return html;
+}
+
+function handleResultKey(key) {
+  selectNextGame();
+}
+
+// ========================================
+// ミニゲーム登録システム
+// ========================================
+const GameRegistry = {};
+
+function registerGame(id, config) {
+  GameRegistry[id] = config;
+}
+
+// ========================================
+// 動物キャラ SVG
+// ========================================
+function getAnimalSVG(animalId, size) {
+  size = size || 200;
+  const svgFunctions = {
+    panda: drawPanda,
+    elephant: drawElephant,
+    cheetah: drawCheetah,
+    mole: drawMole,
+    gorilla: drawGorilla,
+    monkey: drawMonkey,
+    lion: drawLion,
+    owl: drawOwl,
+    rabbit: drawRabbit,
+  };
+
+  svgFunctions.hammer = drawHammer;
+  const drawFn = svgFunctions[animalId];
+  if (!drawFn) return '<div style="width:' + size + 'px;height:' + size + 'px;"></div>';
+  return drawFn(size);
+}
+
+function drawPanda(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="panda-face" cx="48%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="60%" stop-color="#faf8f5"/>
+          <stop offset="100%" stop-color="#e8e4e0"/>
+        </radialGradient>
+        <radialGradient id="panda-ear" cx="45%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="#3a3a3a"/>
+          <stop offset="100%" stop-color="#111111"/>
+        </radialGradient>
+        <radialGradient id="panda-patch" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#333333"/>
+          <stop offset="100%" stop-color="#111111"/>
+        </radialGradient>
+        <radialGradient id="panda-iris" cx="45%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#443322"/>
+          <stop offset="60%" stop-color="#221100"/>
+          <stop offset="100%" stop-color="#000000"/>
+        </radialGradient>
+        <radialGradient id="panda-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="panda-nose-hl" cx="40%" cy="30%" r="50%">
+          <stop offset="0%" stop-color="#555" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#222" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="55" cy="42" r="36" fill="url(#panda-ear)"/>
+      <circle cx="55" cy="42" r="28" fill="none" stroke="#2a2a2a" stroke-width="1" opacity="0.3"/>
+      <circle cx="53" cy="38" r="14" fill="#2a2a2a" opacity="0.5"/>
+      <circle cx="145" cy="42" r="36" fill="url(#panda-ear)"/>
+      <circle cx="145" cy="42" r="28" fill="none" stroke="#2a2a2a" stroke-width="1" opacity="0.3"/>
+      <circle cx="147" cy="38" r="14" fill="#2a2a2a" opacity="0.5"/>
+      <ellipse cx="102" cy="118" rx="78" ry="22" fill="#1a1a1a" opacity="0.13"/>
+      <ellipse cx="100" cy="110" rx="76" ry="72" fill="url(#panda-face)"/>
+      <ellipse cx="100" cy="110" rx="76" ry="72" fill="none" stroke="#ddd8d5" stroke-width="1.5"/>
+      <ellipse cx="70" cy="94" rx="30" ry="26" fill="url(#panda-patch)" transform="rotate(-10, 70, 94)"/>
+      <ellipse cx="130" cy="94" rx="30" ry="26" fill="url(#panda-patch)" transform="rotate(10, 130, 94)"/>
+      <ellipse cx="72" cy="92" rx="13" ry="12" fill="#fff"/>
+      <ellipse cx="72" cy="92" rx="13" ry="12" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
+      <circle cx="74" cy="91" r="8" fill="url(#panda-iris)"/>
+      <circle cx="74" cy="91" r="4.5" fill="#000"/>
+      <circle cx="77" cy="88" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="71" cy="95" r="1.8" fill="#fff" opacity="0.6"/>
+      <path d="M59 87 Q72 82 85 87" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="128" cy="92" rx="13" ry="12" fill="#fff"/>
+      <ellipse cx="128" cy="92" rx="13" ry="12" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
+      <circle cx="130" cy="91" r="8" fill="url(#panda-iris)"/>
+      <circle cx="130" cy="91" r="4.5" fill="#000"/>
+      <circle cx="133" cy="88" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="127" cy="95" r="1.8" fill="#fff" opacity="0.6"/>
+      <path d="M115 87 Q128 82 141 87" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="100" cy="116" rx="11" ry="8" fill="#2a2a2a"/>
+      <ellipse cx="97" cy="113" rx="5" ry="3" fill="url(#panda-nose-hl)"/>
+      <ellipse cx="97" cy="113" rx="3" ry="2" fill="#555" opacity="0.45"/>
+      <path d="M90 124 Q100 136 110 124" fill="none" stroke="#333" stroke-width="2.8" stroke-linecap="round"/>
+      <line x1="100" y1="124" x2="100" y2="127" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="55" cy="118" r="15" fill="url(#panda-cheek)"/>
+      <circle cx="145" cy="118" r="15" fill="url(#panda-cheek)"/>
+      <g transform="translate(155, 20) rotate(25)">
+        <path d="M0 0 Q8 -12 4 -24 Q0 -12 -6 -8 Q-2 -4 0 0" fill="#5a9e3e" opacity="0.7"/>
+        <path d="M2 -4 Q14 -10 18 -22 Q10 -12 4 -8 Q3 -6 2 -4" fill="#4a8e2e" opacity="0.6"/>
+        <line x1="0" y1="0" x2="4" y2="-24" stroke="#3a7e1e" stroke-width="1.2" opacity="0.5"/>
+      </g>
+  </svg>`;
+}
+
+function drawElephant(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="elephant-body" cx="48%" cy="36%" r="62%">
+          <stop offset="0%" stop-color="#b0e0ee"/>
+          <stop offset="50%" stop-color="#88ccdd"/>
+          <stop offset="100%" stop-color="#6aabca"/>
+        </radialGradient>
+        <radialGradient id="elephant-ear-outer" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#90d0e4"/>
+          <stop offset="100%" stop-color="#5fa5be"/>
+        </radialGradient>
+        <radialGradient id="elephant-ear-inner" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#ecd8d8"/>
+          <stop offset="50%" stop-color="#d8bcc4"/>
+          <stop offset="100%" stop-color="#c6a0aa"/>
+        </radialGradient>
+        <radialGradient id="elephant-iris" cx="42%" cy="38%" r="50%">
+          <stop offset="0%" stop-color="#554433"/>
+          <stop offset="60%" stop-color="#332211"/>
+          <stop offset="100%" stop-color="#110800"/>
+        </radialGradient>
+        <linearGradient id="elephant-trunk" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#90d0e4"/>
+          <stop offset="50%" stop-color="#78bcd5"/>
+          <stop offset="100%" stop-color="#5fa5be"/>
+        </linearGradient>
+        <radialGradient id="elephant-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="elephant-nose-hl" cx="42%" cy="32%" r="45%">
+          <stop offset="0%" stop-color="#c0e8f5" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#80c0d8" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="32" cy="92" rx="38" ry="55" fill="url(#elephant-ear-outer)"/>
+      <path d="M22 70 Q30 85 20 105" fill="none" stroke="#5a9ab5" stroke-width="1.5" opacity="0.4"/>
+      <path d="M28 65 Q36 82 26 102" fill="none" stroke="#5a9ab5" stroke-width="1" opacity="0.3"/>
+      <ellipse cx="34" cy="92" rx="25" ry="38" fill="url(#elephant-ear-inner)"/>
+      <ellipse cx="168" cy="92" rx="38" ry="55" fill="url(#elephant-ear-outer)"/>
+      <path d="M178 70 Q170 85 180 105" fill="none" stroke="#5a9ab5" stroke-width="1.5" opacity="0.4"/>
+      <path d="M172 65 Q164 82 174 102" fill="none" stroke="#5a9ab5" stroke-width="1" opacity="0.3"/>
+      <ellipse cx="166" cy="92" rx="25" ry="38" fill="url(#elephant-ear-inner)"/>
+      <ellipse cx="102" cy="108" rx="70" ry="20" fill="#1a1a1a" opacity="0.13"/>
+      <ellipse cx="100" cy="98" rx="68" ry="70" fill="url(#elephant-body)"/>
+      <ellipse cx="100" cy="98" rx="68" ry="70" fill="none" stroke="#b8e0ee" stroke-width="1.5" opacity="0.5"/>
+      <ellipse cx="78" cy="80" rx="13" ry="12" fill="#fff"/>
+      <ellipse cx="78" cy="80" rx="13" ry="12" fill="none" stroke="#bbd8e8" stroke-width="0.8"/>
+      <circle cx="80" cy="79" r="8" fill="url(#elephant-iris)"/>
+      <circle cx="80" cy="79" r="4.5" fill="#000"/>
+      <circle cx="83" cy="76" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="77" cy="83" r="1.8" fill="#fff" opacity="0.6"/>
+      <path d="M65 75 Q78 70 91 75" fill="none" stroke="#5a9ab5" stroke-width="2" stroke-linecap="round"/>
+      <path d="M66 76 L63 72" stroke="#5a9ab5" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M69 74 L67 70" stroke="#5a9ab5" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="122" cy="80" rx="13" ry="12" fill="#fff"/>
+      <ellipse cx="122" cy="80" rx="13" ry="12" fill="none" stroke="#bbd8e8" stroke-width="0.8"/>
+      <circle cx="124" cy="79" r="8" fill="url(#elephant-iris)"/>
+      <circle cx="124" cy="79" r="4.5" fill="#000"/>
+      <circle cx="127" cy="76" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="121" cy="83" r="1.8" fill="#fff" opacity="0.6"/>
+      <path d="M109 75 Q122 70 135 75" fill="none" stroke="#5a9ab5" stroke-width="2" stroke-linecap="round"/>
+      <path d="M134 76 L137 72" stroke="#5a9ab5" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M131 74 L133 70" stroke="#5a9ab5" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M94 100 Q94 108 92 118 Q90 128 88 138 Q86 148 90 155 Q94 160 100 160 Q106 160 110 155 Q114 148 112 138 Q110 128 108 118 Q106 108 106 100" fill="url(#elephant-trunk)" stroke="#5a9ab5" stroke-width="2"/>
+      <path d="M94 115 Q100 118 106 115" fill="none" stroke="#5a9ab5" stroke-width="1.5" opacity="0.5"/>
+      <path d="M93 128 Q100 131 107 128" fill="none" stroke="#5a9ab5" stroke-width="1.5" opacity="0.5"/>
+      <path d="M91 140 Q100 143 109 140" fill="none" stroke="#5a9ab5" stroke-width="1.5" opacity="0.5"/>
+      <ellipse cx="100" cy="157" rx="6" ry="4" fill="#a0d8ea" opacity="0.5"/>
+      <ellipse cx="97" cy="104" rx="4" ry="6" fill="url(#elephant-nose-hl)"/>
+      <circle cx="62" cy="105" r="14" fill="url(#elephant-cheek)"/>
+      <circle cx="138" cy="105" r="14" fill="url(#elephant-cheek)"/>
+      <path d="M82 108 Q78 114 82 116" fill="none" stroke="#5a9ab5" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+      <path d="M118 108 Q122 114 118 116" fill="none" stroke="#5a9ab5" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  </svg>`;
+}
+
+function drawCheetah(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="cheetah-face" cx="48%" cy="36%" r="60%">
+          <stop offset="0%" stop-color="#fae080"/>
+          <stop offset="50%" stop-color="#f0c845"/>
+          <stop offset="100%" stop-color="#d4a830"/>
+        </radialGradient>
+        <linearGradient id="cheetah-ear-outer" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4a830"/>
+          <stop offset="100%" stop-color="#e8b84b"/>
+        </linearGradient>
+        <linearGradient id="cheetah-ear-inner" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f5e0a0"/>
+          <stop offset="100%" stop-color="#f0d080"/>
+        </linearGradient>
+        <radialGradient id="cheetah-iris" cx="45%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#f0c040"/>
+          <stop offset="40%" stop-color="#d4a017"/>
+          <stop offset="80%" stop-color="#b08010"/>
+          <stop offset="100%" stop-color="#8a6008"/>
+        </radialGradient>
+        <radialGradient id="cheetah-spot" cx="40%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="#9a6e30"/>
+          <stop offset="100%" stop-color="#6e4520"/>
+        </radialGradient>
+        <radialGradient id="cheetah-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="cheetah-muzzle" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="#fff8ee"/>
+          <stop offset="100%" stop-color="#f5e8d0"/>
+        </radialGradient>
+        <radialGradient id="cheetah-nose-hl" cx="38%" cy="28%" r="50%">
+          <stop offset="0%" stop-color="#a07838" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#6e4520" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <path d="M55 42 L38 6 L72 32 Z" fill="url(#cheetah-ear-outer)"/>
+      <path d="M57 42 L43 14 L68 35 Z" fill="url(#cheetah-ear-inner)"/>
+      <path d="M38 6 L36 8" stroke="#8a6008" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M145 42 L162 6 L128 32 Z" fill="url(#cheetah-ear-outer)"/>
+      <path d="M143 42 L157 14 L132 35 Z" fill="url(#cheetah-ear-inner)"/>
+      <path d="M162 6 L164 8" stroke="#8a6008" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="102" cy="115" rx="70" ry="18" fill="#1a1a1a" opacity="0.13"/>
+      <ellipse cx="100" cy="105" rx="68" ry="66" fill="url(#cheetah-face)"/>
+      <ellipse cx="100" cy="100" rx="60" ry="55" fill="none" stroke="#f7e090" stroke-width="1.5" opacity="0.4"/>
+      <ellipse cx="100" cy="118" rx="28" ry="22" fill="url(#cheetah-muzzle)"/>
+      <circle cx="58" cy="68" r="6.5" fill="url(#cheetah-spot)"/>
+      <circle cx="142" cy="68" r="6.5" fill="url(#cheetah-spot)"/>
+      <circle cx="52" cy="98" r="5.5" fill="url(#cheetah-spot)"/>
+      <circle cx="148" cy="98" r="5.5" fill="url(#cheetah-spot)"/>
+      <circle cx="73" cy="52" r="4.5" fill="url(#cheetah-spot)"/>
+      <circle cx="127" cy="52" r="4.5" fill="url(#cheetah-spot)"/>
+      <circle cx="44" cy="82" r="4" fill="url(#cheetah-spot)"/>
+      <circle cx="156" cy="82" r="4" fill="url(#cheetah-spot)"/>
+      <circle cx="65" cy="55" r="3.5" fill="url(#cheetah-spot)"/>
+      <circle cx="135" cy="55" r="3.5" fill="url(#cheetah-spot)"/>
+      <circle cx="50" cy="112" r="4.5" fill="url(#cheetah-spot)"/>
+      <circle cx="150" cy="112" r="4.5" fill="url(#cheetah-spot)"/>
+      <path d="M80 82 Q76 96 73 115" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+      <path d="M80 82 Q76 96 73 115" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+      <path d="M120 82 Q124 96 127 115" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+      <path d="M120 82 Q124 96 127 115" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="82" cy="84" rx="14" ry="13" fill="#fff"/>
+      <ellipse cx="82" cy="84" rx="14" ry="13" fill="none" stroke="#ddb830" stroke-width="0.8"/>
+      <circle cx="84" cy="83" r="9" fill="url(#cheetah-iris)"/>
+      <ellipse cx="84" cy="83" rx="3" ry="6" fill="#111"/>
+      <circle cx="87" cy="80" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="81" cy="87" r="2" fill="#fff" opacity="0.6"/>
+      <path d="M68 79 Q82 73 96 79" fill="none" stroke="#b08010" stroke-width="2.2" stroke-linecap="round"/>
+      <ellipse cx="118" cy="84" rx="14" ry="13" fill="#fff"/>
+      <ellipse cx="118" cy="84" rx="14" ry="13" fill="none" stroke="#ddb830" stroke-width="0.8"/>
+      <circle cx="120" cy="83" r="9" fill="url(#cheetah-iris)"/>
+      <ellipse cx="120" cy="83" rx="3" ry="6" fill="#111"/>
+      <circle cx="123" cy="80" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="117" cy="87" r="2" fill="#fff" opacity="0.6"/>
+      <path d="M104 79 Q118 73 132 79" fill="none" stroke="#b08010" stroke-width="2.2" stroke-linecap="round"/>
+      <ellipse cx="100" cy="108" rx="9" ry="7" fill="#6e4520"/>
+      <ellipse cx="97" cy="105" rx="4" ry="2.5" fill="url(#cheetah-nose-hl)"/>
+      <ellipse cx="97" cy="105" rx="2.5" ry="1.5" fill="#8a6030" opacity="0.5"/>
+      <path d="M90 116 Q100 126 110 116" fill="none" stroke="#6e4520" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="100" y1="115" x2="100" y2="118" stroke="#6e4520" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="65" cy="110" r="14" fill="url(#cheetah-cheek)"/>
+      <circle cx="135" cy="110" r="14" fill="url(#cheetah-cheek)"/>
+  </svg>`;
+}
+
+function drawMole(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="mole-body" cx="50%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#9a7a40"/>
+          <stop offset="100%" stop-color="#705518"/>
+        </radialGradient>
+        <radialGradient id="mole-face" cx="48%" cy="36%" r="60%">
+          <stop offset="0%" stop-color="#c8a468"/>
+          <stop offset="50%" stop-color="#b08e50"/>
+          <stop offset="100%" stop-color="#8a6838"/>
+        </radialGradient>
+        <radialGradient id="mole-belly" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="#f8ecd8"/>
+          <stop offset="80%" stop-color="#e8d5b5"/>
+          <stop offset="100%" stop-color="#d8c5a0"/>
+        </radialGradient>
+        <radialGradient id="mole-nose" cx="40%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="#ffbbcc"/>
+          <stop offset="60%" stop-color="#ff8fa0"/>
+          <stop offset="100%" stop-color="#e07888"/>
+        </radialGradient>
+        <radialGradient id="mole-nose-hl" cx="35%" cy="28%" r="45%">
+          <stop offset="0%" stop-color="#ffd8e4" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#ff8fa0" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="mole-iris" cx="45%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#444"/>
+          <stop offset="100%" stop-color="#111"/>
+        </radialGradient>
+        <radialGradient id="mole-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="mole-paw" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="#be9a60"/>
+          <stop offset="100%" stop-color="#8a6838"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="38" cy="152" rx="26" ry="16" fill="url(#mole-paw)" transform="rotate(-20, 38, 152)"/>
+      <ellipse cx="32" cy="148" rx="8" ry="5" fill="#d8c5a0" opacity="0.4" transform="rotate(-20, 32, 148)"/>
+      <path d="M20 143 L12 133" stroke="#f0e0c8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M20 143 L12 133" stroke="#d8c5a0" stroke-width="3" stroke-linecap="round"/>
+      <path d="M26 139 L19 128" stroke="#f0e0c8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M26 139 L19 128" stroke="#d8c5a0" stroke-width="3" stroke-linecap="round"/>
+      <path d="M33 137 L28 126" stroke="#f0e0c8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M33 137 L28 126" stroke="#d8c5a0" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="162" cy="152" rx="26" ry="16" fill="url(#mole-paw)" transform="rotate(20, 162, 152)"/>
+      <ellipse cx="168" cy="148" rx="8" ry="5" fill="#d8c5a0" opacity="0.4" transform="rotate(20, 168, 148)"/>
+      <path d="M180 143 L188 133" stroke="#f0e0c8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M180 143 L188 133" stroke="#d8c5a0" stroke-width="3" stroke-linecap="round"/>
+      <path d="M174 139 L181 128" stroke="#f0e0c8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M174 139 L181 128" stroke="#d8c5a0" stroke-width="3" stroke-linecap="round"/>
+      <path d="M167 137 L172 126" stroke="#f0e0c8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M167 137 L172 126" stroke="#d8c5a0" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="100" cy="132" rx="78" ry="58" fill="url(#mole-body)"/>
+      <ellipse cx="102" cy="110" rx="70" ry="18" fill="#1a1a1a" opacity="0.13"/>
+      <ellipse cx="100" cy="98" rx="68" ry="65" fill="url(#mole-face)"/>
+      <ellipse cx="98" cy="90" rx="50" ry="45" fill="none" stroke="#c8a870" stroke-width="1" opacity="0.3"/>
+      <path d="M70 50 Q72 44 75 50" fill="none" stroke="#8a6838" stroke-width="1.5" opacity="0.3"/>
+      <path d="M90 42 Q92 36 95 42" fill="none" stroke="#8a6838" stroke-width="1.5" opacity="0.3"/>
+      <path d="M108 42 Q110 36 113 42" fill="none" stroke="#8a6838" stroke-width="1.5" opacity="0.3"/>
+      <path d="M125 50 Q127 44 130 50" fill="none" stroke="#8a6838" stroke-width="1.5" opacity="0.3"/>
+      <ellipse cx="100" cy="115" rx="42" ry="38" fill="url(#mole-belly)"/>
+      <ellipse cx="80" cy="84" rx="8" ry="7" fill="#fff"/>
+      <ellipse cx="80" cy="84" rx="8" ry="7" fill="none" stroke="#c8a870" stroke-width="0.5"/>
+      <circle cx="81" cy="83" r="5" fill="url(#mole-iris)"/>
+      <circle cx="81" cy="83" r="3" fill="#111"/>
+      <circle cx="83" cy="81" r="2.5" fill="#fff" opacity="0.9"/>
+      <circle cx="79" cy="86" r="1.2" fill="#fff" opacity="0.6"/>
+      <path d="M72 81 Q80 77 88 81" fill="none" stroke="#8a6838" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="120" cy="84" rx="8" ry="7" fill="#fff"/>
+      <ellipse cx="120" cy="84" rx="8" ry="7" fill="none" stroke="#c8a870" stroke-width="0.5"/>
+      <circle cx="121" cy="83" r="5" fill="url(#mole-iris)"/>
+      <circle cx="121" cy="83" r="3" fill="#111"/>
+      <circle cx="123" cy="81" r="2.5" fill="#fff" opacity="0.9"/>
+      <circle cx="119" cy="86" r="1.2" fill="#fff" opacity="0.6"/>
+      <path d="M112 81 Q120 77 128 81" fill="none" stroke="#8a6838" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="100" cy="99" rx="15" ry="11" fill="url(#mole-nose)"/>
+      <ellipse cx="96" cy="95" rx="6" ry="4" fill="url(#mole-nose-hl)"/>
+      <ellipse cx="96" cy="95" rx="3" ry="2" fill="#ffd0dd" opacity="0.5"/>
+      <ellipse cx="96" cy="101" rx="2.5" ry="2" fill="#cc6677" opacity="0.5"/>
+      <ellipse cx="104" cy="101" rx="2.5" ry="2" fill="#cc6677" opacity="0.5"/>
+      <line x1="55" y1="96" x2="80" y2="102" stroke="#888" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="53" y1="106" x2="80" y2="107" stroke="#888" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="55" y1="116" x2="80" y2="112" stroke="#888" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="145" y1="96" x2="120" y2="102" stroke="#888" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="147" y1="106" x2="120" y2="107" stroke="#888" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="145" y1="116" x2="120" y2="112" stroke="#888" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M90 116 Q100 126 110 116" fill="none" stroke="#6b4a2a" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="100" y1="110" x2="100" y2="118" stroke="#6b4a2a" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="66" cy="108" r="14" fill="url(#mole-cheek)"/>
+      <circle cx="134" cy="108" r="14" fill="url(#mole-cheek)"/>
+  </svg>`;
+}
+
+function drawGorilla(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="gorilla-body" cx="48%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#626262"/>
+          <stop offset="60%" stop-color="#3e3e3e"/>
+          <stop offset="100%" stop-color="#2a2a2a"/>
+        </radialGradient>
+        <radialGradient id="gorilla-forehead" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#505050"/>
+          <stop offset="100%" stop-color="#333"/>
+        </radialGradient>
+        <radialGradient id="gorilla-face" cx="48%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#b09888"/>
+          <stop offset="60%" stop-color="#927060"/>
+          <stop offset="100%" stop-color="#7a6050"/>
+        </radialGradient>
+        <radialGradient id="gorilla-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="gorilla-iris" cx="45%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#5a3a1a"/>
+          <stop offset="100%" stop-color="#2a1a0a"/>
+        </radialGradient>
+        <radialGradient id="gorilla-nose-hl" cx="40%" cy="30%" r="50%">
+          <stop offset="0%" stop-color="#8a7a6a" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#5a4a3a" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="102" cy="112" rx="80" ry="78" fill="#1a1a1a" opacity="0.13"/>
+      <ellipse cx="100" cy="105" rx="80" ry="78" fill="url(#gorilla-body)"/>
+      <ellipse cx="100" cy="48" rx="55" ry="28" fill="url(#gorilla-forehead)"/>
+      <ellipse cx="95" cy="42" rx="30" ry="12" fill="#606060" opacity="0.4"/>
+      <ellipse cx="75" cy="70" rx="20" ry="8" fill="#444"/>
+      <ellipse cx="125" cy="70" rx="20" ry="8" fill="#444"/>
+      <ellipse cx="100" cy="120" rx="48" ry="45" fill="url(#gorilla-face)"/>
+      <ellipse cx="75" cy="86" rx="14" ry="13" fill="#fff"/>
+      <ellipse cx="75" cy="79" rx="15" ry="6" fill="#3a3a3a"/>
+      <circle cx="78" cy="86" r="8" fill="url(#gorilla-iris)"/>
+      <circle cx="79" cy="86" r="4.5" fill="#111"/>
+      <circle cx="81" cy="83" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="75" cy="89" r="1.8" fill="#fff" opacity="0.6"/>
+      <ellipse cx="125" cy="86" rx="14" ry="13" fill="#fff"/>
+      <ellipse cx="125" cy="79" rx="15" ry="6" fill="#3a3a3a"/>
+      <circle cx="128" cy="86" r="8" fill="url(#gorilla-iris)"/>
+      <circle cx="129" cy="86" r="4.5" fill="#111"/>
+      <circle cx="131" cy="83" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="125" cy="89" r="1.8" fill="#fff" opacity="0.6"/>
+      <ellipse cx="90" cy="118" rx="9" ry="7" fill="#5a4a3a"/>
+      <ellipse cx="110" cy="118" rx="9" ry="7" fill="#5a4a3a"/>
+      <ellipse cx="90" cy="119" rx="4" ry="3" fill="#3a2a1a"/>
+      <ellipse cx="110" cy="119" rx="4" ry="3" fill="#3a2a1a"/>
+      <ellipse cx="87" cy="115" rx="3.5" ry="2.5" fill="url(#gorilla-nose-hl)"/>
+      <ellipse cx="107" cy="115" rx="3.5" ry="2.5" fill="url(#gorilla-nose-hl)"/>
+      <path d="M82 137 Q100 152 118 137" fill="none" stroke="#5a4a3a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M88 139 Q100 148 112 139" fill="#4a3a2a" opacity="0.3"/>
+      <circle cx="60" cy="112" r="14" fill="url(#gorilla-cheek)"/>
+      <circle cx="140" cy="112" r="14" fill="url(#gorilla-cheek)"/>
+      <path d="M40 60 Q45 55 42 48" fill="none" stroke="#2a2a2a" stroke-width="1.5" opacity="0.4"/>
+      <path d="M160 60 Q155 55 158 48" fill="none" stroke="#2a2a2a" stroke-width="1.5" opacity="0.4"/>
+      <path d="M35 90 Q30 85 32 78" fill="none" stroke="#2a2a2a" stroke-width="1.5" opacity="0.4"/>
+      <path d="M165 90 Q170 85 168 78" fill="none" stroke="#2a2a2a" stroke-width="1.5" opacity="0.4"/>
+  </svg>`;
+}
+
+function drawMonkey(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="monkey-fur" cx="48%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#d88858"/>
+          <stop offset="60%" stop-color="#c07040"/>
+          <stop offset="100%" stop-color="#a06030"/>
+        </radialGradient>
+        <radialGradient id="monkey-skin" cx="48%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#ffe8d0"/>
+          <stop offset="60%" stop-color="#f5d0b0"/>
+          <stop offset="100%" stop-color="#f0c8a0"/>
+        </radialGradient>
+        <radialGradient id="monkey-ear-inner" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffd8c0"/>
+          <stop offset="100%" stop-color="#e8b090"/>
+        </radialGradient>
+        <radialGradient id="monkey-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="monkey-iris" cx="45%" cy="38%" r="50%">
+          <stop offset="0%" stop-color="#5a3a1a"/>
+          <stop offset="100%" stop-color="#2a1508"/>
+        </radialGradient>
+        <radialGradient id="monkey-nose-hl" cx="40%" cy="30%" r="50%">
+          <stop offset="0%" stop-color="#b07848" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#8a5a3a" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="102" cy="107" rx="70" ry="70" fill="#1a1a1a" opacity="0.13"/>
+      <circle cx="30" cy="85" r="30" fill="url(#monkey-fur)"/>
+      <circle cx="30" cy="85" r="20" fill="url(#monkey-ear-inner)"/>
+      <circle cx="170" cy="85" r="30" fill="url(#monkey-fur)"/>
+      <circle cx="170" cy="85" r="20" fill="url(#monkey-ear-inner)"/>
+      <ellipse cx="100" cy="100" rx="70" ry="70" fill="url(#monkey-fur)"/>
+      <path d="M82 32 Q85 12 92 28" fill="#b06830" stroke="#b06830" stroke-width="1.5"/>
+      <path d="M90 30 Q95 8 102 26" fill="#c07840" stroke="#c07840" stroke-width="1.5"/>
+      <path d="M100 28 Q107 6 112 26" fill="#b06830" stroke="#b06830" stroke-width="1.5"/>
+      <path d="M108 30 Q115 14 118 32" fill="#c07840" stroke="#c07840" stroke-width="1.5"/>
+      <ellipse cx="100" cy="112" rx="50" ry="48" fill="url(#monkey-skin)"/>
+      <ellipse cx="78" cy="87" rx="14" ry="13" fill="#fff"/>
+      <path d="M64 84 Q78 76 92 84" fill="#b06830" opacity="0.5"/>
+      <circle cx="81" cy="87" r="8" fill="url(#monkey-iris)"/>
+      <circle cx="82" cy="87" r="4.5" fill="#111"/>
+      <circle cx="84" cy="84" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="78" cy="90" r="1.8" fill="#fff" opacity="0.6"/>
+      <ellipse cx="122" cy="87" rx="14" ry="13" fill="#fff"/>
+      <path d="M108 84 Q122 76 136 84" fill="#b06830" opacity="0.5"/>
+      <circle cx="125" cy="87" r="8" fill="url(#monkey-iris)"/>
+      <circle cx="126" cy="87" r="4.5" fill="#111"/>
+      <circle cx="128" cy="84" r="3.5" fill="#fff" opacity="0.9"/>
+      <circle cx="122" cy="90" r="1.8" fill="#fff" opacity="0.6"/>
+      <path d="M65 78 Q78 72 90 78" fill="none" stroke="#8a5020" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M110 78 Q122 72 135 78" fill="none" stroke="#8a5020" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="93" cy="108" rx="6" ry="5" fill="#8a5a3a"/>
+      <ellipse cx="107" cy="108" rx="6" ry="5" fill="#8a5a3a"/>
+      <ellipse cx="93" cy="109" rx="3" ry="2.5" fill="#6a3a1a"/>
+      <ellipse cx="107" cy="109" rx="3" ry="2.5" fill="#6a3a1a"/>
+      <ellipse cx="91" cy="106" rx="2.5" ry="1.8" fill="url(#monkey-nose-hl)"/>
+      <ellipse cx="105" cy="106" rx="2.5" ry="1.8" fill="url(#monkey-nose-hl)"/>
+      <path d="M86 122 Q100 136 114 122" fill="none" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M90 124 Q100 133 110 124" fill="#6a3a1a" opacity="0.25"/>
+      <circle cx="62" cy="110" r="14" fill="url(#monkey-cheek)"/>
+      <circle cx="138" cy="110" r="14" fill="url(#monkey-cheek)"/>
+  </svg>`;
+}
+
+function drawLion(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="lion-mane" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#eaaa28"/>
+          <stop offset="60%" stop-color="#d08810"/>
+          <stop offset="100%" stop-color="#b07008"/>
+        </radialGradient>
+        <radialGradient id="lion-mane-outer" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#d09010"/>
+          <stop offset="100%" stop-color="#a06808"/>
+        </radialGradient>
+        <radialGradient id="lion-face" cx="48%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#ffe870"/>
+          <stop offset="50%" stop-color="#f5d048"/>
+          <stop offset="100%" stop-color="#f0c830"/>
+        </radialGradient>
+        <radialGradient id="lion-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="lion-iris" cx="45%" cy="38%" r="50%">
+          <stop offset="0%" stop-color="#7a5020"/>
+          <stop offset="100%" stop-color="#3a2010"/>
+        </radialGradient>
+        <radialGradient id="lion-ear-inner" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffb8c8"/>
+          <stop offset="100%" stop-color="#e890a0"/>
+        </radialGradient>
+        <radialGradient id="lion-nose" cx="42%" cy="32%" r="58%">
+          <stop offset="0%" stop-color="#f0a820"/>
+          <stop offset="60%" stop-color="#d89018"/>
+          <stop offset="100%" stop-color="#c07810"/>
+        </radialGradient>
+        <radialGradient id="lion-nose-hl" cx="38%" cy="28%" r="45%">
+          <stop offset="0%" stop-color="#ffe060" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#d89018" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="102" cy="110" r="90" fill="#1a1a1a" opacity="0.13"/>
+      <circle cx="100" cy="105" r="90" fill="url(#lion-mane)"/>
+      <circle cx="100" cy="14" r="24" fill="url(#lion-mane-outer)"/>
+      <circle cx="65" cy="20" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="135" cy="20" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="38" cy="42" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="162" cy="42" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="18" cy="72" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="182" cy="72" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="14" cy="105" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="186" cy="105" r="22" fill="url(#lion-mane-outer)"/>
+      <circle cx="20" cy="138" r="20" fill="url(#lion-mane-outer)"/>
+      <circle cx="180" cy="138" r="20" fill="url(#lion-mane-outer)"/>
+      <circle cx="38" cy="165" r="18" fill="url(#lion-mane-outer)"/>
+      <circle cx="162" cy="165" r="18" fill="url(#lion-mane-outer)"/>
+      <circle cx="65" cy="182" r="16" fill="url(#lion-mane-outer)"/>
+      <circle cx="135" cy="182" r="16" fill="url(#lion-mane-outer)"/>
+      <circle cx="100" cy="190" r="15" fill="url(#lion-mane-outer)"/>
+      <circle cx="100" cy="105" r="88" fill="none" stroke="#e8a820" stroke-width="3" opacity="0.3"/>
+      <ellipse cx="100" cy="108" rx="60" ry="60" fill="url(#lion-face)"/>
+      <circle cx="52" cy="62" r="16" fill="url(#lion-face)"/>
+      <circle cx="52" cy="62" r="10" fill="url(#lion-ear-inner)"/>
+      <circle cx="148" cy="62" r="16" fill="url(#lion-face)"/>
+      <circle cx="148" cy="62" r="10" fill="url(#lion-ear-inner)"/>
+      <ellipse cx="80" cy="96" rx="13" ry="12" fill="#fff"/>
+      <path d="M67 93 Q80 86 93 93" fill="#e8b830" opacity="0.5"/>
+      <circle cx="82" cy="96" r="7.5" fill="url(#lion-iris)"/>
+      <circle cx="83" cy="96" r="4" fill="#111"/>
+      <circle cx="85" cy="93" r="3.2" fill="#fff" opacity="0.9"/>
+      <circle cx="79" cy="99" r="1.6" fill="#fff" opacity="0.6"/>
+      <ellipse cx="120" cy="96" rx="13" ry="12" fill="#fff"/>
+      <path d="M107 93 Q120 86 133 93" fill="#e8b830" opacity="0.5"/>
+      <circle cx="122" cy="96" r="7.5" fill="url(#lion-iris)"/>
+      <circle cx="123" cy="96" r="4" fill="#111"/>
+      <circle cx="125" cy="93" r="3.2" fill="#fff" opacity="0.9"/>
+      <circle cx="119" cy="99" r="1.6" fill="#fff" opacity="0.6"/>
+      <path d="M67 87 Q80 82 92 87" fill="none" stroke="#c09020" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M108 87 Q120 82 133 87" fill="none" stroke="#c09020" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="100" cy="116" rx="11" ry="9" fill="url(#lion-nose)"/>
+      <ellipse cx="97" cy="113" rx="4.5" ry="3" fill="url(#lion-nose-hl)"/>
+      <ellipse cx="97" cy="113" rx="2.5" ry="1.8" fill="#f5c840" opacity="0.45"/>
+      <path d="M100 125 L100 128" stroke="#b07010" stroke-width="2" stroke-linecap="round"/>
+      <path d="M88 128 Q100 140 112 128" fill="none" stroke="#b07010" stroke-width="3" stroke-linecap="round"/>
+      <path d="M92 130 Q100 137 108 130" fill="#a06808" opacity="0.2"/>
+      <line x1="45" y1="110" x2="70" y2="114" stroke="#d8a830" stroke-width="1.5" opacity="0.4"/>
+      <line x1="44" y1="120" x2="70" y2="120" stroke="#d8a830" stroke-width="1.5" opacity="0.4"/>
+      <line x1="46" y1="130" x2="70" y2="126" stroke="#d8a830" stroke-width="1.5" opacity="0.4"/>
+      <line x1="155" y1="110" x2="130" y2="114" stroke="#d8a830" stroke-width="1.5" opacity="0.4"/>
+      <line x1="156" y1="120" x2="130" y2="120" stroke="#d8a830" stroke-width="1.5" opacity="0.4"/>
+      <line x1="154" y1="130" x2="130" y2="126" stroke="#d8a830" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="65" cy="122" r="14" fill="url(#lion-cheek)"/>
+      <circle cx="135" cy="122" r="14" fill="url(#lion-cheek)"/>
+  </svg>`;
+}
+
+function drawOwl(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="owl-body" cx="48%" cy="33%" r="62%">
+          <stop offset="0%" stop-color="#d0a050"/>
+          <stop offset="60%" stop-color="#b08838"/>
+          <stop offset="100%" stop-color="#906828"/>
+        </radialGradient>
+        <radialGradient id="owl-belly" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="#fff5e0"/>
+          <stop offset="80%" stop-color="#f0e0c0"/>
+          <stop offset="100%" stop-color="#ecdcb8"/>
+        </radialGradient>
+        <radialGradient id="owl-eye-ring" cx="50%" cy="45%" r="50%">
+          <stop offset="0%" stop-color="#fff5e0"/>
+          <stop offset="80%" stop-color="#ecdcb8"/>
+          <stop offset="100%" stop-color="#d8c8a0"/>
+        </radialGradient>
+        <radialGradient id="owl-iris" cx="45%" cy="38%" r="50%">
+          <stop offset="0%" stop-color="#f0b830"/>
+          <stop offset="100%" stop-color="#d08810"/>
+        </radialGradient>
+        <radialGradient id="owl-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="owl-horn" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#a07830"/>
+          <stop offset="100%" stop-color="#806020"/>
+        </linearGradient>
+        <linearGradient id="owl-beak" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#f0b830"/>
+          <stop offset="100%" stop-color="#d09010"/>
+        </linearGradient>
+        <radialGradient id="owl-beak-hl" cx="42%" cy="28%" r="45%">
+          <stop offset="0%" stop-color="#ffe870" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#d09010" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="102" cy="126" rx="72" ry="72" fill="#1a1a1a" opacity="0.13"/>
+      <path d="M52 25 L66 65 L36 58 Z" fill="url(#owl-horn)"/>
+      <path d="M52 32 L62 58" stroke="#907028" stroke-width="1.5" opacity="0.5"/>
+      <path d="M148 25 L134 65 L164 58 Z" fill="url(#owl-horn)"/>
+      <path d="M148 32 L138 58" stroke="#907028" stroke-width="1.5" opacity="0.5"/>
+      <ellipse cx="100" cy="120" rx="72" ry="72" fill="url(#owl-body)"/>
+      <path d="M45 95 L52 88 L59 95" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.35"/>
+      <path d="M60 95 L67 88 L74 95" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.35"/>
+      <path d="M126 95 L133 88 L140 95" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.35"/>
+      <path d="M141 95 L148 88 L155 95" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.35"/>
+      <path d="M35 110 L42 103 L49 110" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.3"/>
+      <path d="M50 110 L57 103 L64 110" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.3"/>
+      <path d="M136 110 L143 103 L150 110" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.3"/>
+      <path d="M151 110 L158 103 L165 110" fill="none" stroke="#806020" stroke-width="1.8" opacity="0.3"/>
+      <ellipse cx="100" cy="142" rx="44" ry="42" fill="url(#owl-belly)"/>
+      <path d="M76 120 Q88 128 100 120 Q112 128 124 120" fill="none" stroke="#d4b870" stroke-width="2" opacity="0.5"/>
+      <path d="M72 133 Q86 141 100 133 Q114 141 128 133" fill="none" stroke="#d4b870" stroke-width="2" opacity="0.5"/>
+      <path d="M74 146 Q87 154 100 146 Q113 154 126 146" fill="none" stroke="#d4b870" stroke-width="2" opacity="0.5"/>
+      <path d="M78 159 Q89 166 100 159 Q111 166 122 159" fill="none" stroke="#d4b870" stroke-width="2" opacity="0.4"/>
+      <circle cx="75" cy="88" r="30" fill="url(#owl-eye-ring)"/>
+      <circle cx="75" cy="88" r="30" fill="none" stroke="#c8a860" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="125" cy="88" r="30" fill="url(#owl-eye-ring)"/>
+      <circle cx="125" cy="88" r="30" fill="none" stroke="#c8a860" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="75" cy="88" r="20" fill="#fff"/>
+      <circle cx="78" cy="87" r="13" fill="url(#owl-iris)"/>
+      <circle cx="79" cy="87" r="7" fill="#1a1a1a"/>
+      <circle cx="82" cy="83" r="4.5" fill="#fff" opacity="0.9"/>
+      <circle cx="74" cy="91" r="2.2" fill="#fff" opacity="0.6"/>
+      <path d="M55 82 Q75 74 95 82" fill="url(#owl-body)" opacity="0.35"/>
+      <circle cx="125" cy="88" r="20" fill="#fff"/>
+      <circle cx="128" cy="87" r="13" fill="url(#owl-iris)"/>
+      <circle cx="129" cy="87" r="7" fill="#1a1a1a"/>
+      <circle cx="132" cy="83" r="4.5" fill="#fff" opacity="0.9"/>
+      <circle cx="124" cy="91" r="2.2" fill="#fff" opacity="0.6"/>
+      <path d="M105 82 Q125 74 145 82" fill="url(#owl-body)" opacity="0.35"/>
+      <path d="M57 80 L54 74" stroke="#806020" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <path d="M63 77 L61 71" stroke="#806020" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <path d="M137 77 L139 71" stroke="#806020" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <path d="M143 80 L146 74" stroke="#806020" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <path d="M93 104 L100 120 L107 104 Z" fill="url(#owl-beak)"/>
+      <path d="M96 106 L100 115 L100 106 Z" fill="url(#owl-beak-hl)"/>
+      <circle cx="54" cy="108" r="14" fill="url(#owl-cheek)"/>
+      <circle cx="146" cy="108" r="14" fill="url(#owl-cheek)"/>
+      <path d="M78 188 L72 196 M78 188 L78 196 M78 188 L84 196" stroke="#d09010" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M122 188 L116 196 M122 188 L122 196 M122 188 L128 196" stroke="#d09010" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function drawRabbit(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="rabbit-fur" cx="48%" cy="38%" r="62%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="50%" stop-color="#f8f4f2"/>
+          <stop offset="100%" stop-color="#e8e0de"/>
+        </radialGradient>
+        <linearGradient id="rabbit-ear-inner" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffb0c0"/>
+          <stop offset="50%" stop-color="#ff8da0"/>
+          <stop offset="100%" stop-color="#ffb0c0"/>
+        </linearGradient>
+        <radialGradient id="rabbit-ear-outer" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="80%" stop-color="#f2ecec"/>
+          <stop offset="100%" stop-color="#e5dede"/>
+        </radialGradient>
+        <radialGradient id="rabbit-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffaabb" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#ffaabb" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="rabbit-iris" cx="45%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="#e83060"/>
+          <stop offset="50%" stop-color="#cc2050"/>
+          <stop offset="100%" stop-color="#a01040"/>
+        </radialGradient>
+        <radialGradient id="rabbit-nose-hl" cx="35%" cy="28%" r="45%">
+          <stop offset="0%" stop-color="#ffc0d0" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#ff7088" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="70" cy="32" rx="20" ry="55" fill="url(#rabbit-ear-outer)" stroke="#e0d8d8" stroke-width="1"/>
+      <ellipse cx="70" cy="34" rx="11" ry="42" fill="url(#rabbit-ear-inner)"/>
+      <ellipse cx="130" cy="32" rx="20" ry="55" fill="url(#rabbit-ear-outer)" stroke="#e0d8d8" stroke-width="1"/>
+      <ellipse cx="130" cy="34" rx="11" ry="42" fill="url(#rabbit-ear-inner)"/>
+      <ellipse cx="56" cy="20" rx="7" ry="9" fill="url(#rabbit-ear-outer)"/>
+      <ellipse cx="84" cy="20" rx="7" ry="9" fill="url(#rabbit-ear-outer)"/>
+      <ellipse cx="116" cy="20" rx="7" ry="9" fill="url(#rabbit-ear-outer)"/>
+      <ellipse cx="144" cy="20" rx="7" ry="9" fill="url(#rabbit-ear-outer)"/>
+      <ellipse cx="102" cy="132" rx="66" ry="18" fill="#1a1a1a" opacity="0.13"/>
+      <ellipse cx="100" cy="122" rx="64" ry="62" fill="url(#rabbit-fur)" stroke="#e0d8d8" stroke-width="0.8"/>
+      <ellipse cx="42" cy="115" rx="8" ry="10" fill="url(#rabbit-fur)"/>
+      <ellipse cx="158" cy="115" rx="8" ry="10" fill="url(#rabbit-fur)"/>
+      <ellipse cx="50" cy="135" rx="7" ry="8" fill="url(#rabbit-fur)"/>
+      <ellipse cx="150" cy="135" rx="7" ry="8" fill="url(#rabbit-fur)"/>
+      <ellipse cx="80" cy="175" rx="9" ry="6" fill="url(#rabbit-fur)"/>
+      <ellipse cx="120" cy="175" rx="9" ry="6" fill="url(#rabbit-fur)"/>
+      <circle cx="60" cy="130" r="15" fill="url(#rabbit-cheek)"/>
+      <circle cx="140" cy="130" r="15" fill="url(#rabbit-cheek)"/>
+      <ellipse cx="78" cy="108" rx="13" ry="14" fill="#fff" stroke="#e0d0d0" stroke-width="0.5"/>
+      <circle cx="80" cy="107" r="9" fill="url(#rabbit-iris)"/>
+      <circle cx="80" cy="107" r="5" fill="#1a0a15"/>
+      <path d="M66 100 Q78 96 92 100" fill="none" stroke="#d0c0c0" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="83" cy="104" r="3" fill="#fff" opacity="0.9"/>
+      <circle cx="77" cy="110" r="1.5" fill="#fff" opacity="0.6"/>
+      <ellipse cx="122" cy="108" rx="13" ry="14" fill="#fff" stroke="#e0d0d0" stroke-width="0.5"/>
+      <circle cx="124" cy="107" r="9" fill="url(#rabbit-iris)"/>
+      <circle cx="124" cy="107" r="5" fill="#1a0a15"/>
+      <path d="M108 100 Q122 96 134 100" fill="none" stroke="#d0c0c0" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="127" cy="104" r="3" fill="#fff" opacity="0.9"/>
+      <circle cx="121" cy="110" r="1.5" fill="#fff" opacity="0.6"/>
+      <ellipse cx="100" cy="126" rx="5.5" ry="4.5" fill="#ff7088"/>
+      <ellipse cx="98" cy="124" rx="2.5" ry="1.8" fill="url(#rabbit-nose-hl)"/>
+      <ellipse cx="98" cy="124" rx="1.5" ry="1" fill="#ffa8b8" opacity="0.5"/>
+      <line x1="100" y1="130" x2="100" y2="138" stroke="#c07080" stroke-width="2" stroke-linecap="round"/>
+      <path d="M93 143 Q100 137 107 143" fill="none" stroke="#c07080" stroke-width="2" stroke-linecap="round"/>
+      <line x1="50" y1="122" x2="72" y2="126" stroke="#d8d0d0" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="48" y1="132" x2="72" y2="131" stroke="#d8d0d0" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="50" y1="142" x2="72" y2="136" stroke="#d8d0d0" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="150" y1="122" x2="128" y2="126" stroke="#d8d0d0" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="152" y1="132" x2="128" y2="131" stroke="#d8d0d0" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="150" y1="142" x2="128" y2="136" stroke="#d8d0d0" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function drawHammer(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="hammer-head" cx="45%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#ff9898"/>
+          <stop offset="40%" stop-color="#ff6b6b"/>
+          <stop offset="100%" stop-color="#e04545"/>
+        </radialGradient>
+        <radialGradient id="hammer-head-top" cx="45%" cy="30%" r="65%">
+          <stop offset="0%" stop-color="#ffb8c0"/>
+          <stop offset="40%" stop-color="#ff909a"/>
+          <stop offset="100%" stop-color="#ff7080"/>
+        </radialGradient>
+        <linearGradient id="hammer-handle" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c08840"/>
+          <stop offset="20%" stop-color="#dea858"/>
+          <stop offset="40%" stop-color="#c89048"/>
+          <stop offset="60%" stop-color="#deb060"/>
+          <stop offset="80%" stop-color="#c89848"/>
+          <stop offset="100%" stop-color="#b88038"/>
+        </linearGradient>
+        <linearGradient id="hammer-handle-hl" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="transparent"/>
+          <stop offset="30%" stop-color="rgba(255,255,255,0.25)"/>
+          <stop offset="50%" stop-color="rgba(255,255,255,0.15)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+        <radialGradient id="hammer-bumper" cx="40%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#ffb0b0"/>
+          <stop offset="50%" stop-color="#ff6b6b"/>
+          <stop offset="100%" stop-color="#d04040"/>
+        </radialGradient>
+      </defs>
+      <rect x="88" y="108" width="24" height="88" rx="8" fill="url(#hammer-handle)"/>
+      <rect x="88" y="108" width="24" height="88" rx="8" fill="url(#hammer-handle-hl)"/>
+      <line x1="94" y1="112" x2="94" y2="192" stroke="#b07830" stroke-width="0.6" opacity="0.4"/>
+      <line x1="100" y1="112" x2="100" y2="192" stroke="#b07830" stroke-width="0.5" opacity="0.3"/>
+      <line x1="106" y1="112" x2="106" y2="192" stroke="#b07830" stroke-width="0.6" opacity="0.4"/>
+      <rect x="85" y="150" width="30" height="9" rx="4.5" fill="#e53935"/>
+      <rect x="85" y="161" width="30" height="9" rx="4.5" fill="#1e88e5"/>
+      <rect x="85" y="172" width="30" height="9" rx="4.5" fill="#fdd835"/>
+      <rect x="85" y="183" width="30" height="9" rx="4.5" fill="#e53935"/>
+      <rect x="93" y="150" width="8" height="9" rx="3" fill="#fff" opacity="0.2"/>
+      <rect x="93" y="161" width="8" height="9" rx="3" fill="#fff" opacity="0.2"/>
+      <rect x="93" y="172" width="8" height="9" rx="3" fill="#fff" opacity="0.2"/>
+      <rect x="93" y="183" width="8" height="9" rx="3" fill="#fff" opacity="0.2"/>
+      <rect x="84" y="146" width="32" height="5" rx="2.5" fill="#c08040"/>
+      <rect x="84" y="192" width="32" height="5" rx="2.5" fill="#c08040"/>
+      <ellipse cx="100" cy="68" rx="62" ry="46" fill="url(#hammer-head)" stroke="#c83838" stroke-width="2.5"/>
+      <clipPath id="hammer-top-half">
+        <rect x="0" y="0" width="200" height="68"/>
+      </clipPath>
+      <ellipse cx="100" cy="68" rx="60" ry="44" fill="url(#hammer-head-top)" clip-path="url(#hammer-top-half)"/>
+      <circle cx="40" cy="68" r="24" fill="url(#hammer-bumper)" stroke="#c83838" stroke-width="2"/>
+      <circle cx="160" cy="68" r="24" fill="url(#hammer-bumper)" stroke="#c83838" stroke-width="2"/>
+      <ellipse cx="33" cy="60" rx="8" ry="6" fill="#fff" opacity="0.4" transform="rotate(-15,33,60)"/>
+      <ellipse cx="153" cy="60" rx="8" ry="6" fill="#fff" opacity="0.4" transform="rotate(-15,153,60)"/>
+      <ellipse cx="82" cy="50" rx="30" ry="14" fill="#fff" opacity="0.35" transform="rotate(-5,82,50)"/>
+      <ellipse cx="82" cy="50" rx="18" ry="8" fill="#fff" opacity="0.25" transform="rotate(-5,82,50)"/>
+      <path d="M100 42 L104.5 54.5 L118 54.5 L107 62.5 L111 75 L100 67 L89 75 L93 62.5 L82 54.5 L95.5 54.5 Z"
+            fill="#fff" opacity="0.75" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// ========================================
+// ミニゲーム スタブ登録（全9種）
+// ========================================
+
+registerGame('rhythm', {
+  name: 'リズムでポン！',
+  animal: 'panda',
+  description: 'リズムに合わせてボタンを押そう！',
+  introVoice: 'audio/intro_rhythm.wav',
+  medalThresholds: { gold: 2300, silver: 1200, bronze: 0 },
+  _timers: [],
+  _animFrame: null,
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._animFrame = null;
+    self._destroyed = false;
+
+    // --- 定数 ---
+    const LANE_COLORS = ['#e53935', '#fbc02d', '#1e88e5'];
+    const LANE_KEYS = ['a', 's', 'd'];
+    const LANE_LABELS = ['✊', '✌️', '✋'];
+    const LANE_NAMES = ['グー', 'チョキ', 'パー'];
+    const PERFECT_MS = 300;
+    const GOOD_MS = 500;
+    const PERFECT_SCORE = 100;
+    const GOOD_SCORE = 50;
+    const GAME_DURATION = 60000; // 60秒
+    const NOTE_TRAVEL_TIME = 3000; // ノーツが上から下まで3秒
+    const TOTAL_NOTES = 35;
+    const JUDGE_Y = 0.82; // 判定ラインのY位置（0~1）
+    const JUDGE_OFFSET = (1 - JUDGE_Y) * NOTE_TRAVEL_TIME; // 判定ラインまでの時間差(540ms)
+
+    // --- ノーツ譜面生成 ---
+    const notes = [];
+    const interval = (GAME_DURATION - 4000) / TOTAL_NOTES; // 最初2秒〜最後2秒に余裕
+    for (let i = 0; i < TOTAL_NOTES; i++) {
+      const time = 2000 + i * interval;
+      const lane = Math.floor(Math.random() * 3);
+      notes.push({ time: time, lane: lane, hit: false, missed: false });
+    }
+
+    // --- 状態 ---
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let perfectCount = 0;
+    let goodCount = 0;
+    let missCount = 0;
+    let startTime = 0;
+    let lastJudge = '';
+    let lastJudgeTime = 0;
+    let gameEnded = false;
+
+    // --- UI構築 ---
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;overflow:hidden;';
+
+    // レーンエリア
+    const laneWidth = 180;
+    const totalLaneWidth = laneWidth * 3 + 40 * 2;
+    const laneStartX = (1920 - totalLaneWidth) / 2;
+
+    // スコア表示
+    const scoreDiv = document.createElement('div');
+    scoreDiv.style.cssText = 'position:absolute;top:20px;left:40px;font-size:44px;font-weight:900;color:#3a2a1a;z-index:10;';
+    scoreDiv.innerHTML = '<span id="rhythm-score">0</span>点';
+    container.appendChild(scoreDiv);
+
+    // コンボ表示
+    const comboDiv = document.createElement('div');
+    comboDiv.style.cssText = 'position:absolute;top:20px;right:40px;font-size:44px;font-weight:900;color:#ff6f00;z-index:10;text-align:right;';
+    comboDiv.innerHTML = '';
+    container.appendChild(comboDiv);
+
+    // 判定表示
+    const judgeDiv = document.createElement('div');
+    judgeDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:72px;font-weight:900;z-index:20;pointer-events:none;opacity:0;transition:opacity 0.15s;text-shadow:2px 2px 0 #fff;';
+    container.appendChild(judgeDiv);
+
+    // 残り時間
+    const timeDiv = document.createElement('div');
+    timeDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#3a2a1a;z-index:10;';
+    container.appendChild(timeDiv);
+
+    // 説明テキスト
+    const helpDiv = document.createElement('div');
+    helpDiv.style.cssText = 'position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:30px;color:#666;z-index:10;white-space:nowrap;';
+    helpDiv.textContent = 'ノーツが赤いラインに重なったらボタンを押そう！';
+    container.appendChild(helpDiv);
+
+    // レーン背景
+    for (let i = 0; i < 3; i++) {
+      const laneBg = document.createElement('div');
+      const x = laneStartX + i * (laneWidth + 40);
+      laneBg.style.cssText = `position:absolute;left:${x}px;top:120px;width:${laneWidth}px;height:calc(100% - 220px);background:rgba(${i===0?'229,57,53':i===1?'251,192,45':'30,136,229'},0.08);border-left:3px solid rgba(${i===0?'229,57,53':i===1?'251,192,45':'30,136,229'},0.3);border-right:3px solid rgba(${i===0?'229,57,53':i===1?'251,192,45':'30,136,229'},0.3);border-radius:12px;`;
+      container.appendChild(laneBg);
+
+      // レーンラベル（判定ラインの位置に配置）
+      const labelTop = 120 + (JUDGE_Y * (1080 - 220 - 120));
+      const label = document.createElement('div');
+      label.style.cssText = `position:absolute;left:${x}px;top:${labelTop - 30}px;width:${laneWidth}px;text-align:center;font-size:56px;z-index:4;pointer-events:none;opacity:0.35;`;
+      label.textContent = LANE_LABELS[i];
+      container.appendChild(label);
+    }
+
+    // 判定ライン
+    const judgeLine = document.createElement('div');
+    const judgeLineTop = 120 + (JUDGE_Y * (1080 - 220 - 120));
+    judgeLine.style.cssText = `position:absolute;left:${laneStartX - 20}px;top:${judgeLineTop}px;width:${totalLaneWidth + 40}px;height:6px;background:#e53935;z-index:5;border-radius:3px;box-shadow:0 0 16px rgba(229,57,53,0.5);`;
+    container.appendChild(judgeLine);
+
+    // 判定ライン文字
+    const judgeLineLabel = document.createElement('div');
+    judgeLineLabel.style.cssText = `position:absolute;left:${laneStartX - 130}px;top:${judgeLineTop - 18}px;font-size:28px;font-weight:900;color:#e53935;z-index:5;`;
+    judgeLineLabel.textContent = '▶ HERE';
+    container.appendChild(judgeLineLabel);
+
+    // ノーツ用キャンバス（DOM要素で描画）
+    const noteElements = [];
+    const noteContainer = document.createElement('div');
+    noteContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:8;';
+    container.appendChild(noteContainer);
+
+    // ノーツDOM生成
+    notes.forEach((note, idx) => {
+      const el = document.createElement('div');
+      const x = laneStartX + note.lane * (laneWidth + 40) + laneWidth / 2;
+      el.style.cssText = `position:absolute;left:${x}px;top:-100px;width:90px;height:90px;margin-left:-45px;border-radius:50%;background:${LANE_COLORS[note.lane]};display:flex;align-items:center;justify-content:center;font-size:46px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.3);opacity:0;transition:none;`;
+      el.textContent = LANE_LABELS[note.lane];
+      noteContainer.appendChild(el);
+      noteElements.push(el);
+    });
+
+    gameArea.appendChild(container);
+
+    // 「いまだ！」表示エリア
+    const imadaDiv = document.createElement('div');
+    const imadaTop = 120 + (JUDGE_Y * (1080 - 220 - 120));
+    imadaDiv.style.cssText = `position:absolute;right:${(1920 - laneStartX - totalLaneWidth) / 2 - 60}px;top:${imadaTop - 24}px;font-size:44px;font-weight:900;color:#e53935;z-index:12;pointer-events:none;opacity:0;transition:opacity 0.1s;text-shadow:0 0 8px rgba(229,57,53,0.4);`;
+    imadaDiv.textContent = 'いまだ！';
+    container.appendChild(imadaDiv);
+    let imadaVisible = false;
+
+    // --- ゲームループ ---
+    const laneTop = 120;
+    const laneHeight = 1080 - 220 - 120;
+    const judgeYpx = laneTop + JUDGE_Y * laneHeight;
+    const IMADA_RANGE = 400; // 判定ラインの何ms手前から「いまだ！」を出すか
+
+    function update() {
+      if (gameEnded || self._destroyed) return;
+      const now = performance.now();
+      const elapsed = now - startTime;
+
+      // 残り時間表示
+      const remain = Math.max(0, Math.ceil((GAME_DURATION - elapsed) / 1000));
+      timeDiv.textContent = '残り ' + remain + '秒';
+
+      // 「いまだ！」判定: 未処理ノーツが判定ライン付近にあるかチェック
+      let showImada = false;
+      notes.forEach((note) => {
+        if (note.hit || note.missed) return;
+        const judgeTarget = note.time - JUDGE_OFFSET;
+        const diff = judgeTarget - elapsed;
+        if (diff > -100 && diff < IMADA_RANGE) {
+          showImada = true;
+        }
+      });
+      if (showImada && !imadaVisible) {
+        imadaDiv.style.opacity = '1';
+        imadaVisible = true;
+      } else if (!showImada && imadaVisible) {
+        imadaDiv.style.opacity = '0';
+        imadaVisible = false;
+      }
+
+      // ノーツ位置更新
+      notes.forEach((note, idx) => {
+        if (note.hit || note.missed) return;
+        const noteElapsed = elapsed - note.time + NOTE_TRAVEL_TIME;
+        const progress = noteElapsed / NOTE_TRAVEL_TIME; // 0~1 で上から下
+        const y = laneTop + progress * laneHeight;
+
+        if (progress < -0.05) {
+          noteElements[idx].style.opacity = '0';
+        } else if (progress > JUDGE_Y + (GOOD_MS + 100) / NOTE_TRAVEL_TIME) {
+          // 判定ラインを通過+猶予を過ぎた = Miss
+          note.missed = true;
+          noteElements[idx].style.opacity = '0';
+          combo = 0;
+          missCount++;
+          showJudge('Miss', '#999');
+          playSE('se_wrong.mp3');
+        } else {
+          noteElements[idx].style.opacity = '1';
+          noteElements[idx].style.top = y + 'px';
+        }
+      });
+
+      // 判定表示のフェード
+      if (lastJudgeTime && now - lastJudgeTime > 600) {
+        judgeDiv.style.opacity = '0';
+      }
+
+      // 終了判定
+      if (elapsed >= GAME_DURATION) {
+        endGame();
+        return;
+      }
+
+      self._animFrame = requestAnimationFrame(update);
+    }
+
+    function showJudge(text, color) {
+      judgeDiv.textContent = text;
+      judgeDiv.style.color = color;
+      judgeDiv.style.opacity = '1';
+      judgeDiv.style.transform = 'translate(-50%,-50%) scale(1.2)';
+      setTimeout(() => {
+        judgeDiv.style.transform = 'translate(-50%,-50%) scale(1)';
+      }, 80);
+      lastJudgeTime = performance.now();
+    }
+
+    function updateScoreDisplay() {
+      const el = document.getElementById('rhythm-score');
+      if (el) el.textContent = score;
+      if (combo >= 2) {
+        comboDiv.innerHTML = combo + ' <span style="font-size:32px;">コンボ！</span>';
+      } else {
+        comboDiv.innerHTML = '';
+      }
+    }
+
+    // --- キー入力処理 ---
+    onGameKey = function(key) {
+      if (gameEnded || self._destroyed) return;
+      const laneIdx = LANE_KEYS.indexOf(key);
+      if (laneIdx === -1) return;
+
+      const now = performance.now();
+      const elapsed = now - startTime;
+
+      // 最も近い未処理のノーツを探す
+      let bestIdx = -1;
+      let bestDiff = Infinity;
+      notes.forEach((note, idx) => {
+        if (note.hit || note.missed || note.lane !== laneIdx) return;
+        const judgeTarget = note.time - JUDGE_OFFSET;
+        const diff = Math.abs(elapsed - judgeTarget);
+        if (diff < bestDiff && diff < GOOD_MS + 100) {
+          bestDiff = diff;
+          bestIdx = idx;
+        }
+      });
+
+      if (bestIdx === -1) return; // 対応ノーツなし
+
+      const note = notes[bestIdx];
+      const judgeTarget = note.time - JUDGE_OFFSET;
+      const diff = Math.abs(elapsed - judgeTarget);
+
+      if (diff <= PERFECT_MS) {
+        // Perfect
+        note.hit = true;
+        noteElements[bestIdx].style.opacity = '0';
+        score += PERFECT_SCORE;
+        combo++;
+        perfectCount++;
+        if (combo > maxCombo) maxCombo = combo;
+        showJudge('Perfect!', '#ff6f00');
+        playSE('se_perfect.mp3');
+        if (combo >= 3) playSE('se_combo.mp3');
+      } else if (diff <= GOOD_MS) {
+        // Good
+        note.hit = true;
+        noteElements[bestIdx].style.opacity = '0';
+        score += GOOD_SCORE;
+        combo++;
+        goodCount++;
+        if (combo > maxCombo) maxCombo = combo;
+        showJudge('Good', '#43a047');
+        playSE('se_correct.mp3');
+      } else {
+        // Miss (too far)
+        note.missed = true;
+        noteElements[bestIdx].style.opacity = '0';
+        combo = 0;
+        missCount++;
+        showJudge('Miss', '#999');
+        playSE('se_wrong.mp3');
+      }
+
+      updateScoreDisplay();
+    };
+
+    function endGame() {
+      if (gameEnded) return;
+      gameEnded = true;
+      onGameKey = null;
+      playSE('se_finish.mp3');
+
+      // 結果表示
+      container.innerHTML = '';
+      container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+      container.innerHTML = `
+        <div style="font-size:56px;font-weight:900;color:#e53935;">リズムでポン！ 終了！</div>
+        ${getAnimalSVG('panda', 120)}
+        <div style="font-size:44px;font-weight:900;">合計 ${score} 点</div>
+        <div style="font-size:34px;color:#555;">
+          Perfect: ${perfectCount} / Good: ${goodCount} / Miss: ${missCount}
+        </div>
+        <div style="font-size:34px;color:#ff6f00;">最大コンボ: ${maxCombo}</div>
+        <div style="font-size:30px;color:#999;margin-top:20px;">少し待ってね...</div>
+      `;
+
+      const t = setTimeout(() => onComplete(score), 2500);
+      self._timers.push(t);
+    }
+
+    // ゲーム開始
+    startTime = performance.now();
+    self._animFrame = requestAnimationFrame(update);
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    if (this._animFrame) {
+      cancelAnimationFrame(this._animFrame);
+      this._animFrame = null;
+    }
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    onGameKey = null;
+  }
+});
+
+registerGame('memory', {
+  name: 'おぼえてパオン',
+  animal: 'elephant',
+  description: '光った順番をよく覚えて、同じ順番でボタンを押そう！',
+  introVoice: 'audio/intro_memory.wav',
+  medalThresholds: { gold: 8, silver: 5, bronze: 3 },
+  _timers: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._destroyed = false;
+
+    // --- 定数 ---
+    const HANDS = [
+      { key: 'a', label: '✊', name: 'グー', color: '#e53935', bg: 'rgba(229,57,53,0.15)' },
+      { key: 's', label: '✌️', name: 'チョキ', color: '#fbc02d', bg: 'rgba(251,192,45,0.15)' },
+      { key: 'd', label: '✋', name: 'パー', color: '#1e88e5', bg: 'rgba(30,136,229,0.15)' },
+    ];
+    const SHOW_INTERVAL = 1500; // 各手の表示時間(ms)
+    const SHOW_GAP = 400; // 手と手の間の空白(ms)
+    const START_LENGTH = 2; // 最初の手の数
+
+    // --- 状態 ---
+    let sequence = []; // 正解の手の列（0/1/2のインデックス）
+    let inputIndex = 0;
+    let currentLength = START_LENGTH;
+    let phase = 'showing'; // 'showing' | 'input' | 'result' | 'ended'
+    let showingIndex = 0;
+
+    // --- UI構築 ---
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+    // タイトル
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#1e88e5;z-index:10;';
+    titleDiv.textContent = 'おぼえてパオン';
+    container.appendChild(titleDiv);
+
+    // ラウンド表示
+    const roundDiv = document.createElement('div');
+    roundDiv.style.cssText = 'position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#3a2a1a;z-index:10;';
+    container.appendChild(roundDiv);
+
+    // 動物表示
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('elephant', 100);
+    container.appendChild(animalDiv);
+
+    // メイン表示エリア（手を大きく表示する場所）
+    const mainDisplay = document.createElement('div');
+    mainDisplay.style.cssText = 'width:400px;height:400px;border-radius:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:6px solid #ddd;transition:background 0.2s,border-color 0.2s;';
+    container.appendChild(mainDisplay);
+
+    // 説明テキスト
+    const helpDiv = document.createElement('div');
+    helpDiv.style.cssText = 'margin-top:30px;font-size:36px;font-weight:900;color:#3a2a1a;text-align:center;min-height:50px;';
+    container.appendChild(helpDiv);
+
+    // 入力済み表示
+    const inputProgress = document.createElement('div');
+    inputProgress.style.cssText = 'margin-top:20px;font-size:40px;min-height:60px;display:flex;gap:16px;align-items:center;';
+    container.appendChild(inputProgress);
+
+    gameArea.appendChild(container);
+
+    // --- ロジック ---
+    function addRandomHand() {
+      const idx = Math.floor(Math.random() * 3);
+      sequence.push(idx);
+    }
+
+    function startRound() {
+      if (self._destroyed) return;
+      phase = 'showing';
+      inputIndex = 0;
+
+      // 初回は最初のシーケンスを生成、以降は1つ追加
+      if (sequence.length === 0) {
+        for (let i = 0; i < START_LENGTH; i++) addRandomHand();
+      } else {
+        addRandomHand();
+      }
+
+      currentLength = sequence.length;
+      roundDiv.textContent = 'ラウンド ' + (currentLength - START_LENGTH + 1) + ' （' + currentLength + '個）';
+      helpDiv.textContent = 'ゾウが見せるよ！よく覚えてね';
+      helpDiv.style.color = '#1e88e5';
+      inputProgress.innerHTML = '';
+      mainDisplay.innerHTML = '';
+      mainDisplay.style.background = 'rgba(255,255,255,0.5)';
+      mainDisplay.style.borderColor = '#ddd';
+
+      // 表示シーケンス開始
+      showingIndex = 0;
+      const t = setTimeout(() => showNextHand(), 800);
+      self._timers.push(t);
+    }
+
+    function showNextHand() {
+      if (self._destroyed) return;
+      if (showingIndex >= sequence.length) {
+        // 全て表示完了 → 入力フェーズへ
+        const t = setTimeout(() => startInputPhase(), 600);
+        self._timers.push(t);
+        return;
+      }
+
+      const handIdx = sequence[showingIndex];
+      const hand = HANDS[handIdx];
+
+      mainDisplay.style.background = hand.bg;
+      mainDisplay.style.borderColor = hand.color;
+      mainDisplay.innerHTML = `
+        <div style="font-size:140px;line-height:1;">${hand.label}</div>
+        <div style="font-size:48px;font-weight:900;color:${hand.color};margin-top:10px;">${hand.name}</div>
+        <div style="font-size:30px;color:#999;margin-top:8px;">${showingIndex + 1} / ${sequence.length}</div>
+      `;
+      playSE('se_show.mp3');
+
+      showingIndex++;
+      const t1 = setTimeout(() => {
+        if (self._destroyed) return;
+        // 一旦消す
+        mainDisplay.innerHTML = '';
+        mainDisplay.style.background = 'rgba(255,255,255,0.5)';
+        mainDisplay.style.borderColor = '#ddd';
+        const t2 = setTimeout(() => showNextHand(), SHOW_GAP);
+        self._timers.push(t2);
+      }, SHOW_INTERVAL);
+      self._timers.push(t1);
+    }
+
+    function startInputPhase() {
+      if (self._destroyed) return;
+      phase = 'input';
+      inputIndex = 0;
+      helpDiv.textContent = '同じ順番でボタンを押そう！';
+      helpDiv.style.color = '#43a047';
+      mainDisplay.innerHTML = `
+        <div style="font-size:64px;color:#43a047;">？</div>
+        <div style="font-size:36px;color:#666;margin-top:10px;">${inputIndex + 1}番目は？</div>
+      `;
+      mainDisplay.style.background = 'rgba(67,160,71,0.08)';
+      mainDisplay.style.borderColor = '#43a047';
+
+      updateInputProgress();
+    }
+
+    function updateInputProgress() {
+      let html = '';
+      for (let i = 0; i < sequence.length; i++) {
+        if (i < inputIndex) {
+          const h = HANDS[sequence[i]];
+          html += `<span style="font-size:44px;opacity:0.6;">${h.label}</span>`;
+        } else if (i === inputIndex) {
+          html += `<span style="font-size:52px;border:3px dashed #43a047;border-radius:12px;padding:4px 8px;">？</span>`;
+        } else {
+          html += `<span style="font-size:44px;opacity:0.2;">○</span>`;
+        }
+      }
+      inputProgress.innerHTML = html;
+    }
+
+    // --- キー入力処理 ---
+    onGameKey = function(key) {
+      if (self._destroyed || phase !== 'input') return;
+      const keyIdx = HANDS.findIndex(h => h.key === key);
+      if (keyIdx === -1) return;
+
+      const expected = sequence[inputIndex];
+
+      if (keyIdx === expected) {
+        // 正解！
+        playSE('se_correct.mp3');
+        const hand = HANDS[keyIdx];
+
+        // フィードバック表示
+        mainDisplay.style.background = hand.bg;
+        mainDisplay.style.borderColor = hand.color;
+        mainDisplay.innerHTML = `
+          <div style="font-size:140px;line-height:1;">${hand.label}</div>
+          <div style="font-size:48px;font-weight:900;color:#43a047;margin-top:10px;">正解！</div>
+        `;
+
+        inputIndex++;
+        updateInputProgress();
+
+        if (inputIndex >= sequence.length) {
+          // ラウンドクリア！
+          phase = 'result';
+          playSE('se_levelup.mp3');
+          helpDiv.textContent = 'すごい！全部覚えてた！';
+          helpDiv.style.color = '#ff6f00';
+
+          const t = setTimeout(() => {
+            if (self._destroyed) return;
+            mainDisplay.innerHTML = '';
+            startRound();
+          }, 1500);
+          self._timers.push(t);
+        } else {
+          // 次の入力待ち
+          const t = setTimeout(() => {
+            if (self._destroyed) return;
+            mainDisplay.innerHTML = `
+              <div style="font-size:64px;color:#43a047;">？</div>
+              <div style="font-size:36px;color:#666;margin-top:10px;">${inputIndex + 1}番目は？</div>
+            `;
+            mainDisplay.style.background = 'rgba(67,160,71,0.08)';
+            mainDisplay.style.borderColor = '#43a047';
+          }, 400);
+          self._timers.push(t);
+        }
+      } else {
+        // 不正解 → ゲーム終了
+        phase = 'ended';
+        onGameKey = null;
+        playSE('se_wrong.mp3');
+
+        const correctHand = HANDS[expected];
+        const wrongHand = HANDS[keyIdx];
+        mainDisplay.style.background = 'rgba(229,57,53,0.1)';
+        mainDisplay.style.borderColor = '#e53935';
+        mainDisplay.innerHTML = `
+          <div style="font-size:56px;color:#e53935;font-weight:900;">残念！</div>
+          <div style="font-size:36px;color:#666;margin-top:10px;">
+            正解は ${correctHand.label} ${correctHand.name}
+          </div>
+          <div style="font-size:30px;color:#999;margin-top:8px;">
+            （あなたの入力: ${wrongHand.label} ${wrongHand.name}）
+          </div>
+        `;
+
+        // スコア = 正解した最長の長さ（前回ラウンドまでの長さ）
+        const finalScore = currentLength - 1;
+        helpDiv.textContent = '記録: ' + finalScore + '個 覚えられた！';
+        helpDiv.style.color = '#e53935';
+
+        const t = setTimeout(() => {
+          if (self._destroyed) return;
+          // 最終結果画面
+          container.innerHTML = '';
+          container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+          container.innerHTML = `
+            <div style="font-size:56px;font-weight:900;color:#1e88e5;">おぼえてパオン 終了！</div>
+            ${getAnimalSVG('elephant', 120)}
+            <div style="font-size:48px;font-weight:900;">記録: ${finalScore} 個</div>
+            <div style="font-size:34px;color:#555;">
+              ${finalScore >= 8 ? 'すばらしい記憶力！' : finalScore >= 5 ? 'よくがんばった！' : finalScore >= 3 ? 'いい調子！' : 'もう一度やってみよう！'}
+            </div>
+            <div style="font-size:30px;color:#999;margin-top:20px;">少し待ってね...</div>
+          `;
+
+          const t2 = setTimeout(() => {
+            if (!self._destroyed) onComplete(finalScore);
+          }, 2500);
+          self._timers.push(t2);
+        }, 2500);
+        self._timers.push(t);
+      }
+    };
+
+    // ゲーム開始
+    startRound();
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    onGameKey = null;
+  }
+});
+
+registerGame('speed', {
+  name: 'はやおしバトル',
+  animal: 'cheetah',
+  description: '画面に出た手と同じボタンを、できるだけ早く押そう！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 850, silver: 650, bronze: 0 },
+  _timers: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._destroyed = false;
+
+    // --- 定数 ---
+    const HANDS = [
+      { key: 'a', label: '✊', name: 'グー', color: '#e53935', bg: 'rgba(229,57,53,0.12)' },
+      { key: 's', label: '✌️', name: 'チョキ', color: '#fbc02d', bg: 'rgba(251,192,45,0.12)' },
+      { key: 'd', label: '✋', name: 'パー', color: '#1e88e5', bg: 'rgba(30,136,229,0.12)' },
+    ];
+    const TOTAL_QUESTIONS = 10;
+    const WAIT_MIN = 1500;
+    const WAIT_MAX = 4000;
+    const PENALTY_MS = 1000;
+
+    // --- スコア計算関数 ---
+    function calcQuestionScore(reactionMs) {
+      const sec = reactionMs / 1000;
+      if (sec <= 1.0) return 100;
+      if (sec <= 1.5) return 80;
+      if (sec <= 2.0) return 60;
+      if (sec <= 3.0) return 40;
+      return 20;
+    }
+
+    // --- 状態 ---
+    let questionIdx = 0;
+    let questions = []; // 出題する手のインデックス配列
+    let reactions = []; // 各問題の反応時間(ms)
+    let scores = []; // 各問題のスコア
+    let phase = 'waiting'; // 'waiting' | 'shown' | 'answered' | 'foul' | 'ended'
+    let showTime = 0;
+    let foulPenalty = 0;
+    let gameEnded = false;
+
+    // 出題シーケンス生成（同じ手が3回連続しないように）
+    function generateQuestions() {
+      const qs = [];
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        let hand;
+        do {
+          hand = Math.floor(Math.random() * 3);
+        } while (
+          qs.length >= 2 &&
+          qs[qs.length - 1] === hand &&
+          qs[qs.length - 2] === hand
+        );
+        qs.push(hand);
+      }
+      return qs;
+    }
+
+    questions = generateQuestions();
+
+    // --- UI構築 ---
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+    // タイトル
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#ff9800;z-index:10;';
+    titleDiv.textContent = 'はやおしバトル';
+    container.appendChild(titleDiv);
+
+    // 動物
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('cheetah', 100);
+    container.appendChild(animalDiv);
+
+    // 問題番号
+    const qNumDiv = document.createElement('div');
+    qNumDiv.style.cssText = 'position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#3a2a1a;z-index:10;';
+    container.appendChild(qNumDiv);
+
+    // スコア表示
+    const scoreDiv = document.createElement('div');
+    scoreDiv.style.cssText = 'position:absolute;top:20px;left:40px;font-size:40px;font-weight:900;color:#3a2a1a;z-index:10;';
+    scoreDiv.textContent = '0点';
+    container.appendChild(scoreDiv);
+
+    // メイン表示エリア
+    const mainDisplay = document.createElement('div');
+    mainDisplay.style.cssText = 'width:450px;height:450px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;';
+    container.appendChild(mainDisplay);
+
+    // 説明テキスト
+    const helpDiv = document.createElement('div');
+    helpDiv.style.cssText = 'margin-top:30px;font-size:36px;font-weight:900;color:#3a2a1a;text-align:center;min-height:50px;';
+    container.appendChild(helpDiv);
+
+    // 反応時間表示
+    const reactionDiv = document.createElement('div');
+    reactionDiv.style.cssText = 'margin-top:16px;font-size:40px;font-weight:900;color:#ff6f00;min-height:50px;';
+    container.appendChild(reactionDiv);
+
+    gameArea.appendChild(container);
+
+    // --- ゲームロジック ---
+    function startQuestion() {
+      if (self._destroyed || gameEnded) return;
+      if (questionIdx >= TOTAL_QUESTIONS) {
+        endGame();
+        return;
+      }
+
+      phase = 'waiting';
+      qNumDiv.textContent = '第' + (questionIdx + 1) + '問 / ' + TOTAL_QUESTIONS;
+      mainDisplay.style.background = 'rgba(255,255,255,0.5)';
+      mainDisplay.style.borderColor = '#ddd';
+      mainDisplay.style.transform = 'scale(1)';
+      mainDisplay.innerHTML = `
+        <div style="font-size:60px;font-weight:900;color:#999;">まって...</div>
+      `;
+      helpDiv.textContent = 'まだ押さないでね！';
+      helpDiv.style.color = '#999';
+      reactionDiv.textContent = '';
+
+      // ランダム待ち時間
+      const waitTime = WAIT_MIN + Math.random() * (WAIT_MAX - WAIT_MIN);
+      const t = setTimeout(() => showQuestion(), waitTime);
+      self._timers.push(t);
+    }
+
+    function showQuestion() {
+      if (self._destroyed || gameEnded) return;
+      const handIdx = questions[questionIdx];
+      const hand = HANDS[handIdx];
+
+      phase = 'shown';
+      showTime = performance.now();
+
+      mainDisplay.style.background = hand.bg;
+      mainDisplay.style.borderColor = hand.color;
+      mainDisplay.style.transform = 'scale(1.08)';
+      mainDisplay.innerHTML = `
+        <div style="font-size:180px;line-height:1;">${hand.label}</div>
+        <div style="font-size:56px;font-weight:900;color:${hand.color};margin-top:10px;">${hand.name}</div>
+      `;
+      helpDiv.textContent = '今だ！同じボタンを押せ！';
+      helpDiv.style.color = '#e53935';
+      reactionDiv.textContent = '';
+
+      playSE('se_appear.mp3');
+
+      // 5秒以内に押さなかったら自動タイムアウト
+      const t = setTimeout(() => {
+        if (self._destroyed || gameEnded) return;
+        if (phase === 'shown') {
+          handleAnswer(5000);
+        }
+      }, 5000);
+      self._timers.push(t);
+    }
+
+    function handleAnswer(reactionMs) {
+      if (self._destroyed || gameEnded) return;
+      phase = 'answered';
+
+      // ペナルティ加算
+      reactionMs += foulPenalty;
+      foulPenalty = 0;
+
+      const qScore = calcQuestionScore(reactionMs);
+      reactions.push(reactionMs);
+      scores.push(qScore);
+
+      // 表示
+      const sec = (reactionMs / 1000).toFixed(3);
+      reactionDiv.textContent = sec + '秒';
+
+      const totalScore = scores.reduce((a, b) => a + b, 0);
+      scoreDiv.textContent = totalScore + '点';
+
+      if (reactionMs <= 1000) {
+        helpDiv.textContent = '超はやい！すごい！';
+        helpDiv.style.color = '#ff6f00';
+        reactionDiv.style.color = '#ff6f00';
+        playSE('se_fast.mp3');
+      } else if (reactionMs <= 1500) {
+        helpDiv.textContent = 'はやい！いいぞ！';
+        helpDiv.style.color = '#43a047';
+        reactionDiv.style.color = '#43a047';
+        playSE('se_fast.mp3');
+      } else if (reactionMs <= 2000) {
+        helpDiv.textContent = 'いい感じ！';
+        helpDiv.style.color = '#1e88e5';
+        reactionDiv.style.color = '#1e88e5';
+        playSE('se_correct.mp3');
+      } else {
+        helpDiv.textContent = '落ち着いてね！';
+        helpDiv.style.color = '#999';
+        reactionDiv.style.color = '#999';
+        playSE('se_correct.mp3');
+      }
+
+      mainDisplay.style.transform = 'scale(1)';
+
+      questionIdx++;
+      const t = setTimeout(() => startQuestion(), 1500);
+      self._timers.push(t);
+    }
+
+    function handleFoul() {
+      if (self._destroyed || gameEnded) return;
+      playSE('se_foul.mp3');
+      foulPenalty += PENALTY_MS;
+
+      // フライング表示
+      mainDisplay.style.background = 'rgba(229,57,53,0.15)';
+      mainDisplay.style.borderColor = '#e53935';
+      mainDisplay.innerHTML = `
+        <div style="font-size:60px;font-weight:900;color:#e53935;">フライング！</div>
+        <div style="font-size:32px;color:#e53935;margin-top:10px;">+1秒 ペナルティ</div>
+      `;
+      helpDiv.textContent = 'まだ早い！表示を待ってね';
+      helpDiv.style.color = '#e53935';
+
+      phase = 'foul';
+      const t = setTimeout(() => {
+        if (self._destroyed || gameEnded) return;
+        phase = 'waiting';
+        mainDisplay.style.background = 'rgba(255,255,255,0.5)';
+        mainDisplay.style.borderColor = '#ddd';
+        mainDisplay.innerHTML = `
+          <div style="font-size:60px;font-weight:900;color:#999;">まって...</div>
+        `;
+        helpDiv.textContent = 'まだ押さないでね！';
+        helpDiv.style.color = '#999';
+
+        // 再度ランダム待ち時間後に出題
+        const waitTime = WAIT_MIN + Math.random() * (WAIT_MAX - WAIT_MIN);
+        const t2 = setTimeout(() => showQuestion(), waitTime);
+        self._timers.push(t2);
+      }, 1200);
+      self._timers.push(t);
+    }
+
+    // --- キー入力処理 ---
+    onGameKey = function(key) {
+      if (self._destroyed || gameEnded) return;
+      const keyIdx = HANDS.findIndex(h => h.key === key);
+      if (keyIdx === -1) return;
+
+      if (phase === 'waiting') {
+        // フライング
+        handleFoul();
+      } else if (phase === 'shown') {
+        const handIdx = questions[questionIdx];
+        if (keyIdx === handIdx) {
+          // 正解
+          const reactionMs = performance.now() - showTime;
+          handleAnswer(reactionMs);
+        } else {
+          // 間違ったボタン → ペナルティ加算、正しいボタンを押すまで待つ
+          foulPenalty += 500;
+          playSE('se_wrong.mp3');
+          helpDiv.textContent = 'ボタンが違う！ +0.5秒ペナルティ';
+          helpDiv.style.color = '#e53935';
+        }
+      }
+      // 'answered' / 'foul' フェーズでは無視
+    };
+
+    function endGame() {
+      if (gameEnded) return;
+      gameEnded = true;
+      onGameKey = null;
+      playSE('se_finish.mp3');
+
+      const totalScore = scores.reduce((a, b) => a + b, 0);
+      const avgReaction = reactions.reduce((a, b) => a + b, 0) / reactions.length;
+      const avgSec = (avgReaction / 1000).toFixed(3);
+      const bestReaction = Math.min(...reactions);
+      const bestSec = (bestReaction / 1000).toFixed(3);
+
+      // 結果画面
+      container.innerHTML = '';
+      container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+
+      // 各問題の結果一覧
+      let detailHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:1000px;">';
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        const sec = (reactions[i] / 1000).toFixed(3);
+        const c = scores[i] >= 80 ? '#ff6f00' : scores[i] >= 60 ? '#43a047' : '#999';
+        detailHtml += `<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:8px 16px;text-align:center;">
+          <div style="font-size:28px;color:#999;">${i + 1}問目</div>
+          <div style="font-size:28px;font-weight:900;color:${c};">${sec}秒</div>
+          <div style="font-size:28px;color:${c};">${scores[i]}点</div>
+        </div>`;
+      }
+      detailHtml += '</div>';
+
+      container.innerHTML = `
+        <div style="font-size:56px;font-weight:900;color:#ff9800;">はやおしバトル 終了！</div>
+        ${getAnimalSVG('cheetah', 100)}
+        <div style="font-size:48px;font-weight:900;">合計 ${totalScore} 点</div>
+        <div style="font-size:34px;color:#555;">
+          平均反応時間: ${avgSec}秒 / 最速: ${bestSec}秒
+        </div>
+        ${detailHtml}
+        <div style="font-size:30px;color:#999;margin-top:10px;">少し待ってね...</div>
+      `;
+
+      const t = setTimeout(() => {
+        if (!self._destroyed) onComplete(totalScore);
+      }, 3000);
+      self._timers.push(t);
+    }
+
+    // ゲーム開始
+    startQuestion();
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    onGameKey = null;
+  }
+});
+
+registerGame('mole', {
+  name: 'もぐらたたき',
+  animal: 'mole',
+  description: '穴から出てくるモグラを見て、正しいボタンで叩こう！',
+  introVoice: 'audio/intro_mole.wav',
+  medalThresholds: { gold: 2000, silver: 1200, bronze: 500 },
+  _timers: [],
+  _intervals: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._intervals = [];
+    self._destroyed = false;
+
+    // --- 定数 ---
+    const GAME_DURATION = 45000;
+    const MOLE_SHOW_TIME = 1500;
+    const HOLES = [
+      { key: 'a', label: '✊', name: 'グー', color: '#e53935' },
+      { key: 's', label: '✌️', name: 'チョキ', color: '#fbc02d' },
+      { key: 'd', label: '✋', name: 'パー', color: '#1e88e5' },
+    ];
+
+    // --- 状態 ---
+    let hits = 0;
+    let misses = 0;
+    let activeMoles = {}; // holeIndex -> { timer, active }
+    let gameActive = false;
+    let spawnInterval = null;
+    let elapsed = 0;
+    let timerInterval = null;
+
+    // --- UI構築 ---
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+    // タイトル
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#8B6914;z-index:10;';
+    titleDiv.textContent = 'もぐらたたき';
+    container.appendChild(titleDiv);
+
+    // 動物
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:10px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('mole', 90);
+    container.appendChild(animalDiv);
+
+    // スコア表示
+    const scoreDiv = document.createElement('div');
+    scoreDiv.style.cssText = 'position:absolute;top:20px;left:40px;font-size:40px;font-weight:900;color:#3a2a1a;z-index:10;';
+    scoreDiv.textContent = '0点';
+    container.appendChild(scoreDiv);
+
+    // タイマー表示
+    const timerDiv = document.createElement('div');
+    timerDiv.style.cssText = 'position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#e53935;z-index:10;';
+    timerDiv.textContent = '残り 45秒';
+    container.appendChild(timerDiv);
+
+    // ヒット/ミス表示
+    const statsDiv = document.createElement('div');
+    statsDiv.style.cssText = 'position:absolute;top:80px;left:40px;font-size:30px;font-weight:700;color:#555;z-index:10;';
+    statsDiv.innerHTML = '叩けた: 0 / ミス: 0';
+    container.appendChild(statsDiv);
+
+    // 説明テキスト
+    const helpDiv = document.createElement('div');
+    helpDiv.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);font-size:32px;font-weight:900;color:#3a2a1a;text-align:center;z-index:10;';
+    helpDiv.textContent = 'モグラが出たら対応するボタンで叩こう！';
+    container.appendChild(helpDiv);
+
+    // 穴エリア
+    const holesArea = document.createElement('div');
+    holesArea.style.cssText = 'display:flex;gap:80px;align-items:flex-end;margin-top:40px;';
+    container.appendChild(holesArea);
+
+    // 穴DOM配列
+    const holeDOMs = [];
+    HOLES.forEach(function(hole, idx) {
+      const holeWrapper = document.createElement('div');
+      holeWrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:16px;';
+
+      // ボタンラベル
+      const btnLabel = document.createElement('div');
+      btnLabel.style.cssText = 'font-size:36px;font-weight:900;color:' + hole.color + ';';
+      btnLabel.textContent = hole.label + ' ' + hole.name;
+      holeWrapper.appendChild(btnLabel);
+
+      // 穴コンテナ（クリッピング用）
+      const holeContainer = document.createElement('div');
+      holeContainer.style.cssText = 'width:220px;height:200px;position:relative;overflow:hidden;';
+
+      // モグラ表示エリア
+      const moleDiv = document.createElement('div');
+      moleDiv.style.cssText = 'position:absolute;bottom:-140px;left:50%;transform:translateX(-50%);transition:bottom 0.3s ease-out;z-index:2;';
+      moleDiv.innerHTML = getAnimalSVG('mole', 130);
+      holeContainer.appendChild(moleDiv);
+
+      // 穴の描画（楕円）
+      const holeVisual = document.createElement('div');
+      holeVisual.style.cssText = 'position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:220px;height:60px;background:radial-gradient(ellipse,#5a3e1b 0%,#3a2510 70%);border-radius:50%;z-index:3;';
+      holeContainer.appendChild(holeVisual);
+
+      holeWrapper.appendChild(holeContainer);
+
+      // 叩いた時のエフェクト表示エリア
+      const effectDiv = document.createElement('div');
+      effectDiv.style.cssText = 'font-size:40px;font-weight:900;min-height:50px;text-align:center;';
+      effectDiv.textContent = '';
+      holeWrapper.appendChild(effectDiv);
+
+      // ハンマー（穴の上にオーバーレイ、通常は非表示）
+      const hammerDiv = document.createElement('div');
+      hammerDiv.style.cssText = 'position:absolute;top:-30px;left:50%;transform:translateX(-50%) rotate(-30deg);z-index:10;opacity:0;transition:none;pointer-events:none;';
+      hammerDiv.innerHTML = getAnimalSVG('hammer', 100);
+      holeContainer.appendChild(hammerDiv);
+
+      holesArea.appendChild(holeWrapper);
+      holeDOMs.push({ moleDiv: moleDiv, effectDiv: effectDiv, holeContainer: holeContainer, hammerDiv: hammerDiv });
+    });
+
+    gameArea.appendChild(container);
+
+    // --- スコア更新 ---
+    function updateScore() {
+      const score = Math.max(0, hits * 100 - misses * 50);
+      scoreDiv.textContent = score + '点';
+      statsDiv.innerHTML = '叩けた: ' + hits + ' / ミス: ' + misses;
+    }
+
+    // --- モグラ出現 ---
+    function spawnMole(holeIdx) {
+      if (self._destroyed || !gameActive) return;
+      if (activeMoles[holeIdx]) return; // 既に出現中
+
+      playSE('se_popup.mp3');
+      const dom = holeDOMs[holeIdx];
+      dom.moleDiv.style.bottom = '30px';
+      dom.effectDiv.textContent = '';
+
+      activeMoles[holeIdx] = { active: true };
+
+      // 一定時間後に引っ込む
+      const hideTimer = setTimeout(function() {
+        if (self._destroyed) return;
+        if (activeMoles[holeIdx] && activeMoles[holeIdx].active) {
+          // 逃げられた
+          playSE('se_escape.mp3');
+          dom.moleDiv.style.bottom = '-140px';
+          dom.effectDiv.textContent = '逃げた！';
+          dom.effectDiv.style.color = '#999';
+          // クールダウン: CSSアニメーション完了まで穴を再利用不可にする
+          activeMoles[holeIdx] = { active: false };
+          const cooldownTimer = setTimeout(function() {
+            delete activeMoles[holeIdx];
+          }, 500);
+          self._timers.push(cooldownTimer);
+          const clearTimer = setTimeout(function() {
+            if (!self._destroyed) dom.effectDiv.textContent = '';
+          }, 800);
+          self._timers.push(clearTimer);
+        }
+      }, MOLE_SHOW_TIME);
+      self._timers.push(hideTimer);
+    }
+
+    // --- モグラ出現スケジュール ---
+    function scheduleSpawns() {
+      let spawnDelay = 1200; // 初期間隔
+      function doSpawn() {
+        if (self._destroyed || !gameActive) return;
+
+        // 経過時間に応じて難易度調整
+        const progress = elapsed / GAME_DURATION;
+        if (progress > 0.5) {
+          spawnDelay = 800;
+        }
+        if (progress > 0.75) {
+          spawnDelay = 600;
+        }
+
+        // 出現する穴を選ぶ
+        const available = [0, 1, 2].filter(function(i) { return !activeMoles[i]; });
+        if (available.length > 0) {
+          const idx = available[Math.floor(Math.random() * available.length)];
+          spawnMole(idx);
+
+          // 中盤以降は同時に2匹出ることがある
+          if (progress > 0.4 && Math.random() < 0.3) {
+            const available2 = available.filter(function(i) { return i !== idx && !activeMoles[i]; });
+            if (available2.length > 0) {
+              const idx2 = available2[Math.floor(Math.random() * available2.length)];
+              const t = setTimeout(function() {
+                if (!self._destroyed && gameActive) spawnMole(idx2);
+              }, 200);
+              self._timers.push(t);
+            }
+          }
+        }
+
+        const nextDelay = spawnDelay + Math.random() * 400;
+        const t = setTimeout(doSpawn, nextDelay);
+        self._timers.push(t);
+      }
+      const t = setTimeout(doSpawn, 800);
+      self._timers.push(t);
+    }
+
+    // --- ハンマーアニメーション ---
+    function swingHammer(keyIdx) {
+      const dom = holeDOMs[keyIdx];
+      const h = dom.hammerDiv;
+      // 振りかぶり状態から一気に振り下ろす
+      h.style.transition = 'none';
+      h.style.opacity = '1';
+      h.style.transform = 'translateX(-50%) rotate(-30deg)';
+      // 強制リフロー
+      h.offsetHeight;
+      h.style.transition = 'transform 0.12s ease-in';
+      h.style.transform = 'translateX(-50%) rotate(15deg)';
+      // 振り下ろし後に戻す
+      const t = setTimeout(function() {
+        if (self._destroyed) return;
+        h.style.transition = 'opacity 0.2s';
+        h.style.opacity = '0';
+        const t2 = setTimeout(function() {
+          h.style.transform = 'translateX(-50%) rotate(-30deg)';
+        }, 200);
+        self._timers.push(t2);
+      }, 150);
+      self._timers.push(t);
+    }
+
+    // --- キー入力 ---
+    onGameKey = function(key) {
+      if (self._destroyed || !gameActive) return;
+
+      const keyIdx = key === 'a' ? 0 : key === 's' ? 1 : key === 'd' ? 2 : -1;
+      if (keyIdx < 0) return;
+
+      // ハンマーを振る（ヒットでもミスでも）
+      swingHammer(keyIdx);
+
+      const dom = holeDOMs[keyIdx];
+
+      if (activeMoles[keyIdx] && activeMoles[keyIdx].active) {
+        // 叩けた！
+        hits++;
+        activeMoles[keyIdx].active = false;
+        playSE('se_hit.mp3');
+
+        dom.moleDiv.style.bottom = '-140px';
+        dom.effectDiv.textContent = '叩けた！';
+        dom.effectDiv.style.color = '#43a047';
+        // クールダウン: CSSアニメーション完了まで穴を再利用不可にする
+        const cooldownT = setTimeout(function() {
+          delete activeMoles[keyIdx];
+        }, 500);
+        self._timers.push(cooldownT);
+        const t = setTimeout(function() {
+          if (!self._destroyed) dom.effectDiv.textContent = '';
+        }, 600);
+        self._timers.push(t);
+      } else {
+        // ミス
+        misses++;
+        playSE('se_wrong.mp3');
+        dom.effectDiv.textContent = 'ミス！';
+        dom.effectDiv.style.color = '#e53935';
+        const t = setTimeout(function() {
+          if (!self._destroyed) dom.effectDiv.textContent = '';
+        }, 500);
+        self._timers.push(t);
+      }
+      updateScore();
+    };
+
+    // --- タイマー ---
+    function startTimer() {
+      const startTime = Date.now();
+      timerInterval = setInterval(function() {
+        if (self._destroyed) return;
+        elapsed = Date.now() - startTime;
+        const remain = Math.max(0, Math.ceil((GAME_DURATION - elapsed) / 1000));
+        timerDiv.textContent = '残り ' + remain + '秒';
+
+        if (elapsed >= GAME_DURATION) {
+          endGame();
+        }
+      }, 100);
+      self._intervals.push(timerInterval);
+    }
+
+    // --- ゲーム終了 ---
+    function endGame() {
+      if (!gameActive) return;
+      gameActive = false;
+      onGameKey = null;
+      if (timerInterval) clearInterval(timerInterval);
+      playSE('se_finish.mp3');
+
+      const finalScore = Math.max(0, hits * 100 - misses * 50);
+
+      container.innerHTML = '';
+      container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+      container.innerHTML = '<div style="font-size:56px;font-weight:900;color:#8B6914;">もぐらたたき 終了！</div>' +
+        getAnimalSVG('mole', 120) +
+        '<div style="font-size:48px;font-weight:900;">合計 ' + finalScore + ' 点</div>' +
+        '<div style="font-size:34px;color:#555;">叩けた: ' + hits + '匹 / ミス: ' + misses + '回</div>' +
+        '<div style="font-size:30px;color:#999;margin-top:10px;">少し待ってね...</div>';
+
+      const t = setTimeout(function() {
+        if (!self._destroyed) onComplete(finalScore);
+      }, 3000);
+      self._timers.push(t);
+    }
+
+    // --- ゲーム開始 ---
+    gameActive = true;
+    startTimer();
+    scheduleSpawns();
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(function(t) { clearTimeout(t); });
+    this._timers = [];
+    this._intervals.forEach(function(i) { clearInterval(i); });
+    this._intervals = [];
+    onGameKey = null;
+  }
+});
+
+registerGame('mash', {
+  name: '連打チャンピオン',
+  animal: 'gorilla',
+  description: '指定されたボタンをたくさん連打しよう！',
+  introVoice: 'audio/intro_mash.wav',
+  medalThresholds: { gold: 600, silver: 400, bronze: 200 },
+  _timers: [],
+  _intervals: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._intervals = [];
+    self._destroyed = false;
+
+    // --- 定数 ---
+    const ROUNDS = [
+      { key: 'a', label: '✊', name: 'グー', color: '#e53935', bg: 'rgba(229,57,53,0.15)' },
+      { key: 's', label: '✌️', name: 'チョキ', color: '#fbc02d', bg: 'rgba(251,192,45,0.15)' },
+      { key: 'd', label: '✋', name: 'パー', color: '#1e88e5', bg: 'rgba(30,136,229,0.15)' },
+    ];
+    const ROUND_TIME = 10000;
+    const REST_TIME = 3000;
+
+    // --- 状態 ---
+    let currentRound = 0;
+    let roundCounts = [0, 0, 0];
+    let roundActive = false;
+    let roundTimer = null;
+    let gorillaScale = 1;
+
+    // --- UI構築 ---
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+    // タイトル
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#4a4a4a;z-index:10;';
+    titleDiv.textContent = '連打チャンピオン';
+    container.appendChild(titleDiv);
+
+    // ラウンド表示
+    const roundDiv = document.createElement('div');
+    roundDiv.style.cssText = 'position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#3a2a1a;z-index:10;';
+    roundDiv.textContent = '';
+    container.appendChild(roundDiv);
+
+    // メインエリア（ボタンアイコン＋カウンター）
+    const mainArea = document.createElement('div');
+    mainArea.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:20px;';
+
+    // ボタンアイコン表示
+    const buttonIcon = document.createElement('div');
+    buttonIcon.style.cssText = 'font-size:140px;line-height:1;transition:transform 0.08s;';
+    buttonIcon.textContent = '';
+    mainArea.appendChild(buttonIcon);
+
+    // カウンター
+    const counterDiv = document.createElement('div');
+    counterDiv.style.cssText = 'font-size:100px;font-weight:900;color:#3a2a1a;line-height:1;';
+    counterDiv.textContent = '0';
+    mainArea.appendChild(counterDiv);
+
+    // ボタン名表示
+    const btnNameDiv = document.createElement('div');
+    btnNameDiv.style.cssText = 'font-size:40px;font-weight:900;color:#555;';
+    btnNameDiv.textContent = '';
+    mainArea.appendChild(btnNameDiv);
+
+    container.appendChild(mainArea);
+
+    // ゴリラ表示
+    const gorillaDiv = document.createElement('div');
+    gorillaDiv.style.cssText = 'position:absolute;bottom:120px;right:80px;transition:transform 0.08s;z-index:5;';
+    gorillaDiv.innerHTML = getAnimalSVG('gorilla', 160);
+    container.appendChild(gorillaDiv);
+
+    // プログレスバー
+    const progressOuter = document.createElement('div');
+    progressOuter.style.cssText = 'position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:700px;height:36px;background:rgba(0,0,0,0.1);border-radius:18px;overflow:hidden;z-index:10;';
+    const progressInner = document.createElement('div');
+    progressInner.style.cssText = 'width:100%;height:100%;background:linear-gradient(90deg,#43a047,#66bb6a);border-radius:18px;transition:width 0.1s linear;';
+    progressOuter.appendChild(progressInner);
+    container.appendChild(progressOuter);
+
+    // 残り時間ラベル
+    const timeLabel = document.createElement('div');
+    timeLabel.style.cssText = 'position:absolute;bottom:28px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:700;color:#555;z-index:10;';
+    timeLabel.textContent = '';
+    container.appendChild(timeLabel);
+
+    // 説明テキスト
+    const helpDiv = document.createElement('div');
+    helpDiv.style.cssText = 'position:absolute;bottom:110px;left:50%;transform:translateX(-50%);font-size:32px;font-weight:900;color:#3a2a1a;text-align:center;z-index:10;width:100%;';
+    helpDiv.textContent = '';
+    container.appendChild(helpDiv);
+
+    gameArea.appendChild(container);
+
+    // --- ラウンド開始 ---
+    function startRound() {
+      if (self._destroyed) return;
+      if (currentRound >= 3) {
+        endGame();
+        return;
+      }
+
+      const round = ROUNDS[currentRound];
+      roundActive = true;
+      roundDiv.textContent = 'ラウンド ' + (currentRound + 1) + ' / 3';
+      buttonIcon.textContent = round.label;
+      buttonIcon.style.color = round.color;
+      counterDiv.textContent = '0';
+      btnNameDiv.textContent = round.label + ' ' + round.name + ' を連打！';
+      btnNameDiv.style.color = round.color;
+      helpDiv.textContent = round.name + 'ボタンをたくさん押そう！';
+      progressInner.style.width = '100%';
+      progressInner.style.background = 'linear-gradient(90deg,' + round.color + ',' + round.color + 'aa)';
+
+      playSE('se_start.mp3');
+
+      const startTime = Date.now();
+      roundTimer = setInterval(function() {
+        if (self._destroyed) return;
+        const elapsed = Date.now() - startTime;
+        const remain = Math.max(0, ROUND_TIME - elapsed);
+        const pct = (remain / ROUND_TIME) * 100;
+        progressInner.style.width = pct + '%';
+        timeLabel.textContent = '残り ' + Math.ceil(remain / 1000) + '秒';
+
+        if (elapsed >= ROUND_TIME) {
+          clearInterval(roundTimer);
+          roundActive = false;
+          playSE('se_finish.mp3');
+
+          currentRound++;
+          if (currentRound < 3) {
+            // 休憩
+            helpDiv.textContent = '休憩中... 次は ' + ROUNDS[currentRound].name + '！';
+            buttonIcon.textContent = '💪';
+            btnNameDiv.textContent = '次のラウンドまで少し待ってね';
+            btnNameDiv.style.color = '#555';
+            counterDiv.textContent = '';
+            timeLabel.textContent = '';
+            progressInner.style.width = '0%';
+
+            const t = setTimeout(function() {
+              if (!self._destroyed) startRound();
+            }, REST_TIME);
+            self._timers.push(t);
+          } else {
+            endGame();
+          }
+        }
+      }, 100);
+      self._intervals.push(roundTimer);
+    }
+
+    // --- キー入力 ---
+    onGameKey = function(key) {
+      if (self._destroyed || !roundActive) return;
+
+      const round = ROUNDS[currentRound];
+      if (key === round.key) {
+        roundCounts[currentRound]++;
+        counterDiv.textContent = '' + roundCounts[currentRound];
+        playSE('se_hit.mp3');
+
+        // ゴリラ盛り上がり演出
+        gorillaScale = 1 + Math.min(roundCounts[currentRound] * 0.015, 0.5);
+        const shakeX = (Math.random() - 0.5) * 10;
+        gorillaDiv.style.transform = 'scale(' + gorillaScale + ') translateX(' + shakeX + 'px)';
+        const t = setTimeout(function() {
+          if (!self._destroyed) {
+            gorillaDiv.style.transform = 'scale(' + gorillaScale + ')';
+          }
+        }, 60);
+        self._timers.push(t);
+
+        // ボタンアイコン拡大演出
+        buttonIcon.style.transform = 'scale(1.2)';
+        const t2 = setTimeout(function() {
+          if (!self._destroyed) buttonIcon.style.transform = 'scale(1)';
+        }, 60);
+        self._timers.push(t2);
+      }
+    };
+
+    // --- ゲーム終了 ---
+    function endGame() {
+      roundActive = false;
+      onGameKey = null;
+      if (roundTimer) clearInterval(roundTimer);
+
+      const totalMashes = roundCounts[0] + roundCounts[1] + roundCounts[2];
+      const finalScore = totalMashes * 10;
+
+      playSE('se_finish.mp3');
+
+      container.innerHTML = '';
+      container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+      container.innerHTML = '<div style="font-size:56px;font-weight:900;color:#4a4a4a;">連打チャンピオン 終了！</div>' +
+        getAnimalSVG('gorilla', 120) +
+        '<div style="font-size:48px;font-weight:900;">合計 ' + finalScore + ' 点</div>' +
+        '<div style="font-size:34px;color:#555;">' +
+          'ラウンド1(グー): ' + roundCounts[0] + '回 / ' +
+          'ラウンド2(チョキ): ' + roundCounts[1] + '回 / ' +
+          'ラウンド3(パー): ' + roundCounts[2] + '回' +
+        '</div>' +
+        '<div style="font-size:36px;color:#333;">合計連打: ' + totalMashes + '回</div>' +
+        '<div style="font-size:30px;color:#999;margin-top:10px;">少し待ってね...</div>';
+
+      const t = setTimeout(function() {
+        if (!self._destroyed) onComplete(finalScore);
+      }, 3000);
+      self._timers.push(t);
+    }
+
+    // --- ゲーム開始 ---
+    startRound();
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(function(t) { clearTimeout(t); });
+    this._timers = [];
+    this._intervals.forEach(function(i) { clearInterval(i); });
+    this._intervals = [];
+    onGameKey = null;
+  }
+});
+
+registerGame('slot', {
+  name: 'スロットでドン！',
+  animal: 'monkey',
+  description: '回っているリールをボタンで止めて、絵柄を揃えよう！',
+  introVoice: 'audio/intro_slot.wav',
+  medalThresholds: { gold: 1000, silver: 500, bronze: 100 },
+  _timers: [],
+  _intervals: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._intervals = [];
+    self._destroyed = false;
+
+    // --- 定数 ---
+    const SYMBOLS = ['🦁', '🐘', '🐱', '🐶', '🐴'];
+    const SYMBOL_NAMES = ['ライオン', 'ゾウ', 'ネコ', 'イヌ', 'ウマ'];
+    // 各絵柄の倍率（レア度）: ライオン=最高、ウマ=最低
+    const SYMBOL_MULT = [5, 4, 3, 2, 1];
+    // 各絵柄の鳴き声SE
+    const SYMBOL_VOICE = [
+      'audio/animal_lion.mp3',
+      'audio/animal_elephant.mp3',
+      'audio/animal_cat.mp3',
+      'audio/animal_dog.mp3',
+      'audio/animal_horse.mp3',
+    ];
+    const BASE_3MATCH = 100; // 3揃い基本点
+    const BASE_2MATCH = 30;  // 2揃い基本点
+    const TOTAL_TRIES = 5;
+    const REEL_SPEED = 120; // ms per step
+
+    // --- 状態 ---
+    let currentTry = 0;
+    let totalScore = 0;
+    let reelValues = [0, 0, 0]; // 各リールの現在の絵柄インデックス
+    let reelStopped = [false, false, false];
+    let reelTimers = [null, null, null];
+    let spinning = false;
+    let tryScores = [];
+
+    // --- UI構築 ---
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+    // タイトル
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#c07040;z-index:10;';
+    titleDiv.textContent = 'スロットでドン！';
+    container.appendChild(titleDiv);
+
+    // 動物
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:10px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('monkey', 90);
+    container.appendChild(animalDiv);
+
+    // 挑戦回数
+    const tryDiv = document.createElement('div');
+    tryDiv.style.cssText = 'position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:36px;font-weight:900;color:#3a2a1a;z-index:10;';
+    tryDiv.textContent = '';
+    container.appendChild(tryDiv);
+
+    // スコア表示
+    const scoreDiv = document.createElement('div');
+    scoreDiv.style.cssText = 'position:absolute;top:20px;left:40px;font-size:40px;font-weight:900;color:#3a2a1a;z-index:10;';
+    scoreDiv.textContent = '0点';
+    container.appendChild(scoreDiv);
+
+    // スロットマシンフレーム
+    const slotFrame = document.createElement('div');
+    slotFrame.style.cssText = 'display:flex;gap:24px;background:linear-gradient(180deg,#fff8e1,#ffe0b2);border:8px solid #c07040;border-radius:30px;padding:30px 40px;box-shadow:0 8px 32px rgba(0,0,0,0.15);';
+
+    // 各リールの窓 + リール表示（上から下に流れるタイプ）
+    const REEL_ITEM_H = 120; // 1絵柄の高さ
+    const VISIBLE_ITEMS = 3; // 表示する絵柄数（上・中央・下）
+    const REEL_WINDOW_H = REEL_ITEM_H * VISIBLE_ITEMS; // 窓の高さ
+    const reelDisplays = [];
+    const reelWindows = [];
+    const reelStrips = [];
+    for (let i = 0; i < 3; i++) {
+      const reelCol = document.createElement('div');
+      reelCol.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;';
+
+      // ボタンラベル
+      const keyNames = ['Aボタン(グー)', 'Sボタン(チョキ)', 'Dボタン(パー)'];
+      const keyColors = ['#e53935', '#fbc02d', '#1e88e5'];
+      const keyLabel = document.createElement('div');
+      keyLabel.style.cssText = 'font-size:28px;font-weight:900;color:' + keyColors[i] + ';';
+      keyLabel.textContent = keyNames[i];
+      reelCol.appendChild(keyLabel);
+
+      // リール窓（クリッピング）
+      const reelWindow = document.createElement('div');
+      reelWindow.style.cssText = 'width:160px;height:' + REEL_WINDOW_H + 'px;background:#fff;border:5px solid #8d6e63;border-radius:20px;overflow:hidden;position:relative;';
+
+      // 中央判定ラインのハイライト
+      const judgeBand = document.createElement('div');
+      judgeBand.style.cssText = 'position:absolute;top:' + REEL_ITEM_H + 'px;left:0;width:100%;height:' + REEL_ITEM_H + 'px;background:rgba(255,215,0,0.15);border-top:3px solid #ffd700;border-bottom:3px solid #ffd700;z-index:2;pointer-events:none;';
+      reelWindow.appendChild(judgeBand);
+
+      // リールストリップ（絵柄を繰り返し並べた帯）
+      const strip = document.createElement('div');
+      strip.style.cssText = 'position:absolute;left:0;width:100%;';
+      // 絵柄を3周分並べる（スムーズなループ用）
+      let stripHTML = '';
+      for (let rep = 0; rep < 3; rep++) {
+        for (let s = 0; s < SYMBOLS.length; s++) {
+          stripHTML += '<div style="width:100%;height:' + REEL_ITEM_H + 'px;display:flex;align-items:center;justify-content:center;font-size:80px;line-height:1;">' + SYMBOLS[s] + '</div>';
+        }
+      }
+      strip.innerHTML = stripHTML;
+      reelWindow.appendChild(strip);
+      reelCol.appendChild(reelWindow);
+
+      // 停止状態テキスト
+      const stopLabel = document.createElement('div');
+      stopLabel.style.cssText = 'font-size:28px;font-weight:700;min-height:40px;color:#43a047;';
+      stopLabel.textContent = '';
+      reelCol.appendChild(stopLabel);
+
+      slotFrame.appendChild(reelCol);
+      reelDisplays.push(null); // 互換性のため残す
+      reelStrips.push(strip);
+      reelWindows.push({ strip: strip, label: stopLabel, window: reelWindow });
+    }
+
+    container.appendChild(slotFrame);
+
+    // 結果表示
+    const resultDiv = document.createElement('div');
+    resultDiv.style.cssText = 'font-size:44px;font-weight:900;color:#c07040;min-height:60px;margin-top:20px;text-align:center;';
+    resultDiv.textContent = '';
+    container.appendChild(resultDiv);
+
+    // 説明テキスト
+    const helpDiv = document.createElement('div');
+    helpDiv.style.cssText = 'position:absolute;bottom:40px;left:50%;transform:translateX(-50%);font-size:32px;font-weight:900;color:#3a2a1a;text-align:center;z-index:10;width:100%;';
+    helpDiv.textContent = '';
+    container.appendChild(helpDiv);
+
+    gameArea.appendChild(container);
+
+    // --- リール位置管理 ---
+    const reelPositions = [0, 0, 0]; // 各リールの現在のピクセル位置
+    const reelAnimFrames = [null, null, null];
+    const TOTAL_STRIP_H = SYMBOLS.length * REEL_ITEM_H; // 1周分の高さ
+    const REEL_SPEEDS = [4, 5, 6]; // 各リールの速度（ピクセル/フレーム）、右ほど速い
+
+    function getReelCenterIndex(reelIdx) {
+      // 中央の窓に表示されている絵柄インデックスを返す
+      const pos = reelPositions[reelIdx] % TOTAL_STRIP_H;
+      return Math.round(pos / REEL_ITEM_H) % SYMBOLS.length;
+    }
+
+    // --- リール回転開始 ---
+    function startSpin() {
+      if (self._destroyed) return;
+      currentTry++;
+      tryDiv.textContent = currentTry + '回目 / ' + TOTAL_TRIES + '回';
+      spinning = true;
+      reelStopped = [false, false, false];
+      resultDiv.textContent = '';
+
+      // 各リールをランダム開始位置に
+      for (let i = 0; i < 3; i++) {
+        reelPositions[i] = Math.floor(Math.random() * SYMBOLS.length) * REEL_ITEM_H;
+        reelValues[i] = 0;
+        reelWindows[i].label.textContent = '';
+        reelWindows[i].window.style.borderColor = '#8d6e63';
+      }
+
+      playSE('se_spin.mp3');
+      helpDiv.textContent = 'A=左  S=中  D=右  ボタンでリールを止めよう！';
+
+      // リール回転アニメーション（上から下に流れる）
+      for (let i = 0; i < 3; i++) {
+        (function(idx) {
+          function animate() {
+            if (self._destroyed || reelStopped[idx]) return;
+            reelPositions[idx] -= REEL_SPEEDS[idx];
+            // ループ処理（負の値を正に戻す）
+            if (reelPositions[idx] < 0) {
+              reelPositions[idx] += TOTAL_STRIP_H;
+            }
+            reelStrips[idx].style.top = -reelPositions[idx] + 'px';
+            reelAnimFrames[idx] = requestAnimationFrame(animate);
+          }
+          animate();
+        })(i);
+      }
+    }
+
+    // --- リール停止（最寄りの絵柄にスナップ） ---
+    function stopReel(idx) {
+      if (reelStopped[idx]) return;
+      reelStopped[idx] = true;
+      if (reelAnimFrames[idx]) cancelAnimationFrame(reelAnimFrames[idx]);
+      playSE('se_stop.mp3');
+
+      // 最寄りの絵柄位置にスナップ
+      const snapped = Math.round(reelPositions[idx] / REEL_ITEM_H) * REEL_ITEM_H;
+      reelPositions[idx] = snapped;
+      reelStrips[idx].style.top = -snapped + 'px';
+
+      // 中央の窓に表示されている絵柄を記録（上1つ分オフセット）
+      reelValues[idx] = Math.round((snapped / REEL_ITEM_H) + 1) % SYMBOLS.length;
+
+      reelWindows[idx].label.textContent = '停止！';
+      reelWindows[idx].window.style.borderColor = '#43a047';
+
+      // 止まった絵柄の鳴き声を再生
+      playAudio(SYMBOL_VOICE[reelValues[idx]]);
+
+      // 全リール停止したか確認
+      if (reelStopped[0] && reelStopped[1] && reelStopped[2]) {
+        judgeSpin();
+      }
+    }
+
+    // --- 判定 ---
+    function judgeSpin() {
+      spinning = false;
+      const s0 = reelValues[0], s1 = reelValues[1], s2 = reelValues[2];
+      let points = 0;
+      let msg = '';
+
+      if (s0 === s1 && s1 === s2) {
+        // 3つ揃い: 基本点 × 絵柄倍率
+        const mult = SYMBOL_MULT[s0];
+        points = BASE_3MATCH * mult;
+        msg = SYMBOLS[s0] + ' 3つ揃い！ ×' + mult + ' +' + points + '点';
+        playSE('se_bigwin.mp3');
+        setTimeout(function() { playSE('se_jackpot.mp3'); }, 300);
+
+        // 枠を金色に
+        for (let i = 0; i < 3; i++) {
+          reelWindows[i].window.style.borderColor = '#ffd700';
+          reelWindows[i].window.style.boxShadow = '0 0 20px rgba(255,215,0,0.6)';
+        }
+      } else if (s0 === s1 || s1 === s2 || s0 === s2) {
+        // 2つ揃い: 揃った絵柄の倍率で加点
+        const matchIdx = s0 === s1 ? s0 : s1 === s2 ? s1 : s0;
+        const mult = SYMBOL_MULT[matchIdx];
+        points = BASE_2MATCH * mult;
+        msg = SYMBOLS[matchIdx] + ' 2つ揃い！ ×' + mult + ' +' + points + '点';
+        playSE('se_jackpot.mp3');
+      } else {
+        // バラバラ
+        points = 10;
+        msg = 'バラバラ... +10点';
+      }
+
+      totalScore += points;
+      tryScores.push(points);
+      scoreDiv.textContent = totalScore + '点';
+      resultDiv.textContent = msg;
+      resultDiv.style.color = points >= 300 ? '#ffd700' : points >= 100 ? '#43a047' : '#999';
+
+      helpDiv.textContent = '';
+
+      // 次の挑戦 or ゲーム終了
+      if (currentTry < TOTAL_TRIES) {
+        helpDiv.textContent = '次の挑戦まで少し待ってね...';
+        const t = setTimeout(function() {
+          if (!self._destroyed) {
+            // 枠をリセット
+            for (let i = 0; i < 3; i++) {
+              reelWindows[i].window.style.boxShadow = 'none';
+            }
+            startSpin();
+          }
+        }, 2500);
+        self._timers.push(t);
+      } else {
+        // ゲーム終了
+        helpDiv.textContent = '';
+        const t = setTimeout(function() {
+          if (self._destroyed) return;
+          showFinalResult();
+        }, 2500);
+        self._timers.push(t);
+      }
+    }
+
+    // --- 最終結果 ---
+    function showFinalResult() {
+      onGameKey = null;
+      // リールアニメーションをクリア
+      for (let i = 0; i < 3; i++) {
+        if (reelAnimFrames[i]) cancelAnimationFrame(reelAnimFrames[i]);
+      }
+
+      playSE('se_finish.mp3');
+
+      let detailHtml = '<div style="display:flex;gap:24px;margin-top:10px;">';
+      for (let i = 0; i < tryScores.length; i++) {
+        const color = tryScores[i] >= 300 ? '#ffd700' : tryScores[i] >= 100 ? '#43a047' : '#999';
+        detailHtml += '<div style="font-size:30px;font-weight:700;color:' + color + ';">' + (i+1) + '回目: ' + tryScores[i] + '点</div>';
+      }
+      detailHtml += '</div>';
+
+      container.innerHTML = '';
+      container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+      container.innerHTML = '<div style="font-size:56px;font-weight:900;color:#c07040;">スロットでドン！ 終了！</div>' +
+        getAnimalSVG('monkey', 120) +
+        '<div style="font-size:48px;font-weight:900;">合計 ' + totalScore + ' 点</div>' +
+        detailHtml +
+        '<div style="font-size:30px;color:#999;margin-top:10px;">少し待ってね...</div>';
+
+      const t = setTimeout(function() {
+        if (!self._destroyed) onComplete(totalScore);
+      }, 3000);
+      self._timers.push(t);
+    }
+
+    // --- キー入力 ---
+    onGameKey = function(key) {
+      if (self._destroyed || !spinning) return;
+
+      if (key === 'a') {
+        stopReel(0);
+      } else if (key === 's') {
+        stopReel(1);
+      } else if (key === 'd') {
+        stopReel(2);
+      }
+    };
+
+    // --- ゲーム開始 ---
+    startSpin();
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(function(t) { clearTimeout(t); });
+    this._timers = [];
+    this._intervals.forEach(function(i) { clearInterval(i); });
+    this._intervals = [];
+    onGameKey = null;
+  }
+});
+
+registerGame('janken', {
+  name: 'ライオンじゃんけん',
+  animal: 'lion',
+  description: '相手のヒントを見て、じゃんけんで勝とう！',
+  introVoice: 'audio/intro_janken.wav',
+  medalThresholds: { gold: 800, silver: 500, bronze: 0 },
+  _timers: [],
+  _active: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._active = true;
+
+    let myHP = 100;
+    let enemyHP = 100;
+    let totalDamageDealt = 0;
+    let waitingForInput = false;
+    let gameEnded = false;
+
+    const HANDS = ['a', 's', 'd'];
+    const HAND_NAMES = { a: 'グー', s: 'チョキ', d: 'パー' };
+    const HAND_EMOJI = { a: '✊', s: '✌️', d: '✋' };
+
+    // ヒント: 出す手と連想がリンクする（グー=丸い/硬いもの、チョキ=2本/ハサミ系、パー=開く/広いもの）
+    const HINTS = {
+      a: [
+        'ライオンは力を溜めている...',
+        'ライオンの拳に力が入っている！',
+        'ライオンはおにぎりを思い浮かべている...',
+        'ライオンはボールで遊びたそうだ...',
+        'ライオンは丸い石を見つめている...',
+        'ライオンはりんごを食べたそうだ...',
+        'ライオンはお団子のことを考えている...',
+      ],
+      s: [
+        'ライオンはカニを思い浮かべている...',
+        'ライオンはハサミを見ている...',
+        'ライオンはピースサインの練習をしている...',
+        'ライオンはエビのことを考えている...',
+        'ライオンはチョキチョキ切りたそうだ...',
+      ],
+      d: [
+        'ライオンが手のひらを広げかけている...',
+        'ライオンの手が大きく開いている！',
+        'ライオンは大きな葉っぱを見ている...',
+        'ライオンはうちわであおぎたそうだ...',
+        'ライオンはお星さまに手を伸ばしている...',
+        'ライオンはひらひらした蝶を追いかけている...',
+        'ライオンはパンケーキのことを考えている...',
+      ],
+    };
+
+    function judge(myHand, enemyHand) {
+      if (myHand === enemyHand) return 'draw';
+      if ((myHand === 'a' && enemyHand === 's') ||
+          (myHand === 's' && enemyHand === 'd') ||
+          (myHand === 'd' && enemyHand === 'a')) return 'win';
+      return 'lose';
+    }
+
+    gameArea.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;width:100%;height:100%;padding:20px 40px;">
+        <div style="display:flex;align-items:center;gap:30px;width:100%;max-width:1200px;margin-bottom:10px;">
+          <div style="flex-shrink:0;">${getAnimalSVG('lion', 120)}</div>
+          <div style="flex:1;">
+            <div style="font-size:32px;font-weight:900;margin-bottom:8px;color:#d4880a;">ライオン</div>
+            <div style="background:#ddd;border-radius:16px;height:48px;width:100%;position:relative;overflow:hidden;border:3px solid #b07010;">
+              <div id="jw-enemy-hp-bar" style="background:linear-gradient(90deg,#e53935,#ff7043);height:100%;width:100%;border-radius:12px;transition:width 0.5s ease;"></div>
+              <div id="jw-enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;color:#fff;text-shadow:1px 1px 3px rgba(0,0,0,0.5);">HP 100/100</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;max-width:1000px;">
+          <div id="jw-hint" style="font-size:40px;font-weight:700;color:#b07010;text-align:center;min-height:60px;"></div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:80px;min-height:180px;">
+            <div style="text-align:center;">
+              <div style="font-size:28px;color:#d4880a;margin-bottom:8px;">ライオン</div>
+              <div id="jw-enemy-hand" style="font-size:120px;opacity:0;">✊</div>
+            </div>
+            <div style="font-size:56px;font-weight:900;color:#999;">VS</div>
+            <div style="text-align:center;">
+              <div style="font-size:28px;color:#1e88e5;margin-bottom:8px;">あなた</div>
+              <div id="jw-my-hand" style="font-size:120px;opacity:0;">✊</div>
+            </div>
+          </div>
+          <div id="jw-result-text" style="font-size:48px;font-weight:900;min-height:65px;text-align:center;"></div>
+          <div id="jw-instruction" style="font-size:36px;color:#3a6a1a;min-height:50px;text-align:center;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:30px;width:100%;max-width:1200px;margin-top:10px;margin-bottom:20px;">
+          <div style="font-size:56px;">🧑</div>
+          <div style="flex:1;">
+            <div style="font-size:32px;font-weight:900;margin-bottom:8px;color:#1e88e5;">あなた</div>
+            <div style="background:#ddd;border-radius:16px;height:48px;width:100%;position:relative;overflow:hidden;border:3px solid #0d47a1;">
+              <div id="jw-my-hp-bar" style="background:linear-gradient(90deg,#42a5f5,#1e88e5);height:100%;width:100%;border-radius:12px;transition:width 0.5s ease;"></div>
+              <div id="jw-my-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;color:#fff;text-shadow:1px 1px 3px rgba(0,0,0,0.5);">HP 100/100</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    const enemyHPBar = document.getElementById('jw-enemy-hp-bar');
+    const enemyHPText = document.getElementById('jw-enemy-hp-text');
+    const myHPBar = document.getElementById('jw-my-hp-bar');
+    const myHPText = document.getElementById('jw-my-hp-text');
+    const hintEl = document.getElementById('jw-hint');
+    const enemyHandEl = document.getElementById('jw-enemy-hand');
+    const myHandEl = document.getElementById('jw-my-hand');
+    const resultTextEl = document.getElementById('jw-result-text');
+    const instructionEl = document.getElementById('jw-instruction');
+
+    function updateHPDisplay() {
+      const ePct = Math.max(0, enemyHP) / 100 * 100;
+      const mPct = Math.max(0, myHP) / 100 * 100;
+      enemyHPBar.style.width = ePct + '%';
+      enemyHPText.textContent = 'HP ' + Math.max(0, enemyHP) + '/100';
+      myHPBar.style.width = mPct + '%';
+      myHPText.textContent = 'HP ' + Math.max(0, myHP) + '/100';
+      if (ePct <= 30) enemyHPBar.style.background = 'linear-gradient(90deg,#b71c1c,#e53935)';
+      if (mPct <= 30) myHPBar.style.background = 'linear-gradient(90deg,#0d47a1,#1565c0)';
+    }
+
+    function addTimer(fn, ms) {
+      const id = setTimeout(function() {
+        if (!self._active) return;
+        fn();
+      }, ms);
+      self._timers.push(id);
+      return id;
+    }
+
+    function startTurn() {
+      if (gameEnded || !self._active) return;
+      const enemyHand = HANDS[Math.floor(Math.random() * 3)];
+      const isCorrectHint = Math.random() < 0.7;
+      let hintHand = enemyHand;
+      if (!isCorrectHint) {
+        const others = HANDS.filter(function(h) { return h !== enemyHand; });
+        hintHand = others[Math.floor(Math.random() * others.length)];
+      }
+      const hintMessages = HINTS[hintHand];
+      const hintMsg = hintMessages[Math.floor(Math.random() * hintMessages.length)];
+
+      enemyHandEl.style.opacity = '0';
+      myHandEl.style.opacity = '0';
+      resultTextEl.textContent = '';
+      resultTextEl.style.color = '#333';
+      hintEl.textContent = '';
+      instructionEl.textContent = '';
+
+      addTimer(function() {
+        if (!self._active) return;
+        hintEl.textContent = hintMsg;
+        playSE('se_janken.mp3');
+        addTimer(function() {
+          if (!self._active) return;
+          instructionEl.textContent = 'グー(A)・チョキ(S)・パー(D) で出そう！';
+          instructionEl.style.animation = 'pulse 2s ease infinite';
+          waitingForInput = true;
+        }, 1500);
+      }, 800);
+
+      onGameKey = function(key) {
+        if (!waitingForInput || gameEnded || !self._active) return;
+        waitingForInput = false;
+        onGameKey = null;
+        instructionEl.textContent = '';
+        instructionEl.style.animation = '';
+
+        var myHand = key;
+        myHandEl.textContent = HAND_EMOJI[myHand];
+        myHandEl.style.opacity = '1';
+
+        addTimer(function() {
+          if (!self._active) return;
+          enemyHandEl.textContent = HAND_EMOJI[enemyHand];
+          enemyHandEl.style.opacity = '1';
+
+          var result = judge(myHand, enemyHand);
+
+          addTimer(function() {
+            if (!self._active) return;
+            if (result === 'win') {
+              resultTextEl.textContent = '勝ち！ ライオンに20ダメージ！';
+              resultTextEl.style.color = '#1e88e5';
+              enemyHP -= 20;
+              totalDamageDealt += 20;
+              playSE('se_win.mp3');
+              addTimer(function() { playSE('se_hit.mp3'); }, 300);
+            } else if (result === 'lose') {
+              resultTextEl.textContent = '負け... 15ダメージ受けた！';
+              resultTextEl.style.color = '#e53935';
+              myHP -= 15;
+              playSE('se_lose.mp3');
+              addTimer(function() { playSE('se_hit.mp3'); }, 300);
+            } else {
+              resultTextEl.textContent = 'あいこ！ お互いに5ダメージ！';
+              resultTextEl.style.color = '#ff9800';
+              enemyHP -= 5;
+              myHP -= 5;
+              totalDamageDealt += 5;
+              playSE('se_draw.mp3');
+            }
+            updateHPDisplay();
+
+            addTimer(function() {
+              if (!self._active) return;
+              if (enemyHP <= 0 || myHP <= 0) {
+                endGame();
+              } else {
+                startTurn();
+              }
+            }, 2000);
+          }, 500);
+        }, 800);
+      };
+    }
+
+    function endGame() {
+      if (gameEnded) return;
+      gameEnded = true;
+      onGameKey = null;
+
+      var score;
+      if (enemyHP <= 0) {
+        score = Math.max(0, myHP) * 10;
+        resultTextEl.textContent = '勝利！！';
+        resultTextEl.style.color = '#ffd700';
+        resultTextEl.style.fontSize = '64px';
+        hintEl.textContent = '';
+        instructionEl.textContent = 'すごい！ ライオンに勝った！';
+        instructionEl.style.color = '#d4880a';
+        playSE('se_victory.mp3');
+      } else {
+        score = totalDamageDealt;
+        resultTextEl.textContent = '惜しい...！';
+        resultTextEl.style.color = '#e53935';
+        resultTextEl.style.fontSize = '64px';
+        hintEl.textContent = '';
+        instructionEl.textContent = '与えたダメージ: ' + totalDamageDealt;
+        instructionEl.style.color = '#999';
+        playSE('se_defeat.mp3');
+      }
+
+      addTimer(function() {
+        if (!self._active) return;
+        onComplete(score);
+      }, 3000);
+    }
+
+    addTimer(function() { startTurn(); }, 1000);
+  },
+  cleanup: function() {
+    this._active = false;
+    if (this._timers) {
+      this._timers.forEach(function(id) { clearTimeout(id); });
+      this._timers = [];
+    }
+    onGameKey = null;
+  }
+});
+
+registerGame('quiz', {
+  name: 'どうぶつクイズ',
+  animal: 'owl',
+  description: '動物に関するクイズに、3つのボタンで答えよう！',
+  introVoice: 'audio/intro_quiz.wav',
+  medalThresholds: { gold: 900, silver: 600, bronze: 300 },
+  _timers: [],
+  _intervals: [],
+  _active: false,
+  init: function(gameArea, onComplete) {
+    var self = this;
+    self._timers = [];
+    self._intervals = [];
+    self._active = true;
+
+    var QUIZ_BANK = [
+      { q: 'キリンの睡眠時間は1日どれくらい？', choices: ['30分', '2時間', '8時間'], answer: 0, trivia: 'キリンは野生では1日約30分しか眠りません。立ったまま眠ることもあります。' },
+      { q: 'パンダが1日に食べる竹の量は？', choices: ['1kg', '15kg', '50kg'], answer: 1, trivia: 'パンダは1日に約15kgもの竹を食べます。起きている時間のほとんどを食事に使います。' },
+      { q: 'ゾウの妊娠期間は？', choices: ['3ヶ月', '12ヶ月', '22ヶ月'], answer: 2, trivia: 'ゾウの妊娠期間は約22ヶ月で、哺乳類の中で最も長いです。' },
+      { q: 'カメレオンが色を変える主な理由は？', choices: ['気分の表現', '温度調節', '獲物を捕る'], answer: 0, trivia: 'カメレオンの体色変化は主に感情表現やコミュニケーションのためです。' },
+      { q: 'ペンギンで一番大きい種類は？', choices: ['皇帝ペンギン', '王様ペンギン', 'マゼランペンギン'], answer: 0, trivia: '皇帝ペンギンは体長約120cmで、ペンギンの中で最大です。' },
+      { q: 'ナマケモノが木から降りるのは何のとき？', choices: ['食事のとき', 'トイレのとき', '寝るとき'], answer: 1, trivia: 'ナマケモノは週に1回、排泄のためだけに木から地上に降ります。' },
+      { q: 'タコの心臓はいくつある？', choices: ['1つ', '2つ', '3つ'], answer: 2, trivia: 'タコには心臓が3つあります。メインの心臓1つと、エラ用の心臓が2つです。' },
+      { q: 'コアラが1日に寝る時間は？', choices: ['8時間', '14時間', '20時間'], answer: 2, trivia: 'コアラは1日に約20時間も眠ります。ユーカリの消化にエネルギーを使うためです。' },
+      { q: 'ダチョウの卵の重さは？', choices: ['約500g', '約1.5kg', '約5kg'], answer: 1, trivia: 'ダチョウの卵は約1.5kgで、鶏卵の約25倍の重さがあります。' },
+      { q: 'イルカはどうやって眠る？', choices: ['海底で寝る', '脳の半分ずつ寝る', '水面に浮いて寝る'], answer: 1, trivia: 'イルカは脳の半分ずつ交代で眠る「半球睡眠」をします。片目を開けたままです。' },
+      { q: 'フラミンゴのピンク色の理由は？', choices: ['生まれつき', '食べ物の色素', '日焼け'], answer: 1, trivia: 'フラミンゴはエビや藻に含まれるカロテノイドという色素でピンクになります。' },
+      { q: 'チーターの最高速度は？', choices: ['時速70km', '時速90km', '時速110km'], answer: 2, trivia: 'チーターは最高時速約110kmで走れる、陸上最速の動物です。' },
+      { q: 'ミツバチが1gのハチミツを作るのに必要な花の数は？', choices: ['約50個', '約500個', '約5000個'], answer: 2, trivia: 'ハチミツ1gを作るのに、ミツバチは約5000個もの花を訪れます。' },
+      { q: 'カバは何色の汗をかく？', choices: ['透明', '赤色', '黄色'], answer: 1, trivia: 'カバは赤い色の汗のような分泌液を出します。日焼け止めと殺菌の効果があります。' },
+      { q: 'ラッコが寝るとき何をする？', choices: ['手をつないで寝る', '穴に潜って寝る', '逆さまで寝る'], answer: 0, trivia: 'ラッコは流されないように、仲間と手をつないで眠ります。とても可愛い習性です。' },
+      { q: 'ゾウの鼻にある筋肉の数は？', choices: ['約100本', '約4万本', '約10万本'], answer: 2, trivia: 'ゾウの鼻には約10万本の筋肉があり、非常に器用に動かすことができます。' },
+      { q: 'ハチドリの1秒間の羽ばたき回数は？', choices: ['約10回', '約50回', '約80回'], answer: 2, trivia: 'ハチドリは1秒間に約80回も羽ばたき、空中で静止（ホバリング）できます。' },
+      { q: 'クラゲの体は何%が水分？', choices: ['約60%', '約80%', '約95%'], answer: 2, trivia: 'クラゲの体の約95%は水分でできています。脳も心臓も血液もありません。' },
+    ];
+
+    var shuffled = QUIZ_BANK.slice().sort(function() { return Math.random() - 0.5; });
+    var questions = shuffled.slice(0, 10);
+    var currentQ = 0;
+    var correctCount = 0;
+    var timeLeft = 15;
+    var timerInterval = null;
+    var waitingForInput = false;
+    var gameEnded = false;
+
+    gameArea.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;width:100%;height:100%;padding:20px 40px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1400px;margin-bottom:10px;">' +
+        '<div style="display:flex;align-items:center;gap:16px;">' +
+          '<div style="flex-shrink:0;">' + getAnimalSVG('owl', 80) + '</div>' +
+          '<div style="font-size:36px;font-weight:900;color:#b08540;">どうぶつクイズ</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:30px;align-items:center;">' +
+          '<div id="qq-progress" style="font-size:32px;font-weight:700;color:#555;"></div>' +
+          '<div id="qq-score-display" style="font-size:32px;font-weight:700;color:#1e88e5;">正解: 0問</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="width:100%;max-width:1400px;margin-bottom:12px;">' +
+        '<div style="background:#ddd;border-radius:12px;height:24px;overflow:hidden;border:2px solid #aaa;">' +
+          '<div id="qq-timer-bar" style="background:linear-gradient(90deg,#43a047,#66bb6a);height:100%;width:100%;border-radius:10px;transition:width 1s linear;"></div>' +
+        '</div>' +
+        '<div id="qq-timer-text" style="text-align:right;font-size:28px;font-weight:700;color:#43a047;margin-top:4px;"></div>' +
+      '</div>' +
+      '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:1400px;gap:20px;">' +
+        '<div id="qq-question" style="font-size:44px;font-weight:900;color:#3a2a1a;text-align:center;min-height:70px;line-height:1.4;"></div>' +
+        '<div id="qq-choices" style="display:flex;gap:30px;justify-content:center;flex-wrap:wrap;margin-top:10px;"></div>' +
+        '<div id="qq-feedback" style="font-size:40px;font-weight:900;min-height:60px;text-align:center;"></div>' +
+        '<div id="qq-trivia" style="font-size:32px;color:#555;text-align:center;min-height:50px;max-width:1000px;line-height:1.5;"></div>' +
+        '<div id="qq-instruction" style="font-size:34px;color:#3a6a1a;min-height:45px;text-align:center;"></div>' +
+      '</div>' +
+    '</div>';
+
+    var progressEl = document.getElementById('qq-progress');
+    var scoreDisplayEl = document.getElementById('qq-score-display');
+    var timerBarEl = document.getElementById('qq-timer-bar');
+    var timerTextEl = document.getElementById('qq-timer-text');
+    var questionEl = document.getElementById('qq-question');
+    var choicesEl = document.getElementById('qq-choices');
+    var feedbackEl = document.getElementById('qq-feedback');
+    var triviaEl = document.getElementById('qq-trivia');
+    var instructionEl = document.getElementById('qq-instruction');
+
+    function addTimer(fn, ms) {
+      var id = setTimeout(function() {
+        if (!self._active) return;
+        fn();
+      }, ms);
+      self._timers.push(id);
+      return id;
+    }
+
+    function showQuestion() {
+      if (gameEnded || !self._active) return;
+      if (currentQ >= 10) {
+        endQuiz();
+        return;
+      }
+      var q = questions[currentQ];
+      progressEl.textContent = '第' + (currentQ + 1) + '問 / 10問';
+      scoreDisplayEl.textContent = '正解: ' + correctCount + '問';
+      feedbackEl.textContent = '';
+      triviaEl.textContent = '';
+      instructionEl.textContent = '';
+      questionEl.textContent = q.q;
+
+      var CHOICE_KEYS = ['A (グー)', 'S (チョキ)', 'D (パー)'];
+      var CHOICE_COLORS = ['#e53935', '#fbc02d', '#1e88e5'];
+      var CHOICE_TEXT_COLORS = ['#fff', '#3a2a1a', '#fff'];
+      var choicesHTML = '';
+      for (var i = 0; i < 3; i++) {
+        choicesHTML += '<div style="background:' + CHOICE_COLORS[i] + ';color:' + CHOICE_TEXT_COLORS[i] +
+          ';border-radius:20px;padding:20px 40px;min-width:280px;text-align:center;font-size:36px;font-weight:700;' +
+          'box-shadow:0 6px 0 rgba(0,0,0,0.2);opacity:1;transition:opacity 0.3s,transform 0.3s;" ' +
+          'id="qq-choice-' + i + '">' +
+          '<div style="font-size:28px;margin-bottom:6px;">' + CHOICE_KEYS[i] + '</div>' +
+          '<div>' + q.choices[i] + '</div>' +
+        '</div>';
+      }
+      choicesEl.innerHTML = choicesHTML;
+
+      playSE('se_question.mp3');
+
+      timeLeft = 15;
+      timerBarEl.style.width = '100%';
+      timerBarEl.style.background = 'linear-gradient(90deg,#43a047,#66bb6a)';
+      timerTextEl.textContent = '残り 15秒';
+      timerTextEl.style.color = '#43a047';
+      var warningPlayed = false;
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(function() {
+        if (!self._active) { clearInterval(timerInterval); return; }
+        timeLeft--;
+        if (timeLeft < 0) timeLeft = 0;
+        timerBarEl.style.width = (timeLeft / 15 * 100) + '%';
+        timerTextEl.textContent = '残り ' + timeLeft + '秒';
+        if (timeLeft <= 5) {
+          timerBarEl.style.background = 'linear-gradient(90deg,#e53935,#ff7043)';
+          timerTextEl.style.color = '#e53935';
+          if (!warningPlayed) {
+            warningPlayed = true;
+            playSE('se_timewarning.mp3');
+          }
+        }
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          if (waitingForInput) {
+            waitingForInput = false;
+            onGameKey = null;
+            handleAnswer(-1);
+          }
+        }
+      }, 1000);
+      self._intervals.push(timerInterval);
+
+      instructionEl.textContent = 'A・S・D で答えを選ぼう！';
+      waitingForInput = true;
+
+      onGameKey = function(key) {
+        if (!waitingForInput || gameEnded || !self._active) return;
+        waitingForInput = false;
+        onGameKey = null;
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        var chosen = key === 'a' ? 0 : key === 's' ? 1 : 2;
+        handleAnswer(chosen);
+      };
+    }
+
+    function handleAnswer(chosen) {
+      if (!self._active) return;
+      var q = questions[currentQ];
+      instructionEl.textContent = '';
+
+      for (var i = 0; i < 3; i++) {
+        var el = document.getElementById('qq-choice-' + i);
+        if (!el) continue;
+        if (i === q.answer) {
+          el.style.transform = 'scale(1.1)';
+          el.style.boxShadow = '0 0 20px rgba(76,175,80,0.7)';
+          el.style.border = '4px solid #2e7d32';
+        } else {
+          el.style.opacity = '0.4';
+        }
+      }
+
+      if (chosen === q.answer) {
+        correctCount++;
+        feedbackEl.textContent = '⭕ 正解！';
+        feedbackEl.style.color = '#2e7d32';
+        playSE('se_correct.mp3');
+        triviaEl.textContent = q.trivia;
+      } else if (chosen === -1) {
+        feedbackEl.textContent = '⏰ 時間切れ！';
+        feedbackEl.style.color = '#e53935';
+        playSE('se_wrong.mp3');
+        triviaEl.textContent = '正解は「' + q.choices[q.answer] + '」でした。' + q.trivia;
+      } else {
+        feedbackEl.textContent = '❌ 残念！';
+        feedbackEl.style.color = '#e53935';
+        playSE('se_wrong.mp3');
+        triviaEl.textContent = '正解は「' + q.choices[q.answer] + '」でした。' + q.trivia;
+      }
+
+      scoreDisplayEl.textContent = '正解: ' + correctCount + '問';
+      currentQ++;
+
+      addTimer(function() {
+        showQuestion();
+      }, 3500);
+    }
+
+    function endQuiz() {
+      gameEnded = true;
+      onGameKey = null;
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      var score = correctCount * 100;
+
+      questionEl.textContent = 'クイズ終了！';
+      choicesEl.innerHTML = '';
+      timerBarEl.style.width = '0%';
+      timerTextEl.textContent = '';
+      progressEl.textContent = '';
+      feedbackEl.textContent = correctCount + '問正解 (' + score + '点)';
+      feedbackEl.style.color = '#b08540';
+      feedbackEl.style.fontSize = '52px';
+      triviaEl.textContent = '';
+      instructionEl.textContent = '';
+
+      addTimer(function() {
+        if (!self._active) return;
+        onComplete(score);
+      }, 2500);
+    }
+
+    addTimer(function() { showQuestion(); }, 800);
+  },
+  cleanup: function() {
+    this._active = false;
+    if (this._timers) {
+      this._timers.forEach(function(id) { clearTimeout(id); });
+      this._timers = [];
+    }
+    if (this._intervals) {
+      this._intervals.forEach(function(id) { clearInterval(id); });
+      this._intervals = [];
+    }
+    onGameKey = null;
+  }
+});
+
+registerGame('race', {
+  name: 'かけっこレース',
+  animal: 'rabbit',
+  description: 'グー、チョキ、パーの順番にボタンを押して走ろう！',
+  introVoice: 'audio/intro_race.wav',
+  medalThresholds: { gold: 2500, silver: 2000, bronze: 0 },
+  _timers: [],
+  _intervals: [],
+  _active: false,
+  _raf: null,
+  init: function(gameArea, onComplete) {
+    var self = this;
+    self._timers = [];
+    self._intervals = [];
+    self._active = true;
+    self._raf = null;
+
+    var TOTAL_STEPS = 30;
+    var SEQUENCE = ['a', 's', 'd'];
+    var SEQ_NAMES = { a: 'グー (A)', s: 'チョキ (S)', d: 'パー (D)' };
+    var SEQ_EMOJI = { a: '✊', s: '✌️', d: '✋' };
+    var SEQ_COLORS = { a: '#e53935', s: '#fbc02d', d: '#1e88e5' };
+    var SEQ_TEXT_COLORS = { a: '#fff', s: '#3a2a1a', d: '#fff' };
+
+    var mySteps = 0;
+    var seqIndex = 0;
+    var stumbling = false;
+    var gameStarted = false;
+    var gameEnded = false;
+    var startTime = 0;
+    var finishTime = 0;
+
+    // CPU rival: finishes in ~20 seconds
+    var CPU_FINISH_MS = 20000;
+    var cpuProgress = 0; // 0..1
+
+    var trackWidth = 1400;
+    var trackLeft = 260;
+
+    gameArea.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;width:100%;height:100%;padding:20px 40px;position:relative;">' +
+      '<div style="font-size:36px;font-weight:900;color:#e05080;margin-bottom:10px;">かけっこレース</div>' +
+      '<div id="rc-timer" style="font-size:56px;font-weight:900;color:#3a2a1a;margin-bottom:16px;">0.00秒</div>' +
+      '<!-- Track area -->' +
+      '<div style="position:relative;width:100%;max-width:1800px;height:220px;margin-bottom:20px;">' +
+        '<!-- Track background -->' +
+        '<div style="position:absolute;top:0;left:' + (trackLeft - 10) + 'px;width:' + (trackWidth + 20) + 'px;height:220px;background:#d2b48c;border-radius:20px;border:3px solid #a0804a;"></div>' +
+        '<!-- Lane lines -->' +
+        '<div style="position:absolute;top:108px;left:' + trackLeft + 'px;width:' + trackWidth + 'px;height:4px;background:rgba(255,255,255,0.5);"></div>' +
+        '<!-- Start line -->' +
+        '<div style="position:absolute;top:10px;left:' + trackLeft + 'px;width:6px;height:200px;background:#333;border-radius:3px;"></div>' +
+        '<div style="position:absolute;top:-15px;left:' + (trackLeft - 30) + 'px;font-size:28px;color:#333;font-weight:700;">START</div>' +
+        '<!-- Goal line -->' +
+        '<div style="position:absolute;top:10px;left:' + (trackLeft + trackWidth) + 'px;width:6px;height:200px;background:#e53935;border-radius:3px;"></div>' +
+        '<div style="position:absolute;top:-15px;left:' + (trackLeft + trackWidth - 20) + 'px;font-size:28px;color:#e53935;font-weight:700;">GOAL</div>' +
+        '<!-- Step markers -->' +
+        '<div id="rc-step-markers" style="position:absolute;top:90px;left:' + trackLeft + 'px;width:' + trackWidth + 'px;height:4px;">' +
+        '</div>' +
+        '<!-- Player (top lane) -->' +
+        '<div id="rc-player" style="position:absolute;top:20px;left:' + trackLeft + 'px;transition:left 0.15s ease;display:flex;flex-direction:column;align-items:center;">' +
+          '<div style="font-size:28px;font-weight:700;color:#e05080;margin-bottom:4px;">あなた</div>' +
+          '<div style="transform:scale(0.6);transform-origin:top center;">' + getAnimalSVG('rabbit', 100) + '</div>' +
+        '</div>' +
+        '<!-- CPU (bottom lane) -->' +
+        '<div id="rc-cpu" style="position:absolute;top:120px;left:' + trackLeft + 'px;transition:left 0.1s linear;display:flex;flex-direction:column;align-items:center;">' +
+          '<div style="font-size:28px;font-weight:700;color:#ff9800;margin-bottom:4px;">ライバル</div>' +
+          '<div style="transform:scale(0.5);transform-origin:top center;">' + getAnimalSVG('cheetah', 100) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- Progress bar -->' +
+      '<div style="width:100%;max-width:1400px;margin-bottom:16px;">' +
+        '<div style="display:flex;justify-content:space-between;font-size:28px;font-weight:700;color:#555;margin-bottom:4px;">' +
+          '<span>進行: <span id="rc-steps-display">0</span> / ' + TOTAL_STEPS + ' 歩</span>' +
+          '<span id="rc-stumble-msg" style="color:#e53935;min-width:200px;text-align:right;"></span>' +
+        '</div>' +
+        '<div style="background:#ddd;border-radius:12px;height:20px;overflow:hidden;border:2px solid #aaa;">' +
+          '<div id="rc-progress-bar" style="background:linear-gradient(90deg,#e05080,#f48fb1);height:100%;width:0%;border-radius:10px;transition:width 0.15s ease;"></div>' +
+        '</div>' +
+      '</div>' +
+      '<!-- Next key display -->' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:10px;">' +
+        '<div style="font-size:34px;color:#555;">次に押すボタン:</div>' +
+        '<div id="rc-next-key" style="width:160px;height:160px;border-radius:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:64px;font-weight:900;box-shadow:0 8px 0 rgba(0,0,0,0.2);transition:transform 0.1s,background 0.2s;"></div>' +
+        '<div id="rc-next-label" style="font-size:36px;font-weight:700;"></div>' +
+      '</div>' +
+      '<div id="rc-instruction" style="font-size:32px;color:#3a6a1a;margin-top:12px;"></div>' +
+    '</div>';
+
+    var timerEl = document.getElementById('rc-timer');
+    var playerEl = document.getElementById('rc-player');
+    var cpuEl = document.getElementById('rc-cpu');
+    var stepsDisplay = document.getElementById('rc-steps-display');
+    var stumbleMsg = document.getElementById('rc-stumble-msg');
+    var progressBar = document.getElementById('rc-progress-bar');
+    var nextKeyEl = document.getElementById('rc-next-key');
+    var nextLabelEl = document.getElementById('rc-next-label');
+    var instructionEl = document.getElementById('rc-instruction');
+
+    function addTimer(fn, ms) {
+      var id = setTimeout(function() {
+        if (!self._active) return;
+        fn();
+      }, ms);
+      self._timers.push(id);
+      return id;
+    }
+
+    function updateNextKey() {
+      var nextKey = SEQUENCE[seqIndex % 3];
+      nextKeyEl.style.background = SEQ_COLORS[nextKey];
+      nextKeyEl.style.color = SEQ_TEXT_COLORS[nextKey];
+      nextKeyEl.textContent = SEQ_EMOJI[nextKey];
+      nextLabelEl.textContent = SEQ_NAMES[nextKey];
+      nextLabelEl.style.color = SEQ_COLORS[nextKey];
+    }
+
+    function updatePlayerPos() {
+      var pct = mySteps / TOTAL_STEPS;
+      var px = trackLeft + pct * trackWidth;
+      playerEl.style.left = px + 'px';
+      stepsDisplay.textContent = mySteps;
+      progressBar.style.width = (pct * 100) + '%';
+    }
+
+    function updateCPUPos() {
+      var px = trackLeft + cpuProgress * trackWidth;
+      cpuEl.style.left = px + 'px';
+    }
+
+    function gameLoop() {
+      if (!self._active || gameEnded) return;
+      if (gameStarted) {
+        var elapsed = performance.now() - startTime;
+        timerEl.textContent = (elapsed / 1000).toFixed(2) + '秒';
+
+        // CPU progress
+        cpuProgress = Math.min(1, elapsed / CPU_FINISH_MS);
+        updateCPUPos();
+
+        // Check if CPU finished
+        if (cpuProgress >= 1 && mySteps < TOTAL_STEPS) {
+          // CPU finished first, but player keeps going
+        }
+      }
+      self._raf = requestAnimationFrame(gameLoop);
+    }
+
+    // Countdown then start
+    instructionEl.textContent = '準備...';
+    nextKeyEl.style.background = '#ccc';
+    nextKeyEl.textContent = '';
+    nextLabelEl.textContent = '';
+
+    addTimer(function() {
+      if (!self._active) return;
+      instructionEl.textContent = 'よーい...';
+      addTimer(function() {
+        if (!self._active) return;
+        instructionEl.textContent = 'スタート！';
+        instructionEl.style.color = '#e53935';
+        instructionEl.style.fontSize = '44px';
+        gameStarted = true;
+        startTime = performance.now();
+        updateNextKey();
+        playSE('se_start.mp3');
+        gameLoop();
+
+        addTimer(function() {
+          if (!self._active) return;
+          instructionEl.textContent = '順番通りにボタンを押そう！';
+          instructionEl.style.color = '#3a6a1a';
+          instructionEl.style.fontSize = '32px';
+        }, 1500);
+      }, 1200);
+    }, 1000);
+
+    onGameKey = function(key) {
+      if (!gameStarted || gameEnded || !self._active) return;
+      if (stumbling) return;
+
+      var expectedKey = SEQUENCE[seqIndex % 3];
+      if (key === expectedKey) {
+        // Correct
+        mySteps++;
+        seqIndex++;
+        playSE('se_step.mp3');
+        stumbleMsg.textContent = '';
+        updatePlayerPos();
+        updateNextKey();
+
+        // Bounce animation on key display
+        nextKeyEl.style.transform = 'scale(1.15)';
+        addTimer(function() {
+          nextKeyEl.style.transform = 'scale(1)';
+        }, 100);
+
+        if (mySteps >= TOTAL_STEPS) {
+          finishGame();
+        }
+      } else {
+        // Wrong key - stumble
+        stumbling = true;
+        playSE('se_stumble.mp3');
+        stumbleMsg.textContent = 'つまずいた！ (1秒ペナルティ)';
+        nextKeyEl.style.transform = 'scale(0.9) rotate(10deg)';
+        playerEl.style.transform = 'rotate(15deg)';
+
+        addTimer(function() {
+          if (!self._active) return;
+          stumbling = false;
+          stumbleMsg.textContent = '';
+          nextKeyEl.style.transform = 'scale(1) rotate(0deg)';
+          playerEl.style.transform = 'rotate(0deg)';
+        }, 1000);
+      }
+    };
+
+    function finishGame() {
+      gameEnded = true;
+      finishTime = performance.now() - startTime;
+      onGameKey = null;
+      if (self._raf) cancelAnimationFrame(self._raf);
+
+      var finishSec = finishTime / 1000;
+      timerEl.textContent = finishSec.toFixed(2) + '秒';
+      timerEl.style.color = '#e53935';
+
+      // Score: max(0, 3000 - finishTimeMs / 10)
+      var score = Math.max(0, Math.round(3000 - finishTime / 10));
+
+      var cpuFinished = cpuProgress >= 1;
+      var beatCPU = !cpuFinished || (finishTime < CPU_FINISH_MS);
+
+      nextKeyEl.style.background = '#4caf50';
+      nextKeyEl.style.color = '#fff';
+      nextKeyEl.textContent = '🎉';
+      nextLabelEl.textContent = 'ゴール！';
+      nextLabelEl.style.color = '#4caf50';
+
+      playSE('se_goal.mp3');
+      if (beatCPU) {
+        addTimer(function() { playSE('se_victory.mp3'); }, 500);
+        instructionEl.textContent = 'ライバルに勝った！ タイム: ' + finishSec.toFixed(2) + '秒';
+        instructionEl.style.color = '#e05080';
+        instructionEl.style.fontSize = '40px';
+      } else {
+        instructionEl.textContent = 'ゴール！ タイム: ' + finishSec.toFixed(2) + '秒';
+        instructionEl.style.color = '#555';
+        instructionEl.style.fontSize = '40px';
+      }
+
+      addTimer(function() {
+        if (!self._active) return;
+        onComplete(score);
+      }, 3000);
+    }
+  },
+  cleanup: function() {
+    this._active = false;
+    if (this._timers) {
+      this._timers.forEach(function(id) { clearTimeout(id); });
+      this._timers = [];
+    }
+    if (this._intervals) {
+      this._intervals.forEach(function(id) { clearInterval(id); });
+      this._intervals = [];
+    }
+    if (this._raf) {
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
+    onGameKey = null;
+  }
+});
+
+// ========================================
+// 初期化
+// ========================================
+function init() {
+  loadState();
+  preloadAllAudio();
+  switchScreen('title');
+  addDecorations();
+  // 初回表示: ページロード直後は自動再生がブロックされる場合があるのでtryする
+  setTimeout(() => playAudio('audio/title.wav'), 500);
+}
+
+// 背景の雲装飾
+function addDecorations() {
+  const clouds = [
+    { x: '5%', y: '8%', w: 120, h: 50 },
+    { x: '25%', y: '3%', w: 160, h: 60 },
+    { x: '60%', y: '6%', w: 140, h: 55 },
+    { x: '80%', y: '2%', w: 100, h: 40 },
+  ];
+
+  clouds.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'cloud';
+    el.style.left = c.x;
+    el.style.top = c.y;
+    el.style.width = c.w + 'px';
+    el.style.height = c.h + 'px';
+    document.body.appendChild(el);
+  });
+}
+
+// DOM準備完了で初期化
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
