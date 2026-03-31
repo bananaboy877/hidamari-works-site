@@ -988,11 +988,11 @@ function onGameComplete(score) {
 
   // メダル判定
   const thresholds = game.medalThresholds;
-  let rank = 'bronze';
-  let medalCount = 1;
-  let rankText = '銅メダル';
-  let rankClass = 'bronze';
-  let seName = 'se_bronze.mp3';
+  let rank = 'none';
+  let medalCount = 0;
+  let rankText = '残念...';
+  let rankClass = '';
+  let seName = 'se_defeat.mp3';
 
   if (score >= thresholds.gold) {
     rank = 'gold';
@@ -1006,6 +1006,12 @@ function onGameComplete(score) {
     rankText = '銀メダル';
     rankClass = 'silver';
     seName = 'se_silver.mp3';
+  } else if (score >= thresholds.bronze) {
+    rank = 'bronze';
+    medalCount = 1;
+    rankText = '銅メダル';
+    rankClass = 'bronze';
+    seName = 'se_bronze.mp3';
   }
 
   // メダル加算
@@ -1030,16 +1036,20 @@ function showResultScreen(game, score, rankText, rankClass, medalCount, seName) 
   const rankEl = document.getElementById('result-rank');
   rankEl.className = 'result-rank ' + rankClass;
 
-  const stars = rankClass === 'gold' ? '⭐⭐⭐' : rankClass === 'silver' ? '⭐⭐' : '⭐';
-  rankEl.textContent = 'ランク: ' + stars + ' ' + rankText;
+  const stars = rankClass === 'gold' ? '⭐⭐⭐' : rankClass === 'silver' ? '⭐⭐' : rankClass === 'bronze' ? '⭐' : '';
+  rankEl.textContent = stars ? ('ランク: ' + stars + ' ' + rankText) : rankText;
 
   // メダル獲得演出
   const medalEarn = document.getElementById('result-medal-earn');
-  let medalIcons = '';
-  for (let i = 0; i < medalCount; i++) {
-    medalIcons += '🏅';
+  if (medalCount > 0) {
+    let medalIcons = '';
+    for (let i = 0; i < medalCount; i++) {
+      medalIcons += '🏅';
+    }
+    medalEarn.innerHTML = medalIcons + ' +' + medalCount + '枚 ゲット！' + createSparkles();
+  } else {
+    medalEarn.innerHTML = '次はメダルを目指そう！';
   }
-  medalEarn.innerHTML = medalIcons + ' +' + medalCount + '枚 ゲット！' + createSparkles();
 
   switchScreen('result');
 
@@ -1049,6 +1059,7 @@ function showResultScreen(game, score, rankText, rankClass, medalCount, seName) 
   // ずんだもんによる結果読み上げ
   const resultVoice = rankClass === 'gold' ? 'audio/result_gold.wav'
     : rankClass === 'silver' ? 'audio/result_silver.wav'
+    : rankClass === 'bronze' ? 'audio/result_bronze.wav'
     : 'audio/result_bronze.wav';
   setTimeout(() => {
     playAudio(resultVoice).then(() => {
@@ -2522,10 +2533,12 @@ registerGame('speed', {
   medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
   _timers: [],
   _destroyed: false,
+  _moveAnim: null,
   init: function(gameArea, onComplete) {
     const self = this;
     self._timers = [];
     self._destroyed = false;
+    self._moveAnim = null;
 
     // --- 定数 ---
     const HANDS = [
@@ -2542,7 +2555,7 @@ registerGame('speed', {
       'audio/speed_scissors.wav',
       'audio/speed_paper.wav',
     ];
-    let speedPromptTimer = null;
+    self._speedPromptTimer = null;
 
     // --- スコア計算関数 ---
     function calcQuestionScore(reactionMs) {
@@ -2563,7 +2576,7 @@ registerGame('speed', {
     let showTime = 0;
     let foulPenalty = 0;
     let gameEnded = false;
-    let timeoutTimer = null; // 現在の問題のタイムアウトタイマー
+    self._timeoutTimer = null; // 現在の問題のタイムアウトタイマー
 
     // 出題シーケンス生成（同じ手が3回連続しないように）
     function generateQuestions() {
@@ -2609,9 +2622,11 @@ registerGame('speed', {
     container.appendChild(scoreDiv);
 
     // メイン表示エリア
+    const displayMode = self.displayMode || 'normal';
     const mainDisplay = document.createElement('div');
-    mainDisplay.style.cssText = 'width:450px;height:450px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;';
+    mainDisplay.style.cssText = 'width:450px;height:450px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;' + (displayMode !== 'normal' ? 'position:absolute;' : '');
     container.appendChild(mainDisplay);
+    let moveAnimFrame = null;
 
     // 説明テキスト
     const helpDiv = document.createElement('div');
@@ -2634,11 +2649,17 @@ registerGame('speed', {
       }
 
       phase = 'waiting';
-      if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
+      if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
+      if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
       qNumDiv.textContent = '第' + (questionIdx + 1) + '問 / ' + TOTAL_QUESTIONS;
       mainDisplay.style.background = 'rgba(255,255,255,0.5)';
       mainDisplay.style.borderColor = '#ddd';
       mainDisplay.style.transform = 'scale(1)';
+      // 待機中は中央に戻す
+      if (displayMode !== 'normal') {
+        mainDisplay.style.left = ((1920 - 450) / 2) + 'px';
+        mainDisplay.style.top = '80px';
+      }
       mainDisplay.innerHTML = `
         <div style="font-size:60px;font-weight:900;color:#999;">まって...</div>
       `;
@@ -2678,35 +2699,72 @@ registerGame('speed', {
       helpDiv.style.color = '#e53935';
       reactionDiv.textContent = '';
 
+      // 表示モード別の位置/アニメーション
+      if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
+      const containerW = 1920, containerH = 800, boxW = 450, boxH = 450;
+      if (displayMode === 'randomPos') {
+        const rx = Math.random() * (containerW - boxW);
+        const ry = Math.random() * (containerH - boxH);
+        mainDisplay.style.left = rx + 'px';
+        mainDisplay.style.top = ry + 'px';
+      } else if (displayMode === 'horizontal') {
+        let posX = 0, dirX = 4;
+        mainDisplay.style.top = ((containerH - boxH) / 2) + 'px';
+        function animH() {
+          if (self._destroyed || phase !== 'shown') return;
+          posX += dirX;
+          if (posX >= containerW - boxW || posX <= 0) dirX *= -1;
+          mainDisplay.style.left = posX + 'px';
+          self._moveAnim = requestAnimationFrame(animH);
+        }
+        self._moveAnim = requestAnimationFrame(animH);
+      } else if (displayMode === 'randomMove') {
+        let posX = (containerW - boxW) / 2, posY = (containerH - boxH) / 2;
+        let dx = (Math.random() - 0.5) * 6, dy = (Math.random() - 0.5) * 6;
+        function animR() {
+          if (self._destroyed || phase !== 'shown') return;
+          posX += dx; posY += dy;
+          if (posX <= 0 || posX >= containerW - boxW) dx *= -1;
+          if (posY <= 0 || posY >= containerH - boxH) dy *= -1;
+          posX = Math.max(0, Math.min(containerW - boxW, posX));
+          posY = Math.max(0, Math.min(containerH - boxH, posY));
+          mainDisplay.style.left = posX + 'px';
+          mainDisplay.style.top = posY + 'px';
+          self._moveAnim = requestAnimationFrame(animR);
+        }
+        self._moveAnim = requestAnimationFrame(animR);
+      }
+
       playSE('se_appear.mp3');
       // 手に対応するTTSを読み上げ
       playAudio(SPEED_HAND_VOICES[handIdx]);
       // 5秒おきにリピート読み上げ
-      if (speedPromptTimer) clearInterval(speedPromptTimer);
-      speedPromptTimer = setInterval(() => {
+      if (self._speedPromptTimer) clearInterval(self._speedPromptTimer);
+      self._speedPromptTimer = setInterval(() => {
         if (self._destroyed || gameEnded || phase !== 'shown') {
-          clearInterval(speedPromptTimer); speedPromptTimer = null; return;
+          clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; return;
         }
         playAudio(SPEED_HAND_VOICES[handIdx]);
       }, 5000);
 
       // 60秒以内に押さなかったら自動タイムアウト（前の問題のタイマーをキャンセル）
-      if (timeoutTimer) clearTimeout(timeoutTimer);
-      timeoutTimer = setTimeout(() => {
+      if (self._timeoutTimer) clearTimeout(self._timeoutTimer);
+      self._timeoutTimer = setTimeout(() => {
         if (self._destroyed || gameEnded) return;
         if (phase === 'shown') {
-          if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
+          if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
           handleAnswer(60000);
         }
-        timeoutTimer = null;
+        self._timeoutTimer = null;
       }, 60000);
     }
 
     function handleAnswer(reactionMs) {
       if (self._destroyed || gameEnded) return;
       phase = 'answered';
-      if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
-      if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
+      if (self._timeoutTimer) { clearTimeout(self._timeoutTimer); self._timeoutTimer = null; }
+      if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
+      if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
 
       // ペナルティ加算
       reactionMs += foulPenalty;
@@ -2719,6 +2777,13 @@ registerGame('speed', {
       // 表示
       const sec = (reactionMs / 1000).toFixed(3);
       reactionDiv.textContent = sec + '秒';
+
+      // タイム読み上げTTS（0.1秒単位、最大10.0秒）
+      const roundedSec = Math.min(10.0, Math.round(reactionMs / 100) / 10);
+      if (roundedSec > 0) {
+        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
+        playAudio(timeFile);
+      }
 
       const totalScore = scores.reduce((a, b) => a + b, 0);
       scoreDiv.textContent = totalScore + '点';
@@ -2833,8 +2898,9 @@ registerGame('speed', {
       if (gameEnded) return;
       gameEnded = true;
       onGameKey = null;
-      if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
-      if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
+      if (self._timeoutTimer) { clearTimeout(self._timeoutTimer); self._timeoutTimer = null; }
+      if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
+      if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
       playSE('se_finish.mp3');
 
       const totalScore = scores.reduce((a, b) => a + b, 0);
@@ -2870,7 +2936,9 @@ registerGame('speed', {
     this._destroyed = true;
     this._timers.forEach(t => clearTimeout(t));
     this._timers = [];
-    if (speedPromptTimer) { clearInterval(speedPromptTimer); speedPromptTimer = null; }
+    if (this._speedPromptTimer) { clearInterval(this._speedPromptTimer); this._speedPromptTimer = null; }
+    if (this._timeoutTimer) { clearTimeout(this._timeoutTimer); this._timeoutTimer = null; }
+    if (this._moveAnim) { cancelAnimationFrame(this._moveAnim); this._moveAnim = null; }
     onGameKey = null;
   }
 });
@@ -2898,6 +2966,52 @@ registerGame('speed5000', {
   totalQuestions: 5000,
   _timers: [],
   _destroyed: false,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
+});
+
+// はやおしバトル 表示モードバリアント
+registerGame('speed_rpos', {
+  name: 'はやおし(場所変化)',
+  animal: 'cheetah',
+  description: '手が毎回違う場所に出現！目で追ってボタンを押そう！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
+  displayMode: 'randomPos',
+  totalQuestions: 100,
+  _timers: [],
+  _destroyed: false,
+  _moveAnim: null,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
+});
+
+registerGame('speed_hori', {
+  name: 'はやおし(横移動)',
+  animal: 'cheetah',
+  description: '手が左右に動き続ける！目で追ってボタンを押そう！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
+  displayMode: 'horizontal',
+  totalQuestions: 100,
+  _timers: [],
+  _destroyed: false,
+  _moveAnim: null,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
+});
+
+registerGame('speed_rand', {
+  name: 'はやおし(ランダム)',
+  animal: 'cheetah',
+  description: '手がランダムに動き回る！目で追ってボタンを押そう！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
+  displayMode: 'randomMove',
+  totalQuestions: 100,
+  _timers: [],
+  _destroyed: false,
+  _moveAnim: null,
   init: GameRegistry['speed'].init,
   cleanup: GameRegistry['speed'].cleanup,
 });
@@ -3168,8 +3282,8 @@ registerGame('mole', {
           if (!self._destroyed) dom.effectDiv.textContent = '';
         }, 600);
         self._timers.push(t);
-      } else {
-        // ミス
+      } else if (!activeMoles[keyIdx]) {
+        // ミス（クールダウン中の穴は無視する）
         misses++;
         playSE('se_wrong.mp3');
         dom.effectDiv.textContent = 'ミス！';
@@ -3617,6 +3731,7 @@ registerGame('slot', {
     // --- リール位置管理 ---
     const reelPositions = [0, 0, 0]; // 各リールの現在のピクセル位置
     const reelAnimFrames = [null, null, null];
+    self._reelAnimFrames = reelAnimFrames;
     const TOTAL_STRIP_H = SYMBOLS.length * REEL_ITEM_H; // 1周分の高さ
     const REEL_SPEEDS = [4, 5, 6]; // 各リールの速度（ピクセル/フレーム）、右ほど速い
 
@@ -3704,7 +3819,8 @@ registerGame('slot', {
         points = BASE_3MATCH * mult;
         msg = SYMBOLS[s0] + ' 3つ揃い！ ×' + mult + ' +' + points + '点';
         playSE('se_bigwin.mp3');
-        setTimeout(function() { playSE('se_jackpot.mp3'); }, 300);
+        var jackpotT = setTimeout(function() { playSE('se_jackpot.mp3'); }, 300);
+        self._timers.push(jackpotT);
 
         // 枠を金色に
         for (let i = 0; i < 3; i++) {
@@ -3809,6 +3925,12 @@ registerGame('slot', {
     this._timers = [];
     this._intervals.forEach(function(i) { clearInterval(i); });
     this._intervals = [];
+    if (this._reelAnimFrames) {
+      for (var i = 0; i < this._reelAnimFrames.length; i++) {
+        if (this._reelAnimFrames[i]) cancelAnimationFrame(this._reelAnimFrames[i]);
+      }
+      this._reelAnimFrames = null;
+    }
     onGameKey = null;
   }
 });
@@ -4111,7 +4233,11 @@ registerGame('quiz', {
       { q: 'クラゲの体は何%が水分？', choices: ['約60%', '約80%', '約95%'], answer: 2, trivia: 'クラゲの体の約95%は水分でできています。脳も心臓も血液もありません。' },
     ];
 
-    var shuffled = QUIZ_BANK.slice().sort(function() { return Math.random() - 0.5; });
+    var shuffled = QUIZ_BANK.slice();
+    for (var i = shuffled.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+    }
     var questions = shuffled.slice(0, 10);
     var currentQ = 0;
     var correctCount = 0;
