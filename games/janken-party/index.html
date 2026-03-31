@@ -2796,7 +2796,7 @@ registerGame('speed', {
       const praise = praiseObj.text;
 
       // タイム読み上げTTS → 完了後に褒めTTS（被らないように順番に再生）
-      const roundedSec = Math.min(10.0, Math.round(reactionMs / 100) / 10);
+      const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
       if (roundedSec > 0) {
         const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
         playAudio(timeFile).then(() => {
