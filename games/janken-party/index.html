@@ -3243,35 +3243,46 @@ registerGame('speed_pose', {
       // キーボードは無視
     };
 
-    // カメラUIを追加
+    // カメラUIを追加（2台対応）
     const container = gameArea.firstElementChild;
     const camWrap = document.createElement('div');
-    camWrap.style.cssText = 'position:absolute;bottom:20px;right:40px;z-index:20;display:flex;flex-direction:column;align-items:center;';
+    camWrap.style.cssText = 'position:absolute;bottom:20px;right:20px;z-index:20;display:flex;flex-direction:column;align-items:center;';
     const camStatus = document.createElement('div');
     camStatus.style.cssText = 'font-size:24px;font-weight:900;color:#1e88e5;margin-bottom:8px;';
     camStatus.textContent = 'カメラ準備中...';
     camWrap.appendChild(camStatus);
-    const camBox = document.createElement('div');
-    camBox.style.cssText = 'position:relative;width:560px;height:420px;border-radius:16px;overflow:hidden;border:4px solid #1e88e5;background:#000;';
-    const video = document.createElement('video');
-    video.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = true;
-    camBox.appendChild(video);
-    const camCanvas = document.createElement('canvas');
-    camCanvas.width = 560;
-    camCanvas.height = 420;
-    camCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;transform:scaleX(-1);';
-    camBox.appendChild(camCanvas);
-    camWrap.appendChild(camBox);
+    // カメラボックスの並び（横並び）
+    const camRow = document.createElement('div');
+    camRow.style.cssText = 'display:flex;gap:12px;';
+    camWrap.appendChild(camRow);
     // 検出されたジェスチャー表示
     const gestureLabel = document.createElement('div');
     gestureLabel.style.cssText = 'font-size:36px;font-weight:900;color:#ff6f00;margin-top:8px;min-height:48px;';
     camWrap.appendChild(gestureLabel);
     container.appendChild(camWrap);
 
-    const camCtx = camCanvas.getContext('2d');
+    // カメラボックス生成ヘルパー
+    var CAM_W = 400, CAM_H = 300;
+    function createCamBox(label) {
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:18px;font-weight:900;color:#555;margin-bottom:4px;';
+      lbl.textContent = label;
+      wrap.appendChild(lbl);
+      var box = document.createElement('div');
+      box.style.cssText = 'position:relative;width:' + CAM_W + 'px;height:' + CAM_H + 'px;border-radius:12px;overflow:hidden;border:4px solid #1e88e5;background:#000;';
+      var vid = document.createElement('video');
+      vid.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
+      vid.autoplay = true; vid.playsInline = true; vid.muted = true;
+      box.appendChild(vid);
+      var cvs = document.createElement('canvas');
+      cvs.width = CAM_W; cvs.height = CAM_H;
+      cvs.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;transform:scaleX(-1);';
+      box.appendChild(cvs);
+      wrap.appendChild(box);
+      return { wrap: wrap, box: box, video: vid, canvas: cvs, ctx: cvs.getContext('2d'), label: lbl };
+    }
 
     // ジェスチャー検出ロジック
     function dist(a, b) {
@@ -3279,98 +3290,82 @@ registerGame('speed_pose', {
       return Math.sqrt(dx * dx + dy * dy);
     }
     function detectGesture(landmarks) {
-      // 指が伸びているか判定（TIPがPIPより上=y値が小さい）
       var indexUp = landmarks[8].y < landmarks[6].y;
       var middleUp = landmarks[12].y < landmarks[10].y;
       var ringUp = landmarks[16].y < landmarks[14].y;
       var pinkyUp = landmarks[20].y < landmarks[18].y;
-
-      // 拳を正面に向けた場合の追加判定：
-      // 全指先(TIP)が手首に近く密集している → グー
+      // 拳を正面に向けた場合の追加判定
       var wrist = landmarks[0];
       var tipDists = [
-        dist(landmarks[8], wrist),
-        dist(landmarks[12], wrist),
-        dist(landmarks[16], wrist),
-        dist(landmarks[20], wrist)
+        dist(landmarks[8], wrist), dist(landmarks[12], wrist),
+        dist(landmarks[16], wrist), dist(landmarks[20], wrist)
       ];
       var avgTipDist = (tipDists[0] + tipDists[1] + tipDists[2] + tipDists[3]) / 4;
       var fingerSpread = Math.max.apply(null, tipDists) - Math.min.apply(null, tipDists);
-      // 指先が手首に近く密集 = 拳を向けたグー
       var fistFront = avgTipDist < 0.2 && fingerSpread < 0.08;
-
-      // パー：4本伸びている
       if (indexUp && middleUp && ringUp && pinkyUp) return 'paper';
-      // チョキ：人差し指と中指だけ伸びている
       if (indexUp && middleUp && !ringUp && !pinkyUp) return 'scissors';
-      // グー：全部閉じている、または拳を正面に向けている
       if ((!indexUp && !middleUp && !ringUp && !pinkyUp) || fistFront) return 'rock';
       return null;
     }
 
+    // 2台分のジェスチャーを統合して判定
+    var camGestures = [null, null]; // 各カメラの最新ジェスチャー
     var stableGesture = null;
     var stableCount = 0;
-    var STABLE_THRESHOLD = 4; // 安定フレーム数
+    var STABLE_THRESHOLD = 4;
     var lastTriggerTime = 0;
-    var TRIGGER_COOLDOWN = 1500; // 発火後のクールダウン(ms)
+    var TRIGGER_COOLDOWN = 1500;
 
-    function processGesture(gesture) {
-      if (gesture === stableGesture) {
+    function updateGesture(camIdx, gesture) {
+      camGestures[camIdx] = gesture;
+      // どちらかのカメラで検出されたジェスチャーを採用
+      var merged = camGestures[0] || camGestures[1] || null;
+      if (merged === stableGesture) {
         stableCount++;
       } else {
-        stableGesture = gesture;
+        stableGesture = merged;
         stableCount = 1;
       }
-      // ジェスチャー表示
       var labels = { rock: '✊ グー', scissors: '✌️ チョキ', paper: '✋ パー' };
-      gestureLabel.textContent = gesture ? (labels[gesture] || '') : '';
-
-      // 安定検出＋クールダウン経過で発火（状態トリガー）
-      if (gesture && stableCount >= STABLE_THRESHOLD) {
+      gestureLabel.textContent = merged ? (labels[merged] || '') : '';
+      if (merged && stableCount >= STABLE_THRESHOLD) {
         var now = performance.now();
         if (now - lastTriggerTime > TRIGGER_COOLDOWN) {
           lastTriggerTime = now;
           var keyMap = { rock: 'a', scissors: 's', paper: 'd' };
-          if (gestureKey) gestureKey(keyMap[gesture]);
+          if (gestureKey) gestureKey(keyMap[merged]);
         }
       }
     }
 
     // 手のランドマーク描画
-    var CAM_W = 560, CAM_H = 420;
-    function drawLandmarks(landmarks) {
-      camCtx.clearRect(0, 0, CAM_W, CAM_H);
+    function drawLandmarks(ctx, landmarks) {
+      ctx.clearRect(0, 0, CAM_W, CAM_H);
       if (!landmarks) return;
-      // 接続線
       var connections = [
-        [0,1],[1,2],[2,3],[3,4],
-        [0,5],[5,6],[6,7],[7,8],
-        [0,9],[9,10],[10,11],[11,12],
-        [0,13],[13,14],[14,15],[15,16],
-        [0,17],[17,18],[18,19],[19,20],
-        [5,9],[9,13],[13,17]
+        [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+        [0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],
+        [0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]
       ];
-      camCtx.strokeStyle = '#00e676';
-      camCtx.lineWidth = 2;
+      ctx.strokeStyle = '#00e676'; ctx.lineWidth = 2;
       connections.forEach(function(c) {
-        camCtx.beginPath();
-        camCtx.moveTo(landmarks[c[0]].x * CAM_W, landmarks[c[0]].y * CAM_H);
-        camCtx.lineTo(landmarks[c[1]].x * CAM_W, landmarks[c[1]].y * CAM_H);
-        camCtx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(landmarks[c[0]].x * CAM_W, landmarks[c[0]].y * CAM_H);
+        ctx.lineTo(landmarks[c[1]].x * CAM_W, landmarks[c[1]].y * CAM_H);
+        ctx.stroke();
       });
-      // 点
-      camCtx.fillStyle = '#ff5252';
+      ctx.fillStyle = '#ff5252';
       landmarks.forEach(function(lm) {
-        camCtx.beginPath();
-        camCtx.arc(lm.x * CAM_W, lm.y * CAM_H, 5, 0, Math.PI * 2);
-        camCtx.fill();
+        ctx.beginPath();
+        ctx.arc(lm.x * CAM_W, lm.y * CAM_H, 4, 0, Math.PI * 2);
+        ctx.fill();
       });
     }
 
     // MediaPipeとカメラの非同期セットアップ
     (async function() {
       try {
-        // MediaPipe ESMを動的import
         camStatus.textContent = 'ライブラリ読み込み中...';
         var mp = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/vision_bundle.mjs');
         if (self._destroyed) return;
@@ -3381,72 +3376,106 @@ registerGame('speed_pose', {
         );
         if (self._destroyed) return;
 
-        var handLandmarker = await mp.HandLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',
-            delegate: 'GPU'
-          },
-          runningMode: 'VIDEO',
-          numHands: 1
-        });
-        if (self._destroyed) return;
-        self._handLandmarker = handLandmarker;
+        // カメラデバイス一覧を取得
+        camStatus.textContent = 'カメラ検出中...';
+        // まず仮のストリームで権限を取得
+        var tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        tempStream.getTracks().forEach(function(t) { t.stop(); });
+        var devices = await navigator.mediaDevices.enumerateDevices();
+        var videoCams = devices.filter(function(d) { return d.kind === 'videoinput'; });
 
-        // カメラ取得
-        camStatus.textContent = 'カメラ接続中...';
-        var stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-        if (self._destroyed) { stream.getTracks().forEach(function(t) { t.stop(); }); return; }
-        self._cameraStream = stream;
-        video.srcObject = stream;
-        await video.play();
-        if (self._destroyed) return;
+        var numCams = Math.min(videoCams.length, 2);
+        var camBoxes = [];
+        var handLandmarkers = [];
+        var streams = [];
+        self._cameraStreams = [];
+        self._handLandmarkers = [];
+        self._detectLoops = [];
 
-        camStatus.textContent = '✅ 手を見せてね！';
-        camStatus.style.color = '#43a047';
-        camBox.style.borderColor = '#43a047';
+        for (var ci = 0; ci < numCams; ci++) {
+          var camLabel = numCams === 1 ? 'カメラ' : (ci === 0 ? '📷 カメラ1（正面）' : '📷 カメラ2（下）');
+          var cb = createCamBox(camLabel);
+          camRow.appendChild(cb.wrap);
+          camBoxes.push(cb);
 
-        // 検出ループ
-        var lastTime = -1;
-        function detect() {
-          if (self._destroyed) return;
-          self._detectLoop = requestAnimationFrame(detect);
-          var now = performance.now();
-          if (now === lastTime) return;
-          lastTime = now;
-          try {
-            var results = handLandmarker.detectForVideo(video, now);
-            if (results.landmarks && results.landmarks.length > 0) {
-              var lm = results.landmarks[0];
-              drawLandmarks(lm);
-              var gesture = detectGesture(lm);
-              processGesture(gesture);
-            } else {
-              drawLandmarks(null);
-              processGesture(null);
-            }
-          } catch(e) {}
+          // HandLandmarker（カメラごとに1つ）
+          camStatus.textContent = (ci + 1) + '台目のモデル準備中...';
+          var hl = await mp.HandLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',
+              delegate: 'GPU'
+            },
+            runningMode: 'VIDEO',
+            numHands: 1
+          });
+          if (self._destroyed) { hl.close(); return; }
+          handLandmarkers.push(hl);
+          self._handLandmarkers.push(hl);
+
+          // カメラストリーム取得
+          camStatus.textContent = (ci + 1) + '台目のカメラ接続中...';
+          var stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: videoCams[ci].deviceId }, width: 640, height: 480 }
+          });
+          if (self._destroyed) { stream.getTracks().forEach(function(t) { t.stop(); }); return; }
+          streams.push(stream);
+          self._cameraStreams.push(stream);
+          cb.video.srcObject = stream;
+          await cb.video.play();
+          cb.box.style.borderColor = '#43a047';
         }
-        self._detectLoop = requestAnimationFrame(detect);
+
+        if (self._destroyed) return;
+        camStatus.textContent = numCams === 2 ? '✅ カメラ2台で検出中！' : '✅ 手を見せてね！';
+        camStatus.style.color = '#43a047';
+
+        // 検出ループ（カメラごとに独立）
+        for (var li = 0; li < numCams; li++) {
+          (function(idx) {
+            var lastTime = -1;
+            function detect() {
+              if (self._destroyed) return;
+              self._detectLoops[idx] = requestAnimationFrame(detect);
+              var now = performance.now();
+              if (now === lastTime) return;
+              lastTime = now;
+              try {
+                var results = handLandmarkers[idx].detectForVideo(camBoxes[idx].video, now);
+                if (results.landmarks && results.landmarks.length > 0) {
+                  var lm = results.landmarks[0];
+                  drawLandmarks(camBoxes[idx].ctx, lm);
+                  var gesture = detectGesture(lm);
+                  updateGesture(idx, gesture);
+                } else {
+                  drawLandmarks(camBoxes[idx].ctx, null);
+                  updateGesture(idx, null);
+                }
+              } catch(e) {}
+            }
+            self._detectLoops[idx] = requestAnimationFrame(detect);
+          })(li);
+        }
 
       } catch(e) {
         camStatus.textContent = '❌ エラー: ' + (e.message || e);
         camStatus.style.color = '#e53935';
         camStatus.style.fontSize = '18px';
-        camStatus.style.maxWidth = '400px';
+        camStatus.style.maxWidth = '600px';
         camStatus.style.wordBreak = 'break-all';
-        camBox.style.borderColor = '#e53935';
         console.error('speed_pose error:', e);
-        // フォールバック：キーボード入力を有効化
         onGameKey = gestureKey;
       }
     })();
   },
   cleanup: function() {
-    // カメラ停止
+    // カメラ・検出ループ停止
+    if (this._detectLoops) { this._detectLoops.forEach(function(l) { if (l) cancelAnimationFrame(l); }); this._detectLoops = []; }
+    if (this._handLandmarkers) { this._handLandmarkers.forEach(function(h) { if (h) h.close(); }); this._handLandmarkers = []; }
+    if (this._cameraStreams) { this._cameraStreams.forEach(function(s) { if (s) s.getTracks().forEach(function(t) { t.stop(); }); }); this._cameraStreams = []; }
+    // 後方互換
     if (this._detectLoop) { cancelAnimationFrame(this._detectLoop); this._detectLoop = null; }
     if (this._handLandmarker) { this._handLandmarker.close(); this._handLandmarker = null; }
     if (this._cameraStream) { this._cameraStream.getTracks().forEach(function(t) { t.stop(); }); this._cameraStream = null; }
-    // 元のcleanup
     GameRegistry['speed'].cleanup.call(this);
   }
 });
