@@ -3283,10 +3283,11 @@ registerGame('speed_pose', {
       return null;
     }
 
-    var lastTriggered = null;
     var stableGesture = null;
     var stableCount = 0;
     var STABLE_THRESHOLD = 4; // 安定フレーム数
+    var lastTriggerTime = 0;
+    var TRIGGER_COOLDOWN = 1500; // 発火後のクールダウン(ms)
 
     function processGesture(gesture) {
       if (gesture === stableGesture) {
@@ -3299,15 +3300,14 @@ registerGame('speed_pose', {
       var labels = { rock: '✊ グー', scissors: '✌️ チョキ', paper: '✋ パー' };
       gestureLabel.textContent = gesture ? (labels[gesture] || '') : '';
 
-      // 安定検出かつ前回と違うジェスチャーの場合のみ発火
-      if (gesture && stableCount >= STABLE_THRESHOLD && gesture !== lastTriggered) {
-        lastTriggered = gesture;
-        var keyMap = { rock: 'a', scissors: 's', paper: 'd' };
-        if (gestureKey) gestureKey(keyMap[gesture]);
-      }
-      // 手が消えたらリセット
-      if (!gesture) {
-        lastTriggered = null;
+      // 安定検出＋クールダウン経過で発火（状態トリガー）
+      if (gesture && stableCount >= STABLE_THRESHOLD) {
+        var now = performance.now();
+        if (now - lastTriggerTime > TRIGGER_COOLDOWN) {
+          lastTriggerTime = now;
+          var keyMap = { rock: 'a', scissors: 's', paper: 'd' };
+          if (gestureKey) gestureKey(keyMap[gesture]);
+        }
       }
     }
 
