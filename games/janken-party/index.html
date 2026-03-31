@@ -2863,8 +2863,8 @@ registerGame('speed', {
       ];
       const praiseObj = praises[Math.floor(Math.random() * praises.length)];
       let praise = praiseObj.text;
-      // 1/5の確率で名前付き褒め
-      if (Math.random() < 0.2) {
+      // テスト: 100%名前付き褒め
+      if (true) {
         const np = namePrefixes[Math.floor(Math.random() * namePrefixes.length)];
         praise = np.text + praise;
         praiseObj.voice = 'audio/praise_' + np.code + '_' + praiseObj.key + '.wav';
