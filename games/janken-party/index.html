@@ -2663,7 +2663,8 @@ registerGame('speed', {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'hayaoshi_' + new Date().toISOString().slice(0, 10) + '_' + reactions.length + 'q.json';
+      var now = new Date(); var dStr = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2);
+      a.download = '早押しバトル_' + (self.name || 'はやおしバトル') + '_' + dStr + '.json';
       a.click();
       URL.revokeObjectURL(url);
     });
@@ -2990,7 +2991,8 @@ registerGame('speed', {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'hayaoshi_' + new Date().toISOString().slice(0, 10) + '_' + reactions.length + 'q.json';
+          var now = new Date(); var dStr = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2);
+      a.download = '早押しバトル_' + (self.name || 'はやおしバトル') + '_' + dStr + '.json';
           a.click();
           URL.revokeObjectURL(url);
         });
