@@ -3410,9 +3410,13 @@ registerGame('speed_pose', {
         self._detectLoop = requestAnimationFrame(detect);
 
       } catch(e) {
-        camStatus.textContent = '❌ カメラを使えません';
+        camStatus.textContent = '❌ エラー: ' + (e.message || e);
         camStatus.style.color = '#e53935';
+        camStatus.style.fontSize = '18px';
+        camStatus.style.maxWidth = '400px';
+        camStatus.style.wordBreak = 'break-all';
         camBox.style.borderColor = '#e53935';
+        console.error('speed_pose error:', e);
         // フォールバック：キーボード入力を有効化
         onGameKey = gestureKey;
       }
