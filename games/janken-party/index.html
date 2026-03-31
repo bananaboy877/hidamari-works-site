@@ -2870,23 +2870,29 @@ registerGame('speed', {
         praiseObj.voice = 'audio/praise_' + np.code + '_' + praiseObj.key + '.wav';
       }
 
-      // タイム読み上げTTS → 完了後に褒めTTS（被らないように順番に再生）
-      // 褒めTTS完了後に次の問題へ進む
+      // タイム読み上げTTS → 褒めTTS → 完了後に次の問題へ進む
       const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
-      function playPraiseAndNext() {
-        if (self._destroyed) return;
-        playAudio(praiseObj.voice).then(() => {
-          if (!self._destroyed && !gameEnded) {
-            questionIdx++;
-            startQuestion();
-          }
-        });
+      function goNext() {
+        if (!self._destroyed && !gameEnded) {
+          questionIdx++;
+          startQuestion();
+        }
       }
       if (roundedSec > 0) {
         const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
-        playAudio(timeFile).then(playPraiseAndNext);
+        playAudio(timeFile).then(() => {
+          if (self._destroyed) return;
+          // 褒めTTS再生 + 最低2秒待機の両方を満たしてから次へ
+          Promise.all([
+            playAudio(praiseObj.voice),
+            new Promise(r => setTimeout(r, 2000))
+          ]).then(goNext);
+        });
       } else {
-        playPraiseAndNext();
+        Promise.all([
+          playAudio(praiseObj.voice),
+          new Promise(r => setTimeout(r, 2000))
+        ]).then(goNext);
       }
 
       if (reactionMs <= 1000) {
