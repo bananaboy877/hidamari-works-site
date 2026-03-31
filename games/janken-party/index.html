@@ -2922,6 +2922,24 @@ registerGame('speed', {
       container.innerHTML = '';
       container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
 
+      // JSON記録データを作成
+      const handNames = ['グー', 'チョキ', 'パー'];
+      const recordData = {
+        game: self.name || 'はやおしバトル',
+        date: new Date().toISOString(),
+        totalQuestions: reactions.length,
+        totalScore: totalScore,
+        avgReactionMs: Math.round(avgReaction),
+        bestReactionMs: bestReaction,
+        details: reactions.map((r, i) => ({
+          question: i + 1,
+          hand: handNames[questions[i]],
+          reactionMs: Math.round(r),
+          score: scores[i],
+        })),
+      };
+      const jsonStr = JSON.stringify(recordData, null, 2);
+
       container.innerHTML = `
         <div style="font-size:56px;font-weight:900;color:#ff9800;">はやおしバトル 終了！</div>
         ${getAnimalSVG('cheetah', 100)}
@@ -2929,12 +2947,27 @@ registerGame('speed', {
         <div style="font-size:40px;color:#555;">
           回答数: ${reactions.length}問 / 平均: ${avgSec}秒 / 最速: ${bestSec}秒
         </div>
+        <button id="speed-export-json" style="margin-top:16px;font-family:inherit;font-size:32px;font-weight:700;padding:12px 32px;border-radius:16px;border:3px solid #ff9800;background:#fff8e1;color:#e65100;cursor:pointer;">記録をJSON保存</button>
         <div style="font-size:30px;color:#999;margin-top:10px;">少し待ってね...</div>
       `;
 
+      // JSON保存ボタン
+      const exportBtn = document.getElementById('speed-export-json');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'hayaoshi_' + new Date().toISOString().slice(0, 10) + '_' + reactions.length + 'q.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      }
+
       const t = setTimeout(() => {
         if (!self._destroyed) onComplete(totalScore);
-      }, 3000);
+      }, 5000);
       self._timers.push(t);
     }
 
@@ -3050,6 +3083,22 @@ registerGame('speed_rand_fast', {
   displayMode: 'randomMove',
   moveSpeed: 12,
   totalQuestions: 100,
+  _timers: [],
+  _destroyed: false,
+  _moveAnim: null,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
+});
+
+registerGame('speed_rand_fast_1000', {
+  name: 'ランダム高速1000',
+  animal: 'cheetah',
+  description: '高速ランダム移動の1000問！集中力の限界に挑戦！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 60000, silver: 40000, bronze: 0 },
+  displayMode: 'randomMove',
+  moveSpeed: 12,
+  totalQuestions: 1000,
   _timers: [],
   _destroyed: false,
   _moveAnim: null,
