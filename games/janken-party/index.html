@@ -2638,6 +2638,37 @@ registerGame('speed', {
     reactionDiv.style.cssText = 'margin-top:16px;font-size:40px;font-weight:900;color:#ff6f00;min-height:50px;';
     container.appendChild(reactionDiv);
 
+    // JSON保存ボタン（ゲーム中常時表示、マウスクリックで保存）
+    const exportBtn = document.createElement('button');
+    exportBtn.textContent = '記録をJSON保存';
+    exportBtn.style.cssText = 'position:absolute;bottom:20px;right:40px;font-family:inherit;font-size:24px;font-weight:700;padding:10px 24px;border-radius:12px;border:2px solid #ff9800;background:#fff8e1;color:#e65100;cursor:pointer;z-index:20;';
+    exportBtn.addEventListener('click', function() {
+      const handNames = ['グー', 'チョキ', 'パー'];
+      const recordData = {
+        game: self.name || 'はやおしバトル',
+        date: new Date().toISOString(),
+        totalQuestions: TOTAL_QUESTIONS,
+        answeredQuestions: reactions.length,
+        totalScore: scores.reduce((a, b) => a + b, 0),
+        avgReactionMs: reactions.length > 0 ? Math.round(reactions.reduce((a, b) => a + b, 0) / reactions.length) : 0,
+        bestReactionMs: reactions.length > 0 ? Math.min(...reactions) : 0,
+        details: reactions.map((r, i) => ({
+          question: i + 1,
+          hand: handNames[questions[i]],
+          reactionMs: Math.round(r),
+          score: scores[i],
+        })),
+      };
+      const blob = new Blob([JSON.stringify(recordData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hayaoshi_' + new Date().toISOString().slice(0, 10) + '_' + reactions.length + 'q.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    container.appendChild(exportBtn);
+
     gameArea.appendChild(container);
 
     // --- ゲームロジック ---
