@@ -595,6 +595,14 @@ function getAudioCtx() {
   return sharedAudioCtx;
 }
 
+// AudioContextをリフレッシュ（ノード上限回避）
+function refreshAudioCtx() {
+  if (sharedAudioCtx) {
+    try { sharedAudioCtx.close(); } catch(e) {}
+    sharedAudioCtx = null;
+  }
+}
+
 function playAudio(src) {
   return new Promise((resolve) => {
     try {
@@ -2692,6 +2700,11 @@ registerGame('speed', {
         return;
       }
 
+      // 20問ごとにAudioContextをリフレッシュ（ノード上限回避）
+      if (questionIdx > 0 && questionIdx % 20 === 0) {
+        refreshAudioCtx();
+      }
+
       phase = 'waiting';
       if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
       if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
@@ -2833,17 +2846,29 @@ registerGame('speed', {
 
       // すべて肯定的なリアクション
       const praises = [
-        { text: 'すごい！', voice: 'audio/praise_sugoi.wav' },
-        { text: 'いいね！', voice: 'audio/praise_iine.wav' },
-        { text: 'ナイス！', voice: 'audio/praise_nice.wav' },
-        { text: 'バッチリ！', voice: 'audio/praise_bacchiri.wav' },
-        { text: 'やったね！', voice: 'audio/praise_yattane.wav' },
-        { text: 'かっこいい！', voice: 'audio/praise_kakkoii.wav' },
-        { text: 'さすが！', voice: 'audio/praise_sasuga.wav' },
-        { text: 'すばらしい！', voice: 'audio/praise_subarashii.wav' },
+        { text: 'すごい！', voice: 'audio/praise_sugoi.wav', key: 'sugoi' },
+        { text: 'いいね！', voice: 'audio/praise_iine.wav', key: 'iine' },
+        { text: 'ナイス！', voice: 'audio/praise_nice.wav', key: 'nice' },
+        { text: 'バッチリ！', voice: 'audio/praise_bacchiri.wav', key: 'bacchiri' },
+        { text: 'やったね！', voice: 'audio/praise_yattane.wav', key: 'yattane' },
+        { text: 'かっこいい！', voice: 'audio/praise_kakkoii.wav', key: 'kakkoii' },
+        { text: 'さすが！', voice: 'audio/praise_sasuga.wav', key: 'sasuga' },
+        { text: 'すばらしい！', voice: 'audio/praise_subarashii.wav', key: 'subarashii' },
+      ];
+      const namePrefixes = [
+        { text: 'えつこさん、', code: 'etsukosan' },
+        { text: 'えっちゃん、', code: 'ecchan' },
+        { text: 'えつこ、', code: 'etsuko' },
+        { text: 'おっぱたさん、', code: 'oppatasan' },
       ];
       const praiseObj = praises[Math.floor(Math.random() * praises.length)];
-      const praise = praiseObj.text;
+      let praise = praiseObj.text;
+      // 1/5の確率で名前付き褒め
+      if (Math.random() < 0.2) {
+        const np = namePrefixes[Math.floor(Math.random() * namePrefixes.length)];
+        praise = np.text + praise;
+        praiseObj.voice = 'audio/praise_' + np.code + '_' + praiseObj.key + '.wav';
+      }
 
       // タイム読み上げTTS → 完了後に褒めTTS（被らないように順番に再生）
       const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
