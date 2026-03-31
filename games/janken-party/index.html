@@ -2871,14 +2871,22 @@ registerGame('speed', {
       }
 
       // タイム読み上げTTS → 完了後に褒めTTS（被らないように順番に再生）
+      // 褒めTTS完了後に次の問題へ進む
       const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
+      function playPraiseAndNext() {
+        if (self._destroyed) return;
+        playAudio(praiseObj.voice).then(() => {
+          if (!self._destroyed && !gameEnded) {
+            questionIdx++;
+            startQuestion();
+          }
+        });
+      }
       if (roundedSec > 0) {
         const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
-        playAudio(timeFile).then(() => {
-          if (!self._destroyed) playAudio(praiseObj.voice);
-        });
+        playAudio(timeFile).then(playPraiseAndNext);
       } else {
-        playAudio(praiseObj.voice);
+        playPraiseAndNext();
       }
 
       if (reactionMs <= 1000) {
@@ -2904,10 +2912,6 @@ registerGame('speed', {
       }
 
       mainDisplay.style.transform = 'scale(1)';
-
-      questionIdx++;
-      const t = setTimeout(() => startQuestion(), 1500);
-      self._timers.push(t);
     }
 
     function handleFoul() {
