@@ -4897,20 +4897,21 @@ registerGame('sequence100', {
     var container = document.createElement('div');
     container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;position:relative;';
 
-    // タイマー
     container.innerHTML =
-      '<div id="sq-timer" style="font-size:72px;font-weight:900;color:#3a2a1a;">0.00秒</div>' +
-      '<div style="display:flex;align-items:center;gap:20px;">' +
-        '<div style="font-size:40px;font-weight:900;color:#555;"><span id="sq-count">0</span> / ' + TOTAL + ' 回</div>' +
+      '<!-- 手の表示（メイン・大きく） -->' +
+      '<div id="sq-next" style="width:360px;height:360px;border-radius:60px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 0 rgba(0,0,0,0.2);transition:transform 0.15s,background 0.2s;animation:sq-pulse 1s ease infinite;"></div>' +
+      '<div id="sq-next-label" style="font-size:52px;font-weight:900;margin-top:8px;"></div>' +
+      '<div id="sq-msg" style="font-size:36px;font-weight:900;color:#e53935;min-height:44px;"></div>' +
+      '<!-- タイム・進捗（コンパクト） -->' +
+      '<div style="display:flex;align-items:center;gap:30px;">' +
+        '<div id="sq-timer" style="font-size:44px;font-weight:900;color:#3a2a1a;">0.00秒</div>' +
+        '<div style="font-size:32px;font-weight:900;color:#555;"><span id="sq-count">0</span> / ' + TOTAL + '</div>' +
       '</div>' +
-      '<div style="width:80%;max-width:1200px;background:#ddd;border-radius:12px;height:24px;overflow:hidden;border:2px solid #aaa;">' +
-        '<div id="sq-bar" style="background:linear-gradient(90deg,#e53935,#fbc02d,#1e88e5);height:100%;width:0%;border-radius:10px;transition:width 0.1s;"></div>' +
+      '<div style="width:60%;max-width:800px;background:#ddd;border-radius:10px;height:16px;overflow:hidden;border:2px solid #aaa;">' +
+        '<div id="sq-bar" style="background:linear-gradient(90deg,#e53935,#fbc02d,#1e88e5);height:100%;width:0%;border-radius:8px;transition:width 0.1s;"></div>' +
       '</div>' +
-      '<div style="font-size:34px;color:#555;margin-top:10px;">次に押すボタン:</div>' +
-      '<div id="sq-next" style="width:200px;height:200px;border-radius:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 0 rgba(0,0,0,0.2);transition:transform 0.1s,background 0.2s;"></div>' +
-      '<div id="sq-next-label" style="font-size:44px;font-weight:900;"></div>' +
-      '<div id="sq-msg" style="font-size:36px;font-weight:900;color:#e53935;min-height:50px;"></div>' +
-      '<div id="sq-instruction" style="font-size:32px;color:#3a6a1a;"></div>';
+      '<div id="sq-instruction" style="font-size:30px;color:#3a6a1a;margin-top:4px;"></div>' +
+      '<style>@keyframes sq-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}</style>';
 
     gameArea.appendChild(container);
 
@@ -4927,17 +4928,26 @@ registerGame('sequence100', {
       self._timers.push(id);
     }
 
+    self._sqVoiceTimer = null; // 5秒リピート用タイマー
+
     function updateNext() {
       var key = SEQUENCE[seqIndex % 3];
       nextEl.style.background = SEQ_COLORS[key];
-      nextEl.innerHTML = handImg(SEQ_HAND[key], 140);
+      nextEl.innerHTML = handImg(SEQ_HAND[key], 280);
       nextLabelEl.textContent = SEQ_NAMES[key];
       nextLabelEl.style.color = SEQ_COLORS[key];
-      // 手が変わったら読み上げ（前の音声を止めてから再生）
+      // 手が変わったら読み上げ + 5秒リピート開始
       if (key !== lastVoiceKey && gameStarted && !gameEnded) {
         stopAllAudio();
         playAudio(SEQ_VOICE[key]);
         lastVoiceKey = key;
+        // 5秒リピート
+        if (self._sqVoiceTimer) clearInterval(self._sqVoiceTimer);
+        self._sqVoiceTimer = setInterval(function() {
+          if (!self._active || gameEnded) { clearInterval(self._sqVoiceTimer); self._sqVoiceTimer = null; return; }
+          var curKey = SEQUENCE[seqIndex % 3];
+          playAudio(SEQ_VOICE[curKey]);
+        }, 5000);
       }
     }
 
@@ -4990,8 +5000,8 @@ registerGame('sequence100', {
         msgEl.textContent = '';
         updateDisplay();
         updateNext();
-        nextEl.style.transform = 'scale(1.15)';
-        addTimer(function() { nextEl.style.transform = 'scale(1)'; }, 100);
+        nextEl.style.transform = 'scale(1.3)';
+        addTimer(function() { nextEl.style.transform = 'scale(1)'; }, 120);
         if (count >= TOTAL) {
           finishGame();
         }
@@ -5013,6 +5023,8 @@ registerGame('sequence100', {
       finishTime = performance.now() - startTime;
       onGameKey = null;
       if (self._raf) cancelAnimationFrame(self._raf);
+      if (self._sqVoiceTimer) { clearInterval(self._sqVoiceTimer); self._sqVoiceTimer = null; }
+      stopAllAudio();
 
       var finishSec = finishTime / 1000;
       timerEl.textContent = finishSec.toFixed(2) + '秒';
@@ -5042,6 +5054,7 @@ registerGame('sequence100', {
     this._active = false;
     if (this._timers) { this._timers.forEach(function(id) { clearTimeout(id); }); this._timers = []; }
     if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
+    if (this._sqVoiceTimer) { clearInterval(this._sqVoiceTimer); this._sqVoiceTimer = null; }
     onGameKey = null;
   }
 });
