@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Grid Splitter</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e12;
+    --surface: #1a1a22;
+    --surface-hover: #24242f;
+    --border: #2a2a36;
+    --text: #e8e8ed;
+    --text-dim: #8888a0;
+    --accent: #f0c040;
+    --accent-hover: #f5d060;
+    --accent-glow: rgba(240, 192, 64, 0.15);
+    --line-color: rgba(240, 80, 80, 0.85);
+    --line-hover: rgba(255, 120, 60, 1);
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+  }
+  .app { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  header { text-align: center; margin-bottom: 36px; }
+  header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), #ff9060);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { color: var(--text-dim); font-size: 14px; margin-top: 6px; }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center; justify-content: center; margin-bottom: 28px;
+  }
+  .grid-config {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 8px 16px; font-size: 14px;
+  }
+  .grid-config label { color: var(--text-dim); font-size: 13px; }
+  .grid-config input[type="number"] {
+    width: 52px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-family: 'Space Mono', monospace;
+    font-size: 14px; text-align: center; padding: 4px; outline: none;
+  }
+  .grid-config input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  .x-mark { color: var(--text-dim); font-family: 'Space Mono', monospace; font-weight: 700; }
+
+  .filename-config {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 8px 16px;
+  }
+  .filename-config label { color: var(--text-dim); font-size: 13px; white-space: nowrap; }
+  .filename-config input {
+    flex: 1; min-width: 100px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-family: 'Space Mono', monospace;
+    font-size: 13px; padding: 4px 8px; outline: none;
+  }
+  .filename-config input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-accent { background: var(--accent); color: #111; }
+  .btn-accent:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+  .btn-accent:disabled { opacity: 0.4; pointer-events: none; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+  .btn-reset { background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 6px 14px; font-size: 13px; border-radius: 8px; }
+  .btn-reset:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 60px 24px; text-align: center; cursor: pointer;
+    transition: all 0.25s; background: var(--surface);
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-glow); }
+  .dropzone-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.6; }
+  .dropzone-text { color: var(--text-dim); font-size: 14px; line-height: 1.6; }
+  .dropzone-text strong { color: var(--accent); }
+  .dropzone input[type="file"] { display: none; }
+
+  .editor-section { margin-top: 12px; }
+  .editor-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; flex-wrap: wrap; gap: 12px;
+  }
+  .editor-header h2 { font-family: 'Space Mono', monospace; font-size: 16px; }
+  .editor-header .info { color: var(--text-dim); font-size: 13px; }
+
+  .canvas-wrapper {
+    position: relative; display: inline-block;
+    background: repeating-conic-gradient(#222 0% 25%, #191919 0% 50%) 50% / 20px 20px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .canvas-wrapper canvas { display: block; }
+
+  .cut-line { position: absolute; z-index: 10; }
+  .cut-line-v {
+    top: 0; width: 16px; height: 100%; cursor: col-resize;
+    transform: translateX(-8px);
+  }
+  .cut-line-h {
+    left: 0; height: 16px; width: 100%; cursor: row-resize;
+    transform: translateY(-8px);
+  }
+  .cut-line::after { content: ''; position: absolute; }
+  .cut-line-v::after {
+    left: 7px; top: 0; width: 2px; height: 100%;
+    background: var(--line-color);
+    box-shadow: 0 0 8px rgba(240, 80, 80, 0.5);
+    transition: background 0.15s, width 0.15s, left 0.15s;
+  }
+  .cut-line-h::after {
+    top: 7px; left: 0; height: 2px; width: 100%;
+    background: var(--line-color);
+    box-shadow: 0 0 8px rgba(240, 80, 80, 0.5);
+    transition: background 0.15s, height 0.15s, top 0.15s;
+  }
+  .cut-line-v:hover::after, .cut-line-v.dragging::after {
+    background: var(--line-hover); width: 3px; left: 6.5px;
+  }
+  .cut-line-h:hover::after, .cut-line-h.dragging::after {
+    background: var(--line-hover); height: 3px; top: 6.5px;
+  }
+  .cut-line .line-label {
+    position: absolute; background: rgba(0,0,0,0.85); color: #ff9060;
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    padding: 2px 6px; border-radius: 3px; pointer-events: none;
+    white-space: nowrap; opacity: 0; transition: opacity 0.15s;
+  }
+  .cut-line:hover .line-label, .cut-line.dragging .line-label { opacity: 1; }
+  .cut-line-v .line-label { top: 6px; left: 20px; }
+  .cut-line-h .line-label { left: 6px; top: 20px; }
+
+  .result-section { margin-top: 28px; }
+  .result-section h2 {
+    font-family: 'Space Mono', monospace; font-size: 16px; margin-bottom: 12px;
+  }
+  .result-grid-table { border-collapse: separate; border-spacing: 5px; }
+  .result-cell {
+    position: relative; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.2s;
+    vertical-align: top;
+  }
+  .result-cell:hover {
+    border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow);
+    transform: scale(1.03); z-index: 2;
+  }
+  .result-cell canvas { display: block; }
+  .result-cell .cell-label {
+    position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.75);
+    color: var(--text-dim); font-family: 'Space Mono', monospace;
+    font-size: 10px; padding: 1px 5px; border-radius: 3px; pointer-events: none;
+  }
+  .result-cell .cell-size {
+    position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.75);
+    color: var(--text-dim); font-family: 'Space Mono', monospace;
+    font-size: 9px; padding: 1px 5px; border-radius: 3px; pointer-events: none;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .result-cell:hover .cell-size { opacity: 1; }
+  .result-cell .cell-dl {
+    position: absolute; bottom: 4px; right: 4px; background: var(--accent);
+    color: #111; border: none; border-radius: 4px; font-size: 11px; font-weight: 700;
+    padding: 3px 8px; cursor: pointer; opacity: 0; transform: translateY(4px); transition: all 0.2s;
+  }
+  .result-cell:hover .cell-dl { opacity: 1; transform: translateY(0); }
+
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 10px; }
+  .progress-bar .fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.1s; }
+  .download-status { text-align: center; color: var(--text-dim); font-size: 13px; margin-top: 6px; min-height: 18px; }
+
+  .hint {
+    text-align: center; color: var(--text-dim); font-size: 12px;
+    margin-top: 4px; margin-bottom: 16px; opacity: 0.7;
+  }
+  .hint span { color: var(--line-color); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    .app { padding: 24px 12px 60px; }
+    header h1 { font-size: 22px; }
+    .controls { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>/// IMAGE GRID SPLITTER</h1>
+    <p>画像をグリッドに分割 — カットラインをドラッグで自由調整</p>
+  </header>
+  <div id="root"></div>
+</div>
+
+<script>
+let img = null;
+let cols = 4, rows = 4, prefix = 'tile';
+let cutsX = [], cutsY = [];
+let downloading = false, dlProgress = 0;
+const root = document.getElementById('root');
+
+function initCutsEqual() {
+  cutsX = []; cutsY = [];
+  for (let i = 1; i < cols; i++) cutsX.push(i / cols);
+  for (let i = 1; i < rows; i++) cutsY.push(i / rows);
+}
+
+function render() {
+  img ? renderEditor() : renderDropzone();
+}
+
+function renderDropzone() {
+  root.innerHTML = `
+    <div class="controls">
+      <div class="grid-config">
+        <label>Grid</label>
+        <input type="number" id="inp-cols" value="${cols}" min="1" max="20">
+        <span class="x-mark">×</span>
+        <input type="number" id="inp-rows" value="${rows}" min="1" max="20">
+      </div>
+    </div>
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-icon">🖼️</div>
+      <div class="dropzone-text">ここに画像をドロップ<br>または<strong>クリックして選択</strong><br><span style="font-size:12px;opacity:0.6">Ctrl+V で貼り付けも可</span></div>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>`;
+  const dz = document.getElementById('dropzone'), fi = document.getElementById('fileInput');
+  dz.onclick = () => fi.click();
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+  fi.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+  bindGridInputs();
+}
+
+function renderEditor() {
+  const maxW = Math.min(root.clientWidth || 900, 900);
+  const scale = Math.min(maxW / img.width, 560 / img.height, 1);
+  const dw = Math.round(img.width * scale), dh = Math.round(img.height * scale);
+
+  const xBounds = [0, ...cutsX.map(r => Math.round(r * img.width)), img.width];
+  const yBounds = [0, ...cutsY.map(r => Math.round(r * img.height)), img.height];
+  const totalTiles = (cutsX.length + 1) * (cutsY.length + 1);
+
+  root.innerHTML = `
+    <div class="controls">
+      <div class="grid-config">
+        <label>Grid</label>
+        <input type="number" id="inp-cols" value="${cols}" min="1" max="20">
+        <span class="x-mark">×</span>
+        <input type="number" id="inp-rows" value="${rows}" min="1" max="20">
+      </div>
+      <div class="filename-config">
+        <label>Prefix</label>
+        <input type="text" id="inp-prefix" value="${prefix}">
+      </div>
+      <button class="btn btn-sm btn-outline" id="btn-eq">等分に戻す</button>
+      <button class="btn btn-sm btn-reset" id="btn-reset">リセット</button>
+    </div>
+    <div class="editor-section">
+      <div class="editor-header">
+        <div>
+          <h2>カットライン編集</h2>
+          <span class="info" id="tile-info">${img.width}×${img.height}px → ${totalTiles}枚</span>
+        </div>
+        <button class="btn btn-accent" id="btn-dl" ${downloading?'disabled':''}>
+          ${downloading ? '⏳ ダウンロード中...' : '⬇ 一括ダウンロード'}
+        </button>
+      </div>
+      ${downloading ? `<div class="progress-bar"><div class="fill" style="width:${dlProgress}%"></div></div><div class="download-status">${Math.round(dlProgress)}%</div>` : ''}
+      <p class="hint"><span>赤いライン</span>をドラッグしてカット位置を調整</p>
+      <div class="canvas-wrapper" id="cw" style="width:${dw}px;height:${dh}px;">
+        <canvas id="pc" width="${dw}" height="${dh}"></canvas>
+        ${cutsX.map((r,i) => `<div class="cut-line cut-line-v" data-a="x" data-i="${i}" style="left:${Math.round(r*dw)}px;"><span class="line-label">x: ${Math.round(r*img.width)}px</span></div>`).join('')}
+        ${cutsY.map((r,i) => `<div class="cut-line cut-line-h" data-a="y" data-i="${i}" style="top:${Math.round(r*dh)}px;"><span class="line-label">y: ${Math.round(r*img.height)}px</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="result-section">
+      <h2 id="res-title">分割結果 (${totalTiles}枚)</h2>
+      <div id="res-grid"></div>
+    </div>`;
+
+  document.getElementById('pc').getContext('2d').drawImage(img, 0, 0, dw, dh);
+  drawResults();
+  bindGridInputs();
+  document.getElementById('inp-prefix').addEventListener('input', e => { prefix = e.target.value || 'tile'; });
+  document.getElementById('btn-eq').addEventListener('click', () => { initCutsEqual(); render(); });
+  document.getElementById('btn-reset').addEventListener('click', () => { img = null; prefix = 'tile'; render(); });
+  document.getElementById('btn-dl').addEventListener('click', downloadAll);
+  setupDrag(dw, dh);
+}
+
+function drawResults() {
+  const xB = [0, ...cutsX.map(r => Math.round(r * img.width)), img.width];
+  const yB = [0, ...cutsY.map(r => Math.round(r * img.height)), img.height];
+  const total = (xB.length-1) * (yB.length-1);
+  const pad = String(total).length;
+
+  // Use a table so each row aligns and cell widths reflect proportional sizes
+  const maxThumb = 150;
+  // Compute a global scale so widths are proportional
+  const colWidths = [];
+  for (let cx = 0; cx < xB.length - 1; cx++) colWidths.push(xB[cx+1] - xB[cx]);
+  const maxColW = Math.max(...colWidths);
+  const thumbScale = Math.min(maxThumb / maxColW, 1);
+
+  const container = document.getElementById('res-grid');
+  const table = document.createElement('table');
+  table.className = 'result-grid-table';
+  let idx = 0;
+  for (let ry = 0; ry < yB.length - 1; ry++) {
+    const tr = document.createElement('tr');
+    for (let rx = 0; rx < xB.length - 1; rx++) {
+      const sx = xB[rx], sy = yB[ry];
+      const sw = xB[rx+1]-sx, sh = yB[ry+1]-sy;
+      const tw = Math.max(Math.round(sw * thumbScale), 30);
+      const th = Math.max(Math.round(sh * thumbScale), 30);
+      const td = document.createElement('td');
+      td.className = 'result-cell';
+      const curIdx = idx;
+      td.innerHTML = `<canvas width="${tw}" height="${th}"></canvas>
+        <span class="cell-label">${idx+1}</span>
+        <span class="cell-size">${sw}×${sh}</span>
+        <button class="cell-dl">⬇</button>`;
+      td.querySelector('canvas').getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
+      td.addEventListener('click', () => dlTile(sx, sy, sw, sh, curIdx));
+      tr.appendChild(td);
+      idx++;
+    }
+    table.appendChild(tr);
+  }
+  container.innerHTML = '';
+  container.appendChild(table);
+
+  const info = document.getElementById('tile-info');
+  if (info) info.textContent = `${img.width}×${img.height}px → ${total}枚`;
+  const title = document.getElementById('res-title');
+  if (title) title.textContent = `分割結果 (${total}枚)`;
+}
+
+function setupDrag(dw, dh) {
+  const wrapper = document.getElementById('cw');
+  let active = null;
+
+  wrapper.querySelectorAll('.cut-line').forEach(line => {
+    line.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      active = { el: line, axis: line.dataset.a, idx: +line.dataset.i };
+      line.classList.add('dragging');
+      line.setPointerCapture(e.pointerId);
+    });
+    line.addEventListener('pointermove', e => {
+      if (!active || active.el !== line) return;
+      const rect = wrapper.getBoundingClientRect();
+      const { axis, idx } = active;
+      if (axis === 'x') {
+        let r = (e.clientX - rect.left) / dw;
+        const lo = idx > 0 ? cutsX[idx-1] + 0.005 : 0.005;
+        const hi = idx < cutsX.length-1 ? cutsX[idx+1] - 0.005 : 0.995;
+        r = Math.max(lo, Math.min(hi, r));
+        cutsX[idx] = r;
+        line.style.left = Math.round(r * dw) + 'px';
+        line.querySelector('.line-label').textContent = `x: ${Math.round(r * img.width)}px`;
+      } else {
+        let r = (e.clientY - rect.top) / dh;
+        const lo = idx > 0 ? cutsY[idx-1] + 0.005 : 0.005;
+        const hi = idx < cutsY.length-1 ? cutsY[idx+1] - 0.005 : 0.995;
+        r = Math.max(lo, Math.min(hi, r));
+        cutsY[idx] = r;
+        line.style.top = Math.round(r * dh) + 'px';
+        line.querySelector('.line-label').textContent = `y: ${Math.round(r * img.height)}px`;
+      }
+    });
+    line.addEventListener('pointerup', () => {
+      if (!active || active.el !== line) return;
+      line.classList.remove('dragging'); active = null;
+      drawResults();
+    });
+    line.addEventListener('pointercancel', () => {
+      line.classList.remove('dragging'); active = null;
+    });
+  });
+}
+
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const i = new Image();
+  i.onload = () => { img = i; prefix = file.name.replace(/\.[^.]+$/, ''); initCutsEqual(); render(); };
+  i.src = URL.createObjectURL(file);
+}
+
+function bindGridInputs() {
+  const ic = document.getElementById('inp-cols'), ir = document.getElementById('inp-rows');
+  if (ic) ic.addEventListener('change', e => { cols = Math.max(1, Math.min(20, +e.target.value||4)); initCutsEqual(); if(img) render(); });
+  if (ir) ir.addEventListener('change', e => { rows = Math.max(1, Math.min(20, +e.target.value||4)); initCutsEqual(); if(img) render(); });
+}
+
+function tileBlob(sx, sy, sw, sh) {
+  return new Promise(res => {
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    c.toBlob(res, 'image/png');
+  });
+}
+
+function dlTile(sx, sy, sw, sh, idx) {
+  tileBlob(sx, sy, sw, sh).then(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    const xB = [0, ...cutsX.map(r=>Math.round(r*img.width)), img.width];
+    const yB = [0, ...cutsY.map(r=>Math.round(r*img.height)), img.height];
+    const tot = (xB.length-1)*(yB.length-1);
+    a.download = `${prefix}_${String(idx+1).padStart(String(tot).length,'0')}.png`;
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+}
+
+async function downloadAll() {
+  downloading = true; dlProgress = 0; render();
+  const xB = [0, ...cutsX.map(r=>Math.round(r*img.width)), img.width];
+  const yB = [0, ...cutsY.map(r=>Math.round(r*img.height)), img.height];
+  const tiles = [];
+  for (let ry = 0; ry < yB.length-1; ry++)
+    for (let rx = 0; rx < xB.length-1; rx++)
+      tiles.push({ sx: xB[rx], sy: yB[ry], sw: xB[rx+1]-xB[rx], sh: yB[ry+1]-yB[ry] });
+  const pad = String(tiles.length).length;
+  for (let i = 0; i < tiles.length; i++) {
+    const t = tiles[i];
+    const b = await tileBlob(t.sx, t.sy, t.sw, t.sh);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    a.download = `${prefix}_${String(i+1).padStart(pad,'0')}.png`;
+    a.click(); URL.revokeObjectURL(a.href);
+    dlProgress = ((i+1)/tiles.length)*100;
+    const f = document.querySelector('.progress-bar .fill');
+    const s = document.querySelector('.download-status');
+    if(f) f.style.width = dlProgress+'%';
+    if(s) s.textContent = Math.round(dlProgress)+'%';
+    await new Promise(r => setTimeout(r, 120));
+  }
+  downloading = false; render();
+}
+
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items; if(!items) return;
+  for (const item of items) if(item.type.startsWith('image/')) { handleFile(item.getAsFile()); break; }
+});
+
+render();
+</script>
+</body>
+</html>
