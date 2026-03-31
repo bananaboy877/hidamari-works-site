@@ -3344,21 +3344,36 @@ registerGame('speed_pose', {
     // MediaPipeとカメラの非同期セットアップ
     (async function() {
       try {
-        // MediaPipeスクリプトを動的ロード
+        // MediaPipeスクリプトを動的ロード（複数CDNを試行）
         if (!window.FilesetResolver) {
-          await new Promise(function(resolve, reject) {
-            var s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js';
-            s.onload = resolve;
-            s.onerror = reject;
-            document.head.appendChild(s);
-          });
+          var cdnUrls = [
+            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/vision_bundle.js',
+            'https://unpkg.com/@mediapipe/tasks-vision@0.10.18/vision_bundle.js'
+          ];
+          var loaded = false;
+          for (var ci = 0; ci < cdnUrls.length; ci++) {
+            try {
+              await new Promise(function(resolve, reject) {
+                var s = document.createElement('script');
+                s.src = cdnUrls[ci];
+                s.crossOrigin = 'anonymous';
+                s.onload = resolve;
+                s.onerror = function() { reject(new Error('Failed: ' + cdnUrls[ci])); };
+                document.head.appendChild(s);
+              });
+              loaded = true;
+              break;
+            } catch(loadErr) {
+              console.warn(loadErr.message);
+            }
+          }
+          if (!loaded) throw new Error('MediaPipeの読み込みに失敗しました。広告ブロッカーを無効にしてください。');
         }
         if (self._destroyed) return;
         camStatus.textContent = 'モデル読み込み中...';
 
         var vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm'
         );
         if (self._destroyed) return;
 
