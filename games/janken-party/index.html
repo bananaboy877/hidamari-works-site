@@ -599,20 +599,27 @@ function playAudio(src) {
   return new Promise((resolve) => {
     try {
       const audio = new Audio(src);
+      let sourceNode = null, gainNode = null;
       // wav(TTS音声)は音量1.3倍
       if (src.endsWith('.wav')) {
         const ctx = getAudioCtx();
         if (ctx) {
           if (ctx.state === 'suspended') ctx.resume();
-          const sourceNode = ctx.createMediaElementSource(audio);
-          const gain = ctx.createGain();
-          gain.gain.value = 1.3;
-          sourceNode.connect(gain);
-          gain.connect(ctx.destination);
+          sourceNode = ctx.createMediaElementSource(audio);
+          gainNode = ctx.createGain();
+          gainNode.gain.value = 1.3;
+          sourceNode.connect(gainNode);
+          gainNode.connect(ctx.destination);
         }
       }
       activeAudios.add(audio);
-      const cleanup = () => { activeAudios.delete(audio); resolve(); };
+      const cleanup = () => {
+        activeAudios.delete(audio);
+        // AudioContextノードを解放
+        if (sourceNode) { try { sourceNode.disconnect(); } catch(e){} }
+        if (gainNode) { try { gainNode.disconnect(); } catch(e){} }
+        resolve();
+      };
       audio.addEventListener('error', cleanup);
       audio.addEventListener('ended', cleanup);
       audio.play().catch(cleanup);
@@ -624,7 +631,12 @@ function playAudio(src) {
 
 function stopAllAudio() {
   activeAudios.forEach(audio => {
-    try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      // endedイベントを発火させてcleanup(disconnect)を走らせる
+      audio.dispatchEvent(new Event('ended'));
+    } catch (e) {}
   });
   activeAudios.clear();
 }
