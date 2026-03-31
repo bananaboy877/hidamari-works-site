@@ -2641,6 +2641,12 @@ registerGame('speed', {
     scoreDiv.textContent = '0点';
     container.appendChild(scoreDiv);
 
+    // えつこ画像表示エリア（正解時に左側に表示）
+    const ETSUKO_COUNT = 30;
+    const etsukoImg = document.createElement('img');
+    etsukoImg.style.cssText = 'position:absolute;bottom:20px;left:40px;max-height:500px;max-width:400px;object-fit:contain;z-index:15;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+    container.appendChild(etsukoImg);
+
     // メイン表示エリア
     const displayMode = self.displayMode || 'normal';
     const mainDisplay = document.createElement('div');
@@ -2706,6 +2712,7 @@ registerGame('speed', {
       }
 
       phase = 'waiting';
+      etsukoImg.style.opacity = '0';
       if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
       if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
       qNumDiv.textContent = '第' + (questionIdx + 1) + '問 / ' + TOTAL_QUESTIONS;
@@ -2918,6 +2925,11 @@ registerGame('speed', {
       }
 
       mainDisplay.style.transform = 'scale(1)';
+
+      // えつこ画像をランダム表示
+      const etsukoIdx = Math.floor(Math.random() * ETSUKO_COUNT) + 1;
+      etsukoImg.src = 'images/etsuko/etsuko_' + String(etsukoIdx).padStart(2, '0') + '.png';
+      etsukoImg.style.opacity = '1';
     }
 
     function handleFoul() {
