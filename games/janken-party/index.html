@@ -2643,9 +2643,23 @@ registerGame('speed', {
 
     // えつこ画像表示エリア（正解時に左側に表示）
     const ETSUKO_COUNT = 30;
+    const etsukoWrap = document.createElement('div');
+    etsukoWrap.style.cssText = 'position:absolute;bottom:20px;left:40px;z-index:15;opacity:0;transition:opacity 0.3s;pointer-events:none;display:flex;flex-direction:column;align-items:center;';
+    // ラベル「えつこ」
+    const etsukoLabel = document.createElement('div');
+    etsukoLabel.style.cssText = 'font-size:28px;font-weight:900;color:#e65100;margin-bottom:2px;';
+    etsukoLabel.textContent = 'えつこ';
+    etsukoWrap.appendChild(etsukoLabel);
+    // 下向き矢印（矩形＋三角）
+    const etsukoArrow = document.createElement('div');
+    etsukoArrow.style.cssText = 'display:flex;flex-direction:column;align-items:center;margin-bottom:4px;';
+    etsukoArrow.innerHTML = '<div style="width:8px;height:20px;background:#e65100;border-radius:2px;"></div><div style="width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #e65100;"></div>';
+    etsukoWrap.appendChild(etsukoArrow);
+    // 画像
     const etsukoImg = document.createElement('img');
-    etsukoImg.style.cssText = 'position:absolute;bottom:20px;left:40px;max-height:500px;max-width:400px;object-fit:contain;z-index:15;opacity:0;transition:opacity 0.3s;pointer-events:none;';
-    container.appendChild(etsukoImg);
+    etsukoImg.style.cssText = 'max-height:460px;max-width:400px;object-fit:contain;';
+    etsukoWrap.appendChild(etsukoImg);
+    container.appendChild(etsukoWrap);
 
     // メイン表示エリア
     const displayMode = self.displayMode || 'normal';
@@ -2712,7 +2726,7 @@ registerGame('speed', {
       }
 
       phase = 'waiting';
-      etsukoImg.style.opacity = '0';
+      etsukoWrap.style.opacity = '0';
       if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
       if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
       qNumDiv.textContent = '第' + (questionIdx + 1) + '問 / ' + TOTAL_QUESTIONS;
@@ -2929,7 +2943,7 @@ registerGame('speed', {
       // えつこ画像をランダム表示
       const etsukoIdx = Math.floor(Math.random() * ETSUKO_COUNT) + 1;
       etsukoImg.src = 'images/etsuko/etsuko_' + String(etsukoIdx).padStart(2, '0') + '.png';
-      etsukoImg.style.opacity = '1';
+      etsukoWrap.style.opacity = '1';
     }
 
     function handleFoul() {
