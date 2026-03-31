@@ -2739,7 +2739,7 @@ registerGame('speed', {
         <div>${handImg(handTypes[handIdx], 360)}</div>
         <div style="font-size:56px;font-weight:900;color:${hand.color};margin-top:10px;">${hand.name}</div>
       `;
-      helpDiv.textContent = hand.name + 'を押してね！';
+      helpDiv.textContent = hand.name + 'のボタンを押してね！';
       helpDiv.style.color = '#e53935';
       reactionDiv.textContent = '';
 
@@ -2939,7 +2939,7 @@ registerGame('speed', {
           foulPenalty += 500;
           playSE('se_wrong.mp3');
           const correctHand = HANDS[handIdx];
-          helpDiv.textContent = correctHand.name + 'を押してね！';
+          helpDiv.textContent = correctHand.name + 'のボタンを押してね！';
           helpDiv.style.color = '#e53935';
           playAudio(SPEED_HAND_VOICES[handIdx]);
         }
