@@ -4882,6 +4882,8 @@ registerGame('sequence100', {
     var SEQ_NAMES = { a: 'グー', s: 'チョキ', d: 'パー' };
     var SEQ_HAND = { a: 'rock', s: 'scissors', d: 'paper' };
     var SEQ_COLORS = { a: '#e53935', s: '#fbc02d', d: '#1e88e5' };
+    var SEQ_VOICE = { a: 'audio/speed_rock.wav', s: 'audio/speed_scissors.wav', d: 'audio/speed_paper.wav' };
+    var lastVoiceKey = null; // 前回読み上げた手（同じ手の連続読み上げを防ぐ）
 
     var count = 0;
     var seqIndex = 0;
@@ -4931,6 +4933,12 @@ registerGame('sequence100', {
       nextEl.innerHTML = handImg(SEQ_HAND[key], 140);
       nextLabelEl.textContent = SEQ_NAMES[key];
       nextLabelEl.style.color = SEQ_COLORS[key];
+      // 手が変わったら読み上げ（前の音声を止めてから再生）
+      if (key !== lastVoiceKey && gameStarted && !gameEnded) {
+        stopAllAudio();
+        playAudio(SEQ_VOICE[key]);
+        lastVoiceKey = key;
+      }
     }
 
     function updateDisplay() {
