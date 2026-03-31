@@ -3246,7 +3246,7 @@ registerGame('speed_pose', {
     camStatus.textContent = 'カメラ準備中...';
     camWrap.appendChild(camStatus);
     const camBox = document.createElement('div');
-    camBox.style.cssText = 'position:relative;width:400px;height:300px;border-radius:16px;overflow:hidden;border:4px solid #1e88e5;background:#000;';
+    camBox.style.cssText = 'position:relative;width:560px;height:420px;border-radius:16px;overflow:hidden;border:4px solid #1e88e5;background:#000;';
     const video = document.createElement('video');
     video.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
     video.autoplay = true;
@@ -3254,8 +3254,8 @@ registerGame('speed_pose', {
     video.muted = true;
     camBox.appendChild(video);
     const camCanvas = document.createElement('canvas');
-    camCanvas.width = 400;
-    camCanvas.height = 300;
+    camCanvas.width = 560;
+    camCanvas.height = 420;
     camCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;transform:scaleX(-1);';
     camBox.appendChild(camCanvas);
     camWrap.appendChild(camBox);
@@ -3268,18 +3268,37 @@ registerGame('speed_pose', {
     const camCtx = camCanvas.getContext('2d');
 
     // ジェスチャー検出ロジック
+    function dist(a, b) {
+      var dx = a.x - b.x, dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
     function detectGesture(landmarks) {
       // 指が伸びているか判定（TIPがPIPより上=y値が小さい）
       var indexUp = landmarks[8].y < landmarks[6].y;
       var middleUp = landmarks[12].y < landmarks[10].y;
       var ringUp = landmarks[16].y < landmarks[14].y;
       var pinkyUp = landmarks[20].y < landmarks[18].y;
+
+      // 拳を正面に向けた場合の追加判定：
+      // 全指先(TIP)が手首に近く密集している → グー
+      var wrist = landmarks[0];
+      var tipDists = [
+        dist(landmarks[8], wrist),
+        dist(landmarks[12], wrist),
+        dist(landmarks[16], wrist),
+        dist(landmarks[20], wrist)
+      ];
+      var avgTipDist = (tipDists[0] + tipDists[1] + tipDists[2] + tipDists[3]) / 4;
+      var fingerSpread = Math.max.apply(null, tipDists) - Math.min.apply(null, tipDists);
+      // 指先が手首に近く密集 = 拳を向けたグー
+      var fistFront = avgTipDist < 0.2 && fingerSpread < 0.08;
+
       // パー：4本伸びている
       if (indexUp && middleUp && ringUp && pinkyUp) return 'paper';
       // チョキ：人差し指と中指だけ伸びている
       if (indexUp && middleUp && !ringUp && !pinkyUp) return 'scissors';
-      // グー：全部閉じている
-      if (!indexUp && !middleUp && !ringUp && !pinkyUp) return 'rock';
+      // グー：全部閉じている、または拳を正面に向けている
+      if ((!indexUp && !middleUp && !ringUp && !pinkyUp) || fistFront) return 'rock';
       return null;
     }
 
@@ -3312,8 +3331,9 @@ registerGame('speed_pose', {
     }
 
     // 手のランドマーク描画
+    var CAM_W = 560, CAM_H = 420;
     function drawLandmarks(landmarks) {
-      camCtx.clearRect(0, 0, 400, 300);
+      camCtx.clearRect(0, 0, CAM_W, CAM_H);
       if (!landmarks) return;
       // 接続線
       var connections = [
@@ -3328,15 +3348,15 @@ registerGame('speed_pose', {
       camCtx.lineWidth = 2;
       connections.forEach(function(c) {
         camCtx.beginPath();
-        camCtx.moveTo(landmarks[c[0]].x * 400, landmarks[c[0]].y * 300);
-        camCtx.lineTo(landmarks[c[1]].x * 400, landmarks[c[1]].y * 300);
+        camCtx.moveTo(landmarks[c[0]].x * CAM_W, landmarks[c[0]].y * CAM_H);
+        camCtx.lineTo(landmarks[c[1]].x * CAM_W, landmarks[c[1]].y * CAM_H);
         camCtx.stroke();
       });
       // 点
       camCtx.fillStyle = '#ff5252';
       landmarks.forEach(function(lm) {
         camCtx.beginPath();
-        camCtx.arc(lm.x * 400, lm.y * 300, 4, 0, Math.PI * 2);
+        camCtx.arc(lm.x * CAM_W, lm.y * CAM_H, 5, 0, Math.PI * 2);
         camCtx.fill();
       });
     }
