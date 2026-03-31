@@ -2778,17 +2778,10 @@ registerGame('speed', {
       const sec = (reactionMs / 1000).toFixed(3);
       reactionDiv.textContent = sec + '秒';
 
-      // タイム読み上げTTS（0.1秒単位、最大10.0秒）
-      const roundedSec = Math.min(10.0, Math.round(reactionMs / 100) / 10);
-      if (roundedSec > 0) {
-        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
-        playAudio(timeFile);
-      }
-
       const totalScore = scores.reduce((a, b) => a + b, 0);
       scoreDiv.textContent = totalScore + '点';
 
-      // すべて肯定的なリアクション（テキスト＋TTS音声）
+      // すべて肯定的なリアクション
       const praises = [
         { text: 'すごい！', voice: 'audio/praise_sugoi.wav' },
         { text: 'いいね！', voice: 'audio/praise_iine.wav' },
@@ -2801,7 +2794,17 @@ registerGame('speed', {
       ];
       const praiseObj = praises[Math.floor(Math.random() * praises.length)];
       const praise = praiseObj.text;
-      playAudio(praiseObj.voice);
+
+      // タイム読み上げTTS → 完了後に褒めTTS（被らないように順番に再生）
+      const roundedSec = Math.min(10.0, Math.round(reactionMs / 100) / 10);
+      if (roundedSec > 0) {
+        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
+        playAudio(timeFile).then(() => {
+          if (!self._destroyed) playAudio(praiseObj.voice);
+        });
+      } else {
+        playAudio(praiseObj.voice);
+      }
 
       if (reactionMs <= 1000) {
         helpDiv.textContent = '超はやい！' + praise;
