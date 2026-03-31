@@ -2570,7 +2570,12 @@ registerGame('speed', {
     const WAIT_MIN = 1500;
     const WAIT_MAX = 3000;
     const PENALTY_MS = 1000;
-    const SPEED_HAND_VOICES = [
+    const isPose = !!self.poseMode;
+    const SPEED_HAND_VOICES = isPose ? [
+      'audio/pose_rock.wav',
+      'audio/pose_scissors.wav',
+      'audio/pose_paper.wav',
+    ] : [
       'audio/speed_rock.wav',
       'audio/speed_scissors.wav',
       'audio/speed_paper.wav',
@@ -2773,7 +2778,7 @@ registerGame('speed', {
         <div>${handImg(handTypes[handIdx], 360)}</div>
         <div style="font-size:56px;font-weight:900;color:${hand.color};margin-top:10px;">${hand.name}</div>
       `;
-      helpDiv.textContent = hand.name + 'のボタンを押してね！';
+      helpDiv.textContent = isPose ? '手を' + hand.name + 'にして、カメラに見せてね！' : hand.name + 'のボタンを押してね！';
       helpDiv.style.color = '#e53935';
       reactionDiv.textContent = '';
 
@@ -3000,7 +3005,7 @@ registerGame('speed', {
           foulPenalty += 500;
           playSE('se_wrong.mp3');
           const correctHand = HANDS[handIdx];
-          helpDiv.textContent = correctHand.name + 'のボタンを押してね！';
+          helpDiv.textContent = isPose ? '手を' + correctHand.name + 'にして、カメラに見せてね！' : correctHand.name + 'のボタンを押してね！';
           helpDiv.style.color = '#e53935';
           playAudio(SPEED_HAND_VOICES[handIdx]);
         }
@@ -3219,6 +3224,7 @@ registerGame('speed_pose', {
   description: 'カメラにグー・チョキ・パーを見せて答えよう！',
   introVoice: 'audio/intro_speed.wav',
   medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
+  poseMode: true,
   totalQuestions: 100,
   _timers: [],
   _destroyed: false,
