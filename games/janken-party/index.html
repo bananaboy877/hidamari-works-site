@@ -2754,9 +2754,12 @@ registerGame('speed', {
       helpDiv.style.color = '#999';
       reactionDiv.textContent = '';
 
-      // 「まって！」TTS（少し遅延させてstopAllAudioの後に再生されるようにする）
+      // 「まって！」TTS
       const ttsT = setTimeout(() => {
-        if (!self._destroyed && phase === 'waiting') playAudio('audio/speed_wait.wav');
+        if (!self._destroyed && phase === 'waiting') {
+          stopAllAudio();
+          playAudio('audio/speed_wait.wav');
+        }
       }, 300);
       self._timers.push(ttsT);
 
@@ -2911,28 +2914,30 @@ registerGame('speed', {
       }
 
       // タイム読み上げTTS → 褒めTTS → 完了後に次の問題へ進む
+      // stopAllAudioでPromiseが即resolveしても重複しないよう、answeredPhaseフラグで管理
+      var answeredPhase = true;
       const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
       function goNext() {
-        if (!self._destroyed && !gameEnded) {
+        if (!self._destroyed && !gameEnded && answeredPhase) {
+          answeredPhase = false;
           questionIdx++;
           startQuestion();
         }
       }
-      if (roundedSec > 0) {
-        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
-        playAudio(timeFile).then(() => {
-          if (self._destroyed) return;
-          // 褒めTTS再生 + 最低2秒待機の両方を満たしてから次へ
-          Promise.all([
-            playAudio(praiseObj.voice),
-            new Promise(r => setTimeout(r, 2000))
-          ]).then(goNext);
-        });
-      } else {
+      function playPraiseThenNext() {
+        if (self._destroyed || !answeredPhase) return;
+        stopAllAudio();
         Promise.all([
           playAudio(praiseObj.voice),
           new Promise(r => setTimeout(r, 2000))
         ]).then(goNext);
+      }
+      if (roundedSec > 0) {
+        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
+        stopAllAudio();
+        playAudio(timeFile).then(playPraiseThenNext);
+      } else {
+        playPraiseThenNext();
       }
 
       if (reactionMs <= 1000) {
