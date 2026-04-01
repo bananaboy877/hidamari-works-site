@@ -2734,6 +2734,7 @@ registerGame('speed', {
       }
 
       phase = 'waiting';
+      stopAllAudio();
       etsukoWrap.style.opacity = '0';
       if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
       if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
@@ -2836,6 +2837,7 @@ registerGame('speed', {
         self._moveAnim = requestAnimationFrame(animR);
       }
 
+      stopAllAudio();
       playSE('se_appear.mp3');
       // 手に対応するTTSを読み上げ
       playAudio(SPEED_HAND_VOICES[handIdx]);
@@ -3307,12 +3309,27 @@ registerGame('speed_pose', {
       return Math.sqrt(dx * dx + dy * dy);
     }
     function detectGesture(landmarks) {
+      // 指の伸び判定：TIPがPIPより上（通常）
       var indexUp = landmarks[8].y < landmarks[6].y;
       var middleUp = landmarks[12].y < landmarks[10].y;
       var ringUp = landmarks[16].y < landmarks[14].y;
       var pinkyUp = landmarks[20].y < landmarks[18].y;
-      // 拳を正面に向けた場合の追加判定
+
+      // 手の甲側からの判定：TIPとMCPの距離でも伸び判定
+      // 指が伸びていればTIP-MCP距離が大きく、曲がっていれば小さい
       var wrist = landmarks[0];
+      var indexExt = dist(landmarks[8], landmarks[5]) > dist(landmarks[6], landmarks[5]) * 1.5;
+      var middleExt = dist(landmarks[12], landmarks[9]) > dist(landmarks[10], landmarks[9]) * 1.5;
+      var ringExt = dist(landmarks[16], landmarks[13]) > dist(landmarks[14], landmarks[13]) * 1.5;
+      var pinkyExt = dist(landmarks[20], landmarks[17]) > dist(landmarks[18], landmarks[17]) * 1.5;
+
+      // 統合判定：どちらかの方式で伸びていればOK
+      var idxOpen = indexUp || indexExt;
+      var midOpen = middleUp || middleExt;
+      var rngOpen = ringUp || ringExt;
+      var pnkOpen = pinkyUp || pinkyExt;
+
+      // 拳を正面に向けた場合の追加判定
       var tipDists = [
         dist(landmarks[8], wrist), dist(landmarks[12], wrist),
         dist(landmarks[16], wrist), dist(landmarks[20], wrist)
@@ -3320,9 +3337,10 @@ registerGame('speed_pose', {
       var avgTipDist = (tipDists[0] + tipDists[1] + tipDists[2] + tipDists[3]) / 4;
       var fingerSpread = Math.max.apply(null, tipDists) - Math.min.apply(null, tipDists);
       var fistFront = avgTipDist < 0.2 && fingerSpread < 0.08;
-      if (indexUp && middleUp && ringUp && pinkyUp) return 'paper';
-      if (indexUp && middleUp && !ringUp && !pinkyUp) return 'scissors';
-      if ((!indexUp && !middleUp && !ringUp && !pinkyUp) || fistFront) return 'rock';
+
+      if (idxOpen && midOpen && rngOpen && pnkOpen) return 'paper';
+      if (idxOpen && midOpen && !rngOpen && !pnkOpen) return 'scissors';
+      if ((!idxOpen && !midOpen && !rngOpen && !pnkOpen) || fistFront) return 'rock';
       return null;
     }
 
@@ -3530,10 +3548,10 @@ registerGame('speed_pose_face', {
   animal: 'cheetah',
   description: 'グー・チョキ・パー＋口を開ける！カメラで答えよう！',
   introVoice: 'audio/intro_speed.wav',
-  medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
+  medalThresholds: { gold: 60000, silver: 40000, bronze: 0 },
   poseMode: true,
   faceMode: true,
-  totalQuestions: 100,
+  totalQuestions: 1000,
   _timers: [],
   _destroyed: false,
   _moveAnim: null,
