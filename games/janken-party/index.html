@@ -3003,7 +3003,7 @@ registerGame('speed', {
         } else {
           // 間違ったボタン → ペナルティ加算、正しいボタンを押すまで待つ
           foulPenalty += 500;
-          playSE('se_wrong.mp3');
+          if (!isPose) playSE('se_wrong.mp3');
           const correctHand = HANDS[handIdx];
           helpDiv.textContent = isPose ? '手を' + correctHand.name + 'にして、カメラに見せてね！' : correctHand.name + 'のボタンを押してね！';
           helpDiv.style.color = '#e53935';
