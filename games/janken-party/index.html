@@ -2566,6 +2566,9 @@ registerGame('speed', {
       { key: 's', label: '✌️', name: 'チョキ', color: '#fbc02d', bg: 'rgba(251,192,45,0.12)' },
       { key: 'd', label: '✋', name: 'パー', color: '#1e88e5', bg: 'rgba(30,136,229,0.12)' },
     ];
+    if (self.faceMode) {
+      HANDS.push({ key: 'f', label: '👄', name: 'あーん', color: '#e91e63', bg: 'rgba(233,30,99,0.12)', img: 'images/mouth_open.png' });
+    }
     const TOTAL_QUESTIONS = self.totalQuestions || 100;
     const WAIT_MIN = 1500;
     const WAIT_MAX = 3000;
@@ -2575,7 +2578,7 @@ registerGame('speed', {
       'audio/pose_rock.wav',
       'audio/pose_scissors.wav',
       'audio/pose_paper.wav',
-    ] : [
+    ].concat(self.faceMode ? ['audio/pose_mouth.wav'] : []) : [
       'audio/speed_rock.wav',
       'audio/speed_scissors.wav',
       'audio/speed_paper.wav',
@@ -2609,7 +2612,7 @@ registerGame('speed', {
       for (let i = 0; i < TOTAL_QUESTIONS; i++) {
         let hand;
         do {
-          hand = Math.floor(Math.random() * 3);
+          hand = Math.floor(Math.random() * HANDS.length);
         } while (
           qs.length >= 2 &&
           qs[qs.length - 1] === hand &&
@@ -2774,11 +2777,20 @@ registerGame('speed', {
       mainDisplay.style.borderColor = hand.color;
       mainDisplay.style.transform = 'scale(1.08)';
       const handTypes = ['rock','scissors','paper'];
+      var displayImg = hand.img
+        ? '<img src="' + hand.img + '" style="height:300px;">'
+        : handImg(handTypes[handIdx], 360);
       mainDisplay.innerHTML = `
-        <div>${handImg(handTypes[handIdx], 360)}</div>
+        <div>${displayImg}</div>
         <div style="font-size:56px;font-weight:900;color:${hand.color};margin-top:10px;">${hand.name}</div>
       `;
-      helpDiv.textContent = isPose ? '手を' + hand.name + 'にして、カメラに見せてね！' : hand.name + 'のボタンを押してね！';
+      if (isPose || self.faceMode) {
+        helpDiv.textContent = hand.key === 'f'
+          ? '口を大きく開けて、カメラに見せてね！'
+          : '手を' + hand.name + 'にして、カメラに見せてね！';
+      } else {
+        helpDiv.textContent = hand.name + 'のボタンを押してね！';
+      }
       helpDiv.style.color = '#e53935';
       reactionDiv.textContent = '';
 
@@ -3002,9 +3014,15 @@ registerGame('speed', {
           handleAnswer(reactionMs);
         } else {
           // 間違ったボタン → ペナルティ加算、正しいボタンを押すまで待つ
-          if (!isPose) { foulPenalty += 500; playSE('se_wrong.mp3'); }
+          if (!isPose && !self.faceMode) { foulPenalty += 500; playSE('se_wrong.mp3'); }
           const correctHand = HANDS[handIdx];
-          helpDiv.textContent = isPose ? '手を' + correctHand.name + 'にして、カメラに見せてね！' : correctHand.name + 'のボタンを押してね！';
+          if (isPose || self.faceMode) {
+            helpDiv.textContent = correctHand.key === 'f'
+              ? '口を大きく開けて、カメラに見せてね！'
+              : '手を' + correctHand.name + 'にして、カメラに見せてね！';
+          } else {
+            helpDiv.textContent = correctHand.name + 'のボタンを押してね！';
+          }
           helpDiv.style.color = '#e53935';
           playAudio(SPEED_HAND_VOICES[handIdx]);
         }
@@ -3326,13 +3344,13 @@ registerGame('speed_pose', {
         stableGesture = merged;
         stableCount = 1;
       }
-      var labels = { rock: '✊ グー', scissors: '✌️ チョキ', paper: '✋ パー' };
+      var labels = { rock: '✊ グー', scissors: '✌️ チョキ', paper: '✋ パー', mouth: '👄 あーん' };
       gestureLabel.textContent = merged ? (labels[merged] || '') : '';
       if (merged && stableCount >= STABLE_THRESHOLD) {
         var now = performance.now();
         if (now - lastTriggerTime > TRIGGER_COOLDOWN) {
           lastTriggerTime = now;
-          var keyMap = { rock: 'a', scissors: 's', paper: 'd' };
+          var keyMap = { rock: 'a', scissors: 's', paper: 'd', mouth: 'f' };
           if (gestureKey) gestureKey(keyMap[merged]);
         }
       }
@@ -3382,6 +3400,22 @@ registerGame('speed_pose', {
         tempStream.getTracks().forEach(function(t) { t.stop(); });
         var devices = await navigator.mediaDevices.enumerateDevices();
         var videoCams = devices.filter(function(d) { return d.kind === 'videoinput'; });
+
+        // faceMode: FaceLandmarkerも作成
+        var faceLandmarker = null;
+        if (self.faceMode) {
+          camStatus.textContent = '顔認識モデル読み込み中...';
+          faceLandmarker = await mp.FaceLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task',
+              delegate: 'GPU'
+            },
+            runningMode: 'VIDEO',
+            numFaces: 1
+          });
+          if (self._destroyed) { faceLandmarker.close(); return; }
+          self._faceLandmarker = faceLandmarker;
+        }
 
         var numCams = Math.min(videoCams.length, 2);
         var camBoxes = [];
@@ -3440,15 +3474,25 @@ registerGame('speed_pose', {
               lastTime = now;
               try {
                 var results = handLandmarkers[idx].detectForVideo(camBoxes[idx].video, now);
+                var handGesture = null;
                 if (results.landmarks && results.landmarks.length > 0) {
                   var lm = results.landmarks[0];
                   drawLandmarks(camBoxes[idx].ctx, lm);
-                  var gesture = detectGesture(lm);
-                  updateGesture(idx, gesture);
+                  handGesture = detectGesture(lm);
                 } else {
                   drawLandmarks(camBoxes[idx].ctx, null);
-                  updateGesture(idx, null);
                 }
+                // 口検出（faceModeのみ、カメラ1台目のみ）
+                var faceGesture = null;
+                if (faceLandmarker && idx === 0) {
+                  var faceResults = faceLandmarker.detectForVideo(camBoxes[0].video, now);
+                  if (faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
+                    var fl = faceResults.faceLandmarks[0];
+                    var mouthDist = Math.abs(fl[13].y - fl[14].y);
+                    if (mouthDist > 0.04) faceGesture = 'mouth';
+                  }
+                }
+                updateGesture(idx, faceGesture || handGesture);
               } catch(e) {}
             }
             self._detectLoops[idx] = requestAnimationFrame(detect);
@@ -3470,6 +3514,7 @@ registerGame('speed_pose', {
     // カメラ・検出ループ停止
     if (this._detectLoops) { this._detectLoops.forEach(function(l) { if (l) cancelAnimationFrame(l); }); this._detectLoops = []; }
     if (this._handLandmarkers) { this._handLandmarkers.forEach(function(h) { if (h) h.close(); }); this._handLandmarkers = []; }
+    if (this._faceLandmarker) { this._faceLandmarker.close(); this._faceLandmarker = null; }
     if (this._cameraStreams) { this._cameraStreams.forEach(function(s) { if (s) s.getTracks().forEach(function(t) { t.stop(); }); }); this._cameraStreams = []; }
     // 後方互換
     if (this._detectLoop) { cancelAnimationFrame(this._detectLoop); this._detectLoop = null; }
@@ -3477,6 +3522,27 @@ registerGame('speed_pose', {
     if (this._cameraStream) { this._cameraStream.getTracks().forEach(function(t) { t.stop(); }); this._cameraStream = null; }
     GameRegistry['speed'].cleanup.call(this);
   }
+});
+
+// === はやおしバトル（ポーズ＋フェイス）：手＋口を開ける検出 ===
+registerGame('speed_pose_face', {
+  name: 'はやおし（ポーズ＋フェイス）',
+  animal: 'cheetah',
+  description: 'グー・チョキ・パー＋口を開ける！カメラで答えよう！',
+  introVoice: 'audio/intro_speed.wav',
+  medalThresholds: { gold: 6000, silver: 4000, bronze: 0 },
+  poseMode: true,
+  faceMode: true,
+  totalQuestions: 100,
+  _timers: [],
+  _destroyed: false,
+  _moveAnim: null,
+  _cameraStreams: [],
+  _detectLoops: [],
+  _handLandmarkers: [],
+  _faceLandmarker: null,
+  init: GameRegistry['speed_pose'].init,
+  cleanup: GameRegistry['speed_pose'].cleanup,
 });
 
 registerGame('mole', {
