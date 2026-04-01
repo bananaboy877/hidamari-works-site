@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PUSH QUEST - 腕立てRPG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0f;color:#fff;font-family:'Rajdhani',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+
+#app{position:relative;width:100vw;height:100vh;}
+
+video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.2;z-index:0;}
+#poseCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;}
+#gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;}
+
+/* HUD */
+.hud{position:absolute;z-index:10;pointer-events:none;}
+
+#floorDisplay{top:20px;left:50%;transform:translateX(-50%);font-family:'Orbitron',monospace;text-align:center;}
+#floorDisplay .label{font-size:14px;color:#ff08;letter-spacing:3px;}
+#floorDisplay .value{font-size:36px;color:#ff0;text-shadow:0 0 15px #ff0;}
+
+#repDisplay{top:20px;left:30px;font-family:'Orbitron',monospace;}
+#repDisplay .label{font-size:12px;color:#0ff8;letter-spacing:2px;}
+#repDisplay .value{font-size:32px;color:#0ff;text-shadow:0 0 15px #0ff;}
+
+#comboDisplay{top:20px;right:30px;text-align:right;font-family:'Orbitron',monospace;}
+#comboDisplay .label{font-size:12px;color:#f0f8;letter-spacing:2px;}
+#comboDisplay .value{font-size:32px;color:#f0f;text-shadow:0 0 15px #f0f;}
+
+#poseStatus{bottom:30px;right:30px;font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;padding:8px 24px;border-radius:30px;border:2px solid;transition:all 0.15s;}
+#poseStatus.up{color:#0f0;border-color:#0f04;background:#0f01;}
+#poseStatus.down{color:#f80;border-color:#f804;background:#f801;}
+#poseStatus.none{color:#fff4;border-color:#fff2;background:#fff01;}
+
+/* Damage flash */
+#damageFlash{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);z-index:15;font-family:'Orbitron',monospace;font-size:72px;font-weight:900;text-align:center;pointer-events:none;opacity:0;}
+
+/* Timing ring */
+#timingGuide{bottom:30px;left:30px;font-family:'Orbitron',monospace;font-size:12px;color:#fff4;text-align:center;}
+
+/* Start Screen */
+#startScreen{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a0f 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#startScreen h1{font-family:'Orbitron',monospace;font-size:72px;font-weight:900;background:linear-gradient(135deg,#0f0,#0ff,#f0f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 30px #0ff4);letter-spacing:8px;}
+#startScreen .sub{font-size:22px;color:#fff6;letter-spacing:6px;margin-bottom:20px;}
+#startScreen .instructions{font-size:16px;color:#fff5;max-width:520px;text-align:center;line-height:2;margin-bottom:20px;}
+#startScreen .instructions strong{color:#0ff;}
+#startScreen .instructions em{color:#f0f;font-style:normal;}
+
+.btn{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;padding:16px 50px;border:2px solid #0ff;background:#0ff1;color:#0ff;cursor:pointer;letter-spacing:4px;transition:all 0.2s;pointer-events:all;border-radius:4px;}
+.btn:hover{background:#0ff3;box-shadow:0 0 30px #0ff4;transform:scale(1.05);}
+
+/* Loading */
+#loadingOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:200;background:#0a0a0f;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#loadingOverlay .spinner{width:50px;height:50px;border:3px solid #0ff2;border-top-color:#0ff;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loadingOverlay p{font-family:'Orbitron',monospace;font-size:16px;color:#0ff8;letter-spacing:3px;}
+
+#errorMsg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:#200;border:2px solid #f44;padding:30px 40px;font-size:18px;color:#faa;text-align:center;max-width:500px;line-height:1.6;display:none;border-radius:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <video id="webcam" playsinline autoplay muted></video>
+  <canvas id="poseCanvas"></canvas>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="floorDisplay" class="hud">
+    <div class="label">FLOOR</div>
+    <div class="value" id="floorVal">1</div>
+  </div>
+  <div id="repDisplay" class="hud">
+    <div class="label">TOTAL REPS</div>
+    <div class="value" id="repVal">0</div>
+  </div>
+  <div id="comboDisplay" class="hud">
+    <div class="label">COMBO</div>
+    <div class="value" id="comboVal">0</div>
+  </div>
+  <div id="poseStatus" class="hud none">検出待ち</div>
+  <div id="damageFlash"></div>
+  <div id="timingGuide" class="hud"></div>
+
+  <div id="startScreen">
+    <h1>PUSH QUEST</h1>
+    <div class="sub">腕立てRPG</div>
+    <div class="instructions">
+      カメラの前で<strong>腕立て伏せ</strong>をしよう！<br>
+      <em>2秒かけて下ろす → 1秒で上げる</em><br>
+      タイミングが良いほど<strong>大ダメージ</strong>！<br>
+      モンスターを倒して階層を進もう！
+    </div>
+    <button class="btn" id="startBtn">START</button>
+  </div>
+
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p id="loadingText">LOADING...</p>
+  </div>
+
+  <div id="errorMsg"></div>
+</div>
+
+<script>
+(() => {
+// ============ ELEMENTS ============
+const video = document.getElementById('webcam');
+const poseCanvas = document.getElementById('poseCanvas');
+const gameCanvas = document.getElementById('gameCanvas');
+const poseCtx = poseCanvas.getContext('2d');
+const gCtx = gameCanvas.getContext('2d');
+const floorEl = document.getElementById('floorVal');
+const repEl = document.getElementById('repVal');
+const comboEl = document.getElementById('comboVal');
+const poseStatusEl = document.getElementById('poseStatus');
+const damageEl = document.getElementById('damageFlash');
+const startScreen = document.getElementById('startScreen');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
+const errorMsg = document.getElementById('errorMsg');
+
+// ============ GAME STATE ============
+let gameRunning = false;
+let floor = 1;
+let totalReps = 0;
+let combo = 0;
+let maxCombo = 0;
+
+// Timing
+const DOWN_DURATION = 2000; // 2秒で下ろす
+const UP_DURATION = 1000;   // 1秒で上げる
+
+// Pose state
+let poseState = 'none'; // 'none','up','down'
+let prevPoseState = 'none';
+let downStartTime = 0;  // DOWN開始時刻
+let upStartTime = 0;    // UP開始時刻
+let lastRepTime = 0;
+let currentDownDuration = 0;
+let currentUpDuration = 0;
+
+// Monster
+let monster = null;
+let monsterHitAnim = 0;
+let monsterDeadAnim = 0;
+let monsterFloat = 0;
+let particles = [];
+
+// Audio
+let audioCtx = null;
+
+// ============ MONSTERS ============
+const MONSTER_DEFS = [
+  { name: 'スライム', hp: 30, color: '#0f0', glow: '#0f04', type: 'slime' },
+  { name: 'ゴブリン', hp: 50, color: '#f80', glow: '#f804', type: 'goblin' },
+  { name: 'スケルトン', hp: 80, color: '#0ff', glow: '#0ff4', type: 'skeleton' },
+  { name: 'ダークウルフ', hp: 120, color: '#c0f', glow: '#c0f4', type: 'wolf' },
+  { name: 'ドラゴン', hp: 200, color: '#f0f', glow: '#f0f4', type: 'dragon' },
+];
+
+function getMonsterDef(floorNum) {
+  const idx = (floorNum - 1) % MONSTER_DEFS.length;
+  const cycle = Math.floor((floorNum - 1) / MONSTER_DEFS.length);
+  const def = MONSTER_DEFS[idx];
+  return {
+    name: def.name,
+    maxHp: Math.round(def.hp * Math.pow(1.5, cycle)),
+    hp: Math.round(def.hp * Math.pow(1.5, cycle)),
+    color: def.color,
+    glow: def.glow,
+    type: def.type,
+  };
+}
+
+// ============ AUDIO ============
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playTone(freq, duration, vol) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+function playHitSound() { playTone(600, 0.08, 0.2); setTimeout(() => playTone(900, 0.06, 0.15), 30); }
+function playCritSound() { playTone(800, 0.1, 0.25); setTimeout(() => playTone(1200, 0.08, 0.2), 40); setTimeout(() => playTone(1600, 0.06, 0.15), 80); }
+function playDefeatSound() { playTone(200, 0.3, 0.2); setTimeout(() => playTone(400, 0.2, 0.15), 100); setTimeout(() => playTone(800, 0.3, 0.2), 200); }
+
+// ============ RESIZE ============
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  poseCanvas.width = w; poseCanvas.height = h;
+  gameCanvas.width = w; gameCanvas.height = h;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ============ MEDIAPIPE POSE ============
+let poseLandmarker = null;
+let detectLoopId = null;
+
+async function initPose() {
+  loadingOverlay.style.display = 'flex';
+  try {
+    loadingText.textContent = 'LOADING MEDIAPIPE...';
+    const mp = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/vision_bundle.mjs');
+
+    loadingText.textContent = 'LOADING POSE MODEL...';
+    const vision = await mp.FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm'
+    );
+
+    poseLandmarker = await mp.PoseLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task',
+        delegate: 'GPU'
+      },
+      runningMode: 'VIDEO',
+      numPoses: 1
+    });
+
+    loadingText.textContent = 'STARTING CAMERA...';
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    video.srcObject = stream;
+    await video.play();
+
+    loadingOverlay.style.display = 'none';
+
+    // 検出ループ開始
+    let lastTime = -1;
+    function detect() {
+      detectLoopId = requestAnimationFrame(detect);
+      const now = performance.now();
+      if (now === lastTime) return;
+      lastTime = now;
+      try {
+        const results = poseLandmarker.detectForVideo(video, now);
+        if (results.landmarks && results.landmarks.length > 0) {
+          drawSkeleton(results.landmarks[0]);
+          detectPushUp(results.landmarks[0]);
+        } else {
+          poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+          poseState = 'none';
+        }
+        updatePoseStatus();
+      } catch(e) {}
+    }
+    detectLoopId = requestAnimationFrame(detect);
+
+  } catch(e) {
+    loadingOverlay.style.display = 'none';
+    errorMsg.textContent = 'カメラまたはMediaPipeの初期化に失敗しました。\n' + (e.message || e);
+    errorMsg.style.display = 'block';
+    console.error(e);
+  }
+}
+
+// ============ SKELETON DRAWING ============
+function drawSkeleton(lm) {
+  const W = poseCanvas.width, H = poseCanvas.height;
+  poseCtx.clearRect(0, 0, W, H);
+  const connections = [
+    [11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]
+  ];
+  poseCtx.save();
+  poseCtx.strokeStyle = poseState === 'down' ? '#f804' : '#0ff4';
+  poseCtx.lineWidth = 2;
+  for (const [a,b] of connections) {
+    const la = lm[a], lb = lm[b];
+    if (la && lb) {
+      poseCtx.beginPath();
+      poseCtx.moveTo((1 - la.x) * W, la.y * H);
+      poseCtx.lineTo((1 - lb.x) * W, lb.y * H);
+      poseCtx.stroke();
+    }
+  }
+  const pts = [11,12,13,14,15,16,23,24];
+  for (const i of pts) {
+    const p = lm[i];
+    if (p) {
+      poseCtx.beginPath();
+      poseCtx.arc((1 - p.x) * W, p.y * H, 5, 0, Math.PI * 2);
+      poseCtx.fillStyle = poseState === 'down' ? '#f80' : '#0ff';
+      poseCtx.fill();
+    }
+  }
+  poseCtx.restore();
+}
+
+// ============ PUSH-UP DETECTION ============
+function angleBetween(a, b, c) {
+  const ab = { x: a.x - b.x, y: a.y - b.y, z: (a.z||0) - (b.z||0) };
+  const cb = { x: c.x - b.x, y: c.y - b.y, z: (c.z||0) - (b.z||0) };
+  const dot = ab.x*cb.x + ab.y*cb.y + ab.z*cb.z;
+  const m1 = Math.sqrt(ab.x**2 + ab.y**2 + ab.z**2);
+  const m2 = Math.sqrt(cb.x**2 + cb.y**2 + cb.z**2);
+  if (m1 * m2 === 0) return 180;
+  return Math.acos(Math.min(1, Math.max(-1, dot / (m1 * m2)))) * (180 / Math.PI);
+}
+
+function detectPushUp(lm) {
+  const lS = lm[11], lE = lm[13], lW = lm[15];
+  const rS = lm[12], rE = lm[14], rW = lm[16];
+  let angles = [];
+  if (lS && lE && lW) angles.push(angleBetween(lS, lE, lW));
+  if (rS && rE && rW) angles.push(angleBetween(rS, rE, rW));
+  if (angles.length === 0) { poseState = 'none'; return; }
+  const avg = angles.reduce((a,b) => a+b, 0) / angles.length;
+
+  prevPoseState = poseState;
+  if (avg < 110) poseState = 'down';
+  else if (avg > 145) poseState = 'up';
+
+  const now = performance.now();
+  // DOWN開始
+  if (prevPoseState !== 'down' && poseState === 'down') {
+    downStartTime = now;
+  }
+  // UP開始 (= 1レップ完了)
+  if (prevPoseState === 'down' && poseState === 'up') {
+    currentDownDuration = now - downStartTime;
+    upStartTime = now;
+    if (gameRunning && monster && monster.hp > 0) {
+      totalReps++;
+      repEl.textContent = totalReps;
+      dealDamage();
+    }
+  }
+}
+
+function updatePoseStatus() {
+  poseStatusEl.className = 'hud ' + poseState;
+  if (poseState === 'up') poseStatusEl.textContent = '▲ UP';
+  else if (poseState === 'down') poseStatusEl.textContent = '▼ DOWN';
+  else poseStatusEl.textContent = '検出待ち';
+}
+
+// ============ COMBAT ============
+function dealDamage() {
+  // タイミング評価: 2秒に近いほど高ダメージ
+  const downDiff = Math.abs(currentDownDuration - DOWN_DURATION);
+  let dmg, label, color;
+
+  if (downDiff < 300) {
+    // PERFECT: 2秒 ±0.3秒
+    dmg = 25 + combo * 2;
+    label = 'CRITICAL! ' + dmg;
+    color = '#ff0';
+    combo++;
+    playCritSound();
+  } else if (downDiff < 700) {
+    // GOOD: 2秒 ±0.7秒
+    dmg = 15 + combo;
+    label = 'GOOD! ' + dmg;
+    color = '#0f0';
+    combo++;
+    playHitSound();
+  } else {
+    // NORMAL
+    dmg = 8;
+    label = dmg + '';
+    color = '#fff';
+    combo = 0;
+    playHitSound();
+  }
+
+  maxCombo = Math.max(maxCombo, combo);
+  comboEl.textContent = combo;
+
+  monster.hp = Math.max(0, monster.hp - dmg);
+  monsterHitAnim = 1.0;
+
+  // ダメージ数字表示
+  showDamage(label, color);
+
+  // パーティクル
+  spawnParticles(dmg > 20 ? 12 : 6, monster.color);
+
+  // モンスター撃破
+  if (monster.hp <= 0) {
+    monsterDeadAnim = 1.0;
+    playDefeatSound();
+    setTimeout(() => {
+      floor++;
+      floorEl.textContent = floor;
+      monster = getMonsterDef(floor);
+      monsterDeadAnim = 0;
+    }, 1500);
+  }
+}
+
+function showDamage(text, color) {
+  damageEl.textContent = text;
+  damageEl.style.color = color;
+  damageEl.style.textShadow = '0 0 30px ' + color + ', 0 0 60px ' + color;
+  damageEl.style.opacity = '1';
+  damageEl.style.transform = 'translate(-50%, -60%) scale(1.3)';
+  setTimeout(() => {
+    damageEl.style.opacity = '0';
+    damageEl.style.transform = 'translate(-50%, -80%) scale(0.8)';
+  }, 600);
+}
+
+function spawnParticles(count, color) {
+  const W = gameCanvas.width, H = gameCanvas.height;
+  const cx = W / 2, cy = H * 0.38;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 4;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      life: 1.0,
+      color: color,
+      size: 3 + Math.random() * 4
+    });
+  }
+}
+
+// ============ MONSTER DRAWING ============
+function drawMonster(ctx, W, H, now) {
+  if (!monster) return;
+  const cx = W / 2, cy = H * 0.38;
+  const size = 120;
+  monsterFloat = Math.sin(now * 0.002) * 8;
+  const shakeX = monsterHitAnim > 0 ? (Math.random() - 0.5) * 20 * monsterHitAnim : 0;
+  const shakeY = monsterHitAnim > 0 ? (Math.random() - 0.5) * 10 * monsterHitAnim : 0;
+  const mx = cx + shakeX, my = cy + monsterFloat + shakeY;
+
+  if (monsterHitAnim > 0) monsterHitAnim = Math.max(0, monsterHitAnim - 0.03);
+
+  ctx.save();
+
+  // 死亡アニメーション
+  if (monsterDeadAnim > 0) {
+    ctx.globalAlpha = monsterDeadAnim;
+    monsterDeadAnim = Math.max(0, monsterDeadAnim - 0.02);
+  }
+
+  // グロー
+  ctx.shadowColor = monster.color;
+  ctx.shadowBlur = 30 + Math.sin(now * 0.005) * 10;
+
+  // モンスター描画
+  const t = monster.type;
+  ctx.strokeStyle = monster.color;
+  ctx.fillStyle = monster.color + '30';
+  ctx.lineWidth = 3;
+
+  if (t === 'slime') {
+    drawSlime(ctx, mx, my, size, now);
+  } else if (t === 'goblin') {
+    drawGoblin(ctx, mx, my, size, now);
+  } else if (t === 'skeleton') {
+    drawSkeleton2(ctx, mx, my, size, now);
+  } else if (t === 'wolf') {
+    drawWolf(ctx, mx, my, size, now);
+  } else if (t === 'dragon') {
+    drawDragon(ctx, mx, my, size, now);
+  }
+
+  ctx.restore();
+
+  // HPバー
+  drawHPBar(ctx, cx, cy + size + 30, monster);
+
+  // モンスター名
+  ctx.save();
+  ctx.font = '700 24px Rajdhani';
+  ctx.fillStyle = monster.color;
+  ctx.textAlign = 'center';
+  ctx.shadowColor = monster.color;
+  ctx.shadowBlur = 10;
+  ctx.fillText(monster.name, cx, cy + size + 65);
+  ctx.restore();
+}
+
+function drawSlime(ctx, x, y, s, now) {
+  const wobble = Math.sin(now * 0.004) * 8;
+  ctx.beginPath();
+  ctx.moveTo(x - s*0.5, y + s*0.2);
+  ctx.quadraticCurveTo(x - s*0.55, y - s*0.3 + wobble, x, y - s*0.5);
+  ctx.quadraticCurveTo(x + s*0.55, y - s*0.3 - wobble, x + s*0.5, y + s*0.2);
+  ctx.quadraticCurveTo(x, y + s*0.3, x - s*0.5, y + s*0.2);
+  ctx.fill(); ctx.stroke();
+  // 目
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(x - 15, y - 10, 8, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 15, y - 10, 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.arc(x - 13, y - 8, 4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 17, y - 8, 4, 0, Math.PI*2); ctx.fill();
+}
+
+function drawGoblin(ctx, x, y, s, now) {
+  // 体
+  ctx.beginPath();
+  ctx.ellipse(x, y + 10, s*0.3, s*0.4, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  // 頭
+  ctx.beginPath();
+  ctx.arc(x, y - s*0.35, s*0.25, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  // 耳
+  ctx.beginPath();
+  ctx.moveTo(x - s*0.25, y - s*0.4);
+  ctx.lineTo(x - s*0.5, y - s*0.7);
+  ctx.lineTo(x - s*0.15, y - s*0.45);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + s*0.25, y - s*0.4);
+  ctx.lineTo(x + s*0.5, y - s*0.7);
+  ctx.lineTo(x + s*0.15, y - s*0.45);
+  ctx.stroke();
+  // 目
+  ctx.fillStyle = '#f00';
+  ctx.beginPath(); ctx.arc(x - 10, y - s*0.38, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 10, y - s*0.38, 5, 0, Math.PI*2); ctx.fill();
+}
+
+function drawSkeleton2(ctx, x, y, s, now) {
+  // 頭蓋骨
+  ctx.beginPath(); ctx.arc(x, y - s*0.35, s*0.22, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  // 顎
+  ctx.beginPath();
+  ctx.moveTo(x - s*0.15, y - s*0.2);
+  ctx.lineTo(x, y - s*0.1);
+  ctx.lineTo(x + s*0.15, y - s*0.2);
+  ctx.stroke();
+  // 目
+  ctx.fillStyle = monster.color;
+  ctx.beginPath(); ctx.arc(x - 10, y - s*0.4, 6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 10, y - s*0.4, 6, 0, Math.PI*2); ctx.fill();
+  // 背骨
+  ctx.beginPath();
+  ctx.moveTo(x, y - s*0.15);
+  ctx.lineTo(x, y + s*0.3);
+  ctx.stroke();
+  // 肋骨
+  for (let i = 0; i < 3; i++) {
+    const ry = y - s*0.05 + i * 18;
+    ctx.beginPath();
+    ctx.moveTo(x - s*0.25, ry + 5);
+    ctx.quadraticCurveTo(x, ry - 5, x + s*0.25, ry + 5);
+    ctx.stroke();
+  }
+  // 腕
+  ctx.beginPath(); ctx.moveTo(x, y - s*0.1); ctx.lineTo(x - s*0.4, y + s*0.1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y - s*0.1); ctx.lineTo(x + s*0.4, y + s*0.1); ctx.stroke();
+}
+
+function drawWolf(ctx, x, y, s, now) {
+  // 体
+  ctx.beginPath();
+  ctx.ellipse(x, y + 10, s*0.45, s*0.3, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  // 頭
+  ctx.beginPath();
+  ctx.ellipse(x - s*0.35, y - s*0.15, s*0.2, s*0.18, -0.3, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  // 耳
+  ctx.beginPath();
+  ctx.moveTo(x - s*0.45, y - s*0.28);
+  ctx.lineTo(x - s*0.55, y - s*0.55);
+  ctx.lineTo(x - s*0.35, y - s*0.3);
+  ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - s*0.3, y - s*0.3);
+  ctx.lineTo(x - s*0.35, y - s*0.55);
+  ctx.lineTo(x - s*0.2, y - s*0.28);
+  ctx.fill(); ctx.stroke();
+  // 目
+  ctx.fillStyle = '#f00';
+  ctx.beginPath(); ctx.arc(x - s*0.38, y - s*0.2, 5, 0, Math.PI*2); ctx.fill();
+  // 尻尾
+  ctx.beginPath();
+  ctx.moveTo(x + s*0.4, y);
+  ctx.quadraticCurveTo(x + s*0.65, y - s*0.3, x + s*0.55, y - s*0.5);
+  ctx.stroke();
+}
+
+function drawDragon(ctx, x, y, s, now) {
+  // 体
+  ctx.beginPath();
+  ctx.ellipse(x, y + 5, s*0.4, s*0.35, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  // 頭
+  ctx.beginPath();
+  ctx.ellipse(x, y - s*0.4, s*0.2, s*0.18, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  // 角
+  ctx.beginPath(); ctx.moveTo(x - 15, y - s*0.55); ctx.lineTo(x - 25, y - s*0.8); ctx.lineTo(x - 5, y - s*0.55); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + 15, y - s*0.55); ctx.lineTo(x + 25, y - s*0.8); ctx.lineTo(x + 5, y - s*0.55); ctx.stroke();
+  // 翼
+  const wingFlap = Math.sin(now * 0.006) * 15;
+  ctx.beginPath();
+  ctx.moveTo(x - s*0.3, y - s*0.1);
+  ctx.lineTo(x - s*0.8, y - s*0.5 + wingFlap);
+  ctx.lineTo(x - s*0.6, y - s*0.1 + wingFlap*0.5);
+  ctx.lineTo(x - s*0.3, y + s*0.1);
+  ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + s*0.3, y - s*0.1);
+  ctx.lineTo(x + s*0.8, y - s*0.5 + wingFlap);
+  ctx.lineTo(x + s*0.6, y - s*0.1 + wingFlap*0.5);
+  ctx.lineTo(x + s*0.3, y + s*0.1);
+  ctx.fill(); ctx.stroke();
+  // 目
+  ctx.fillStyle = '#ff0';
+  ctx.beginPath(); ctx.arc(x - 10, y - s*0.43, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 10, y - s*0.43, 5, 0, Math.PI*2); ctx.fill();
+}
+
+function drawHPBar(ctx, x, y, mon) {
+  const w = 200, h = 14;
+  const ratio = mon.hp / mon.maxHp;
+  ctx.save();
+  // 背景
+  ctx.fillStyle = '#fff1';
+  ctx.fillRect(x - w/2, y, w, h);
+  // HP
+  const hpColor = ratio > 0.5 ? mon.color : ratio > 0.25 ? '#ff0' : '#f44';
+  ctx.fillStyle = hpColor;
+  ctx.shadowColor = hpColor;
+  ctx.shadowBlur = 10;
+  ctx.fillRect(x - w/2, y, w * ratio, h);
+  // 枠
+  ctx.strokeStyle = '#fff4';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - w/2, y, w, h);
+  // テキスト
+  ctx.shadowBlur = 0;
+  ctx.font = '700 12px Orbitron';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(mon.hp + ' / ' + mon.maxHp, x, y + h/2 + 1);
+  ctx.restore();
+}
+
+// ============ TIMING GUIDE ============
+function drawTimingGuide(ctx, W, H, now) {
+  if (!gameRunning) return;
+  const cx = 80, cy = H - 80, r = 35;
+
+  ctx.save();
+  // 背景リング
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#fff2';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  if (poseState === 'down') {
+    // DOWN中: 2秒のタイマー
+    const elapsed = now - downStartTime;
+    const progress = Math.min(1, elapsed / DOWN_DURATION);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + progress * Math.PI * 2);
+    ctx.strokeStyle = progress < 0.85 ? '#f80' : progress < 1.15 ? '#0f0' : '#f44';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.font = '900 16px Orbitron';
+    ctx.fillStyle = '#f80';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DOWN', cx, cy - 4);
+    ctx.font = '700 12px Orbitron';
+    ctx.fillText((elapsed/1000).toFixed(1) + 's', cx, cy + 14);
+  } else if (poseState === 'up') {
+    // UP中
+    const elapsed = now - upStartTime;
+    const progress = Math.min(1, elapsed / UP_DURATION);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + progress * Math.PI * 2);
+    ctx.strokeStyle = '#0ff';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = '#0ff';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.font = '900 16px Orbitron';
+    ctx.fillStyle = '#0ff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('UP', cx, cy);
+  } else {
+    ctx.font = '700 14px Orbitron';
+    ctx.fillStyle = '#fff4';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('READY', cx, cy);
+  }
+
+  // ラベル
+  ctx.font = '500 11px Rajdhani';
+  ctx.fillStyle = '#fff4';
+  ctx.fillText('2s↓ 1s↑', cx, cy + r + 18);
+  ctx.restore();
+}
+
+// ============ PARTICLES ============
+function updateParticles(ctx) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life -= 0.02;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ============ GAME LOOP ============
+function gameLoop(now) {
+  if (!gameRunning) return;
+  const W = gameCanvas.width, H = gameCanvas.height;
+  gCtx.clearRect(0, 0, W, H);
+
+  // 背景グリッド
+  gCtx.save();
+  gCtx.strokeStyle = '#0ff08';
+  gCtx.lineWidth = 0.5;
+  const gridSize = 60;
+  for (let x = 0; x < W; x += gridSize) {
+    gCtx.beginPath(); gCtx.moveTo(x, 0); gCtx.lineTo(x, H); gCtx.stroke();
+  }
+  for (let y = 0; y < H; y += gridSize) {
+    gCtx.beginPath(); gCtx.moveTo(0, y); gCtx.lineTo(W, y); gCtx.stroke();
+  }
+  gCtx.restore();
+
+  drawMonster(gCtx, W, H, now);
+  updateParticles(gCtx);
+  drawTimingGuide(gCtx, W, H, now);
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ============ GAME CONTROL ============
+function startGame() {
+  initAudio();
+  floor = 1;
+  totalReps = 0;
+  combo = 0;
+  maxCombo = 0;
+
+  floorEl.textContent = floor;
+  repEl.textContent = '0';
+  comboEl.textContent = '0';
+
+  monster = getMonsterDef(floor);
+  particles = [];
+  monsterHitAnim = 0;
+  monsterDeadAnim = 0;
+
+  startScreen.style.display = 'none';
+  gameRunning = true;
+  requestAnimationFrame(gameLoop);
+}
+
+// ============ EVENT LISTENERS ============
+document.getElementById('startBtn').addEventListener('click', startGame);
+
+// ============ INIT ============
+initPose();
+})();
+</script>
+</body>
+</html>
