@@ -149,6 +149,10 @@ let monsterDeadAnim = 0;
 let monsterFloat = 0;
 let particles = [];
 
+// Charge
+let chargeLevel = 0; // 0〜1、DOWN中にたまる
+let isCharging = false;
+
 // Audio
 let audioCtx = null;
 
@@ -196,6 +200,8 @@ function playTone(freq, duration, vol) {
 function playHitSound() { playTone(600, 0.08, 0.2); setTimeout(() => playTone(900, 0.06, 0.15), 30); }
 function playCritSound() { playTone(800, 0.1, 0.25); setTimeout(() => playTone(1200, 0.08, 0.2), 40); setTimeout(() => playTone(1600, 0.06, 0.15), 80); }
 function playDefeatSound() { playTone(200, 0.3, 0.2); setTimeout(() => playTone(400, 0.2, 0.15), 100); setTimeout(() => playTone(800, 0.3, 0.2), 200); }
+function playChargeTickSound(level) { if (audioCtx) playTone(300 + level * 600, 0.03, 0.05 + level * 0.1); }
+function playReleaseSound() { playTone(1000, 0.15, 0.3); setTimeout(() => playTone(1400, 0.1, 0.2), 50); }
 
 // ============ RESIZE ============
 function resize() {
@@ -325,19 +331,28 @@ function detectPushUp(lm) {
   else if (avg > 145) poseState = 'up';
 
   const now = performance.now();
-  // DOWN開始
+  // DOWN開始 → チャージ開始
   if (prevPoseState !== 'down' && poseState === 'down') {
     downStartTime = now;
+    isCharging = true;
+    chargeLevel = 0;
   }
-  // UP開始 (= 1レップ完了)
+  // DOWN継続中 → チャージ蓄積
+  if (poseState === 'down' && isCharging) {
+    const elapsed = now - downStartTime;
+    chargeLevel = Math.min(1, elapsed / DOWN_DURATION);
+  }
+  // UP完了 (= 1レップ完了) → チャージ解放で攻撃！
   if (prevPoseState === 'down' && poseState === 'up') {
     currentDownDuration = now - downStartTime;
     upStartTime = now;
-    if (gameRunning && monster && monster.hp > 0) {
+    if (gameRunning && monster && monster.hp > 0 && isCharging) {
       totalReps++;
       repEl.textContent = totalReps;
       dealDamage();
     }
+    isCharging = false;
+    chargeLevel = 0;
   }
 }
 
@@ -350,29 +365,38 @@ function updatePoseStatus() {
 
 // ============ COMBAT ============
 function dealDamage() {
-  // タイミング評価: 2秒に近いほど高ダメージ
+  // タイミング評価: 2秒に近いほど高ダメージ（チャージ量で決定）
   const downDiff = Math.abs(currentDownDuration - DOWN_DURATION);
+  const chargeQuality = Math.max(0, 1 - downDiff / DOWN_DURATION); // 0〜1
   let dmg, label, color;
 
   if (downDiff < 300) {
-    // PERFECT: 2秒 ±0.3秒
+    // PERFECT: 2秒 ±0.3秒 → フルチャージ解放
     dmg = 25 + combo * 2;
-    label = 'CRITICAL! ' + dmg;
+    label = '⚡ CRITICAL! ' + dmg;
     color = '#ff0';
     combo++;
+    playReleaseSound();
     playCritSound();
   } else if (downDiff < 700) {
     // GOOD: 2秒 ±0.7秒
     dmg = 15 + combo;
-    label = 'GOOD! ' + dmg;
+    label = '💥 GOOD! ' + dmg;
     color = '#0f0';
     combo++;
-    playHitSound();
-  } else {
-    // NORMAL
+    playReleaseSound();
+  } else if (currentDownDuration > 500) {
+    // NORMAL: チャージ不足だがダメージは出る
     dmg = 8;
     label = dmg + '';
     color = '#fff';
+    combo = 0;
+    playHitSound();
+  } else {
+    // チャージ不足: ほぼ即UP
+    dmg = 3;
+    label = 'WEAK ' + dmg;
+    color = '#f448';
     combo = 0;
     playHitSound();
   }
@@ -474,6 +498,39 @@ function drawMonster(ctx, W, H, now) {
   }
 
   ctx.restore();
+
+  // チャージエフェクト（DOWN中にモンスター周囲に集まるエネルギー）
+  if (isCharging && chargeLevel > 0 && monster.hp > 0) {
+    ctx.save();
+    // チャージリング
+    const ringR = size * (1.2 - chargeLevel * 0.4);
+    ctx.beginPath();
+    ctx.arc(cx, cy + monsterFloat, ringR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 0, ' + (chargeLevel * 0.6) + ')';
+    ctx.lineWidth = 2 + chargeLevel * 4;
+    ctx.shadowColor = '#ff0';
+    ctx.shadowBlur = 20 * chargeLevel;
+    ctx.stroke();
+    // 収束パーティクル
+    for (let i = 0; i < 8; i++) {
+      const angle = (now * 0.003 + i * Math.PI / 4) % (Math.PI * 2);
+      const dist = ringR + 20 * (1 - chargeLevel);
+      const px = cx + Math.cos(angle) * dist;
+      const py = cy + monsterFloat + Math.sin(angle) * dist;
+      ctx.beginPath();
+      ctx.arc(px, py, 3 + chargeLevel * 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 0, ' + (chargeLevel * 0.8) + ')';
+      ctx.fill();
+    }
+    // CHARGEテキスト
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ff0';
+    ctx.font = '900 ' + (20 + chargeLevel * 16) + 'px Orbitron';
+    ctx.fillStyle = 'rgba(255, 255, 0, ' + (0.4 + chargeLevel * 0.6) + ')';
+    ctx.textAlign = 'center';
+    ctx.fillText('CHARGE', cx, cy - size - 10 + monsterFloat);
+    ctx.restore();
+  }
 
   // HPバー
   drawHPBar(ctx, cx, cy + size + 30, monster);
@@ -666,27 +723,28 @@ function drawTimingGuide(ctx, W, H, now) {
   ctx.stroke();
 
   if (poseState === 'down') {
-    // DOWN中: 2秒のタイマー
+    // チャージ中: 2秒のタイマー
     const elapsed = now - downStartTime;
     const progress = Math.min(1, elapsed / DOWN_DURATION);
+    const isFullCharge = progress >= 0.85 && progress <= 1.15;
     ctx.beginPath();
     ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + progress * Math.PI * 2);
-    ctx.strokeStyle = progress < 0.85 ? '#f80' : progress < 1.15 ? '#0f0' : '#f44';
-    ctx.lineWidth = 6;
+    ctx.strokeStyle = isFullCharge ? '#ff0' : progress < 0.85 ? '#f80' : '#f44';
+    ctx.lineWidth = 6 + (isFullCharge ? Math.sin(now * 0.02) * 2 : 0);
     ctx.shadowColor = ctx.strokeStyle;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = isFullCharge ? 20 : 10;
     ctx.stroke();
 
     ctx.shadowBlur = 0;
-    ctx.font = '900 16px Orbitron';
-    ctx.fillStyle = '#f80';
+    ctx.font = '900 14px Orbitron';
+    ctx.fillStyle = isFullCharge ? '#ff0' : '#f80';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('DOWN', cx, cy - 4);
+    ctx.fillText(isFullCharge ? 'FULL!' : 'CHARGE', cx, cy - 4);
     ctx.font = '700 12px Orbitron';
     ctx.fillText((elapsed/1000).toFixed(1) + 's', cx, cy + 14);
   } else if (poseState === 'up') {
-    // UP中
+    // 攻撃解放
     const elapsed = now - upStartTime;
     const progress = Math.min(1, elapsed / UP_DURATION);
     ctx.beginPath();
@@ -698,11 +756,11 @@ function drawTimingGuide(ctx, W, H, now) {
     ctx.stroke();
 
     ctx.shadowBlur = 0;
-    ctx.font = '900 16px Orbitron';
+    ctx.font = '900 14px Orbitron';
     ctx.fillStyle = '#0ff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('UP', cx, cy);
+    ctx.fillText('ATTACK!', cx, cy);
   } else {
     ctx.font = '700 14px Orbitron';
     ctx.fillStyle = '#fff4';
@@ -714,7 +772,7 @@ function drawTimingGuide(ctx, W, H, now) {
   // ラベル
   ctx.font = '500 11px Rajdhani';
   ctx.fillStyle = '#fff4';
-  ctx.fillText('2s↓ 1s↑', cx, cy + r + 18);
+  ctx.fillText('2s溜め → 上げて攻撃', cx, cy + r + 18);
   ctx.restore();
 }
 
