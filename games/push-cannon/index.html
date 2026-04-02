@@ -124,7 +124,7 @@ let angleLocked = false;
 let angleStableStart = 0;
 let lastStableAngle = -1;
 const LOCK_TIME = 1000;
-const ANGLE_TOLERANCE = 5;
+const ANGLE_TOLERANCE = 8;
 
 // 砲弾
 let projectile = null;
@@ -336,11 +336,15 @@ function detectPushUp(lm) {
 
     if (!angleLocked) {
       launchAngle = newAngle;
-      if (lastStableAngle < 0 || Math.abs(newAngle - lastStableAngle) > ANGLE_TOLERANCE) {
+      if (lastStableAngle < 0) {
+        lastStableAngle = newAngle;
+        angleStableStart = now;
+      } else if (Math.abs(newAngle - lastStableAngle) > ANGLE_TOLERANCE) {
         lastStableAngle = newAngle;
         angleStableStart = now;
       } else if (now - angleStableStart >= LOCK_TIME) {
         angleLocked = true;
+        launchAngle = lastStableAngle;
         playLockSound();
       }
     }
