@@ -194,6 +194,37 @@
   }
   .hint span { color: var(--line-color); font-weight: 600; }
 
+  .paint-section { margin-bottom: 20px; }
+  .paint-toggle {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 10px 16px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 14px; font-weight: 500; transition: all 0.2s;
+  }
+  .paint-toggle:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+  .paint-arrow { font-size: 12px; color: var(--accent); }
+  .paint-panel {
+    margin-top: 8px; padding: 16px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .paint-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .paint-tool-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; font-weight: 500;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .paint-tool-btn:hover { border-color: var(--text-dim); }
+  .paint-tool-btn.active { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+  .paint-color-group, .paint-size-group { display: flex; align-items: center; gap: 6px; }
+  .paint-color-group label, .paint-size-group label { color: var(--text-dim); font-size: 13px; }
+  .paint-color-group input[type="color"] {
+    width: 32px; height: 28px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); cursor: pointer; padding: 0;
+  }
+  .color-hex { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); }
+  .paint-size-group input[type="range"] { width: 100px; accent-color: var(--accent); }
+  #size-label { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); min-width: 40px; }
+
   @media (max-width: 600px) {
     .app { padding: 24px 12px 60px; }
     header h1 { font-size: 22px; }
@@ -215,7 +246,14 @@ let img = null;
 let cols = 4, rows = 4, prefix = 'tile';
 let cutsX = [], cutsY = [];
 let downloading = false, dlProgress = 0;
+let paintCanvas = null, paintCtx = null;
+let paintOpen = false;
+let brushColor = '#ffffff', brushSize = 20;
+let activeTool = 'brush';
+let isPainting = false, lastPaintPt = null;
 const root = document.getElementById('root');
+
+function imgSource() { return paintCanvas || img; }
 
 function initCutsEqual() {
   cutsX = []; cutsY = [];
@@ -275,6 +313,33 @@ function renderEditor() {
       <button class="btn btn-sm btn-outline" id="btn-eq">等分に戻す</button>
       <button class="btn btn-sm btn-reset" id="btn-reset">リセット</button>
     </div>
+    <div class="paint-section">
+      <div class="paint-toggle" id="paint-toggle">
+        <span class="paint-arrow">${paintOpen ? '\u25BC' : '\u25B6'}</span>
+        <span>ペイントモード</span>
+      </div>
+      ${paintOpen ? `
+      <div class="paint-panel">
+        <div class="paint-tools">
+          <button class="paint-tool-btn ${activeTool==='brush'?'active':''}" id="tool-brush">ブラシ</button>
+          <button class="paint-tool-btn ${activeTool==='eyedropper'?'active':''}" id="tool-eyedropper">スポイト</button>
+          <div class="paint-color-group">
+            <label>色</label>
+            <input type="color" id="brush-color" value="${brushColor}">
+            <span class="color-hex" id="color-hex">${brushColor}</span>
+          </div>
+          <div class="paint-size-group">
+            <label>サイズ</label>
+            <input type="range" id="brush-size" min="1" max="100" value="${brushSize}">
+            <span id="size-label">${brushSize}px</span>
+          </div>
+          <button class="btn btn-sm btn-outline" id="paint-undo">元画像に戻す</button>
+        </div>
+        <div class="canvas-wrapper" id="paint-cw" style="width:${dw}px;height:${dh}px;">
+          <canvas id="paint-display" width="${dw}" height="${dh}" style="cursor:crosshair;"></canvas>
+        </div>
+      </div>` : ''}
+    </div>
     <div class="editor-section">
       <div class="editor-header">
         <div>
@@ -298,14 +363,16 @@ function renderEditor() {
       <div id="res-grid"></div>
     </div>`;
 
-  document.getElementById('pc').getContext('2d').drawImage(img, 0, 0, dw, dh);
+  document.getElementById('pc').getContext('2d').drawImage(imgSource(), 0, 0, dw, dh);
   drawResults();
   bindGridInputs();
   document.getElementById('inp-prefix').addEventListener('input', e => { prefix = e.target.value || 'tile'; });
   document.getElementById('btn-eq').addEventListener('click', () => { initCutsEqual(); render(); });
-  document.getElementById('btn-reset').addEventListener('click', () => { img = null; prefix = 'tile'; render(); });
+  document.getElementById('btn-reset').addEventListener('click', () => { img = null; paintCanvas = null; paintCtx = null; paintOpen = false; prefix = 'tile'; render(); });
   document.getElementById('btn-dl').addEventListener('click', downloadAll);
   setupDrag(dw, dh);
+  document.getElementById('paint-toggle').addEventListener('click', () => { paintOpen = !paintOpen; render(); });
+  if (paintOpen) setupPaint(dw, dh);
 }
 
 function drawResults() {
@@ -340,7 +407,7 @@ function drawResults() {
         <span class="cell-label">${idx+1}</span>
         <span class="cell-size">${sw}×${sh}</span>
         <button class="cell-dl">⬇</button>`;
-      td.querySelector('canvas').getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
+      td.querySelector('canvas').getContext('2d').drawImage(imgSource(), sx, sy, sw, sh, 0, 0, tw, th);
       td.addEventListener('click', () => dlTile(sx, sy, sw, sh, curIdx));
       tr.appendChild(td);
       idx++;
@@ -400,10 +467,124 @@ function setupDrag(dw, dh) {
   });
 }
 
+function pointerToCanvas(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function paintDot(pt, scale, displayCtx) {
+  paintCtx.fillStyle = brushColor;
+  paintCtx.beginPath();
+  paintCtx.arc(pt.x * scale, pt.y * scale, brushSize / 2, 0, Math.PI * 2);
+  paintCtx.fill();
+  displayCtx.fillStyle = brushColor;
+  displayCtx.beginPath();
+  displayCtx.arc(pt.x, pt.y, brushSize / scale / 2, 0, Math.PI * 2);
+  displayCtx.fill();
+}
+
+function paintLine(from, to, scale, displayCtx) {
+  paintCtx.strokeStyle = brushColor;
+  paintCtx.lineWidth = brushSize;
+  paintCtx.lineCap = 'round'; paintCtx.lineJoin = 'round';
+  paintCtx.beginPath(); paintCtx.moveTo(from.x * scale, from.y * scale);
+  paintCtx.lineTo(to.x * scale, to.y * scale); paintCtx.stroke();
+  const ds = brushSize / scale;
+  displayCtx.strokeStyle = brushColor;
+  displayCtx.lineWidth = ds;
+  displayCtx.lineCap = 'round'; displayCtx.lineJoin = 'round';
+  displayCtx.beginPath(); displayCtx.moveTo(from.x, from.y);
+  displayCtx.lineTo(to.x, to.y); displayCtx.stroke();
+}
+
+function pickColor(e, canvas, scale) {
+  const pt = pointerToCanvas(e, canvas);
+  const pixel = paintCtx.getImageData(Math.round(pt.x * scale), Math.round(pt.y * scale), 1, 1).data;
+  brushColor = '#' + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+  const ci = document.getElementById('brush-color');
+  const ch = document.getElementById('color-hex');
+  if (ci) ci.value = brushColor;
+  if (ch) ch.textContent = brushColor;
+  activeTool = 'brush';
+  document.getElementById('tool-brush').classList.add('active');
+  document.getElementById('tool-eyedropper').classList.remove('active');
+  canvas.style.cursor = 'crosshair';
+}
+
+function setupPaint(dw, dh) {
+  const dc = document.getElementById('paint-display');
+  if (!dc) return;
+  const dctx = dc.getContext('2d');
+  const scale = img.width / dw;
+  dctx.drawImage(imgSource(), 0, 0, dw, dh);
+
+  document.getElementById('tool-brush').addEventListener('click', () => {
+    activeTool = 'brush';
+    document.getElementById('tool-brush').classList.add('active');
+    document.getElementById('tool-eyedropper').classList.remove('active');
+    dc.style.cursor = 'crosshair';
+  });
+  document.getElementById('tool-eyedropper').addEventListener('click', () => {
+    activeTool = 'eyedropper';
+    document.getElementById('tool-eyedropper').classList.add('active');
+    document.getElementById('tool-brush').classList.remove('active');
+    dc.style.cursor = 'copy';
+  });
+  document.getElementById('brush-color').addEventListener('input', e => {
+    brushColor = e.target.value;
+    document.getElementById('color-hex').textContent = brushColor;
+  });
+  document.getElementById('brush-size').addEventListener('input', e => {
+    brushSize = +e.target.value;
+    document.getElementById('size-label').textContent = brushSize + 'px';
+  });
+  document.getElementById('paint-undo').addEventListener('click', () => {
+    paintCtx.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
+    paintCtx.drawImage(img, 0, 0);
+    dctx.drawImage(imgSource(), 0, 0, dw, dh);
+    const pc = document.getElementById('pc');
+    if (pc) pc.getContext('2d').drawImage(imgSource(), 0, 0, dw, dh);
+    drawResults();
+  });
+
+  dc.addEventListener('pointerdown', e => {
+    if (activeTool === 'eyedropper') { pickColor(e, dc, scale); return; }
+    e.preventDefault();
+    isPainting = true;
+    dc.setPointerCapture(e.pointerId);
+    const pt = pointerToCanvas(e, dc);
+    lastPaintPt = pt;
+    paintDot(pt, scale, dctx);
+  });
+  dc.addEventListener('pointermove', e => {
+    if (!isPainting || activeTool !== 'brush') return;
+    const pt = pointerToCanvas(e, dc);
+    paintLine(lastPaintPt, pt, scale, dctx);
+    lastPaintPt = pt;
+  });
+  dc.addEventListener('pointerup', () => {
+    if (isPainting) {
+      isPainting = false; lastPaintPt = null;
+      const pc = document.getElementById('pc');
+      if (pc) pc.getContext('2d').drawImage(imgSource(), 0, 0, dw, dh);
+      drawResults();
+    }
+  });
+  dc.addEventListener('pointercancel', () => { isPainting = false; lastPaintPt = null; });
+}
+
 function handleFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   const i = new Image();
-  i.onload = () => { img = i; prefix = file.name.replace(/\.[^.]+$/, ''); initCutsEqual(); render(); };
+  i.onload = () => {
+    img = i;
+    paintCanvas = document.createElement('canvas');
+    paintCanvas.width = img.width; paintCanvas.height = img.height;
+    paintCtx = paintCanvas.getContext('2d');
+    paintCtx.drawImage(img, 0, 0);
+    paintOpen = false; activeTool = 'brush'; brushColor = '#ffffff'; brushSize = 20;
+    prefix = file.name.replace(/\.[^.]+$/, ''); initCutsEqual(); render();
+  };
   i.src = URL.createObjectURL(file);
 }
 
@@ -416,7 +597,7 @@ function bindGridInputs() {
 function tileBlob(sx, sy, sw, sh) {
   return new Promise(res => {
     const c = document.createElement('canvas'); c.width = sw; c.height = sh;
-    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    c.getContext('2d').drawImage(imgSource(), sx, sy, sw, sh, 0, 0, sw, sh);
     c.toBlob(res, 'image/png');
   });
 }
