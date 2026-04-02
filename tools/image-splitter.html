@@ -224,6 +224,7 @@
   .color-hex { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); }
   .paint-size-group input[type="range"] { width: 100px; accent-color: var(--accent); }
   #size-label { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); min-width: 40px; }
+  #paint-cursor { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 5; }
 
   @media (max-width: 600px) {
     .app { padding: 24px 12px 60px; }
@@ -336,7 +337,8 @@ function renderEditor() {
           <button class="btn btn-sm btn-outline" id="paint-undo">元画像に戻す</button>
         </div>
         <div class="canvas-wrapper" id="paint-cw" style="width:${dw}px;height:${dh}px;">
-          <canvas id="paint-display" width="${dw}" height="${dh}" style="cursor:crosshair;"></canvas>
+          <canvas id="paint-display" width="${dw}" height="${dh}" style="cursor:none;"></canvas>
+          <canvas id="paint-cursor" width="${dw}" height="${dh}"></canvas>
         </div>
       </div>` : ''}
     </div>
@@ -508,7 +510,6 @@ function pickColor(e, canvas, scale) {
   activeTool = 'brush';
   document.getElementById('tool-brush').classList.add('active');
   document.getElementById('tool-eyedropper').classList.remove('active');
-  canvas.style.cursor = 'crosshair';
 }
 
 function setupPaint(dw, dh) {
@@ -518,17 +519,52 @@ function setupPaint(dw, dh) {
   const scale = img.width / dw;
   dctx.drawImage(imgSource(), 0, 0, dw, dh);
 
+  const cursorCanvas = document.getElementById('paint-cursor');
+  const cursorCtx = cursorCanvas.getContext('2d');
+  function drawCursor(x, y) {
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+    if (activeTool === 'eyedropper') {
+      cursorCtx.strokeStyle = '#fff';
+      cursorCtx.lineWidth = 2;
+      cursorCtx.beginPath();
+      cursorCtx.arc(x, y, 6, 0, Math.PI * 2);
+      cursorCtx.stroke();
+      cursorCtx.strokeStyle = '#000';
+      cursorCtx.lineWidth = 1;
+      cursorCtx.beginPath();
+      cursorCtx.arc(x, y, 7, 0, Math.PI * 2);
+      cursorCtx.stroke();
+    } else {
+      const r = brushSize / scale / 2;
+      cursorCtx.strokeStyle = 'rgba(255,255,255,0.8)';
+      cursorCtx.lineWidth = 1.5;
+      cursorCtx.beginPath();
+      cursorCtx.arc(x, y, r, 0, Math.PI * 2);
+      cursorCtx.stroke();
+      cursorCtx.strokeStyle = 'rgba(0,0,0,0.4)';
+      cursorCtx.lineWidth = 1;
+      cursorCtx.beginPath();
+      cursorCtx.arc(x, y, r + 1, 0, Math.PI * 2);
+      cursorCtx.stroke();
+    }
+  }
+  dc.addEventListener('mousemove', e => {
+    const pt = pointerToCanvas(e, dc);
+    drawCursor(pt.x, pt.y);
+  });
+  dc.addEventListener('mouseleave', () => {
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+  });
+
   document.getElementById('tool-brush').addEventListener('click', () => {
     activeTool = 'brush';
     document.getElementById('tool-brush').classList.add('active');
     document.getElementById('tool-eyedropper').classList.remove('active');
-    dc.style.cursor = 'crosshair';
   });
   document.getElementById('tool-eyedropper').addEventListener('click', () => {
     activeTool = 'eyedropper';
     document.getElementById('tool-eyedropper').classList.add('active');
     document.getElementById('tool-brush').classList.remove('active');
-    dc.style.cursor = 'copy';
   });
   document.getElementById('brush-color').addEventListener('input', e => {
     brushColor = e.target.value;
