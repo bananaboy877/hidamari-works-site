@@ -90,9 +90,9 @@ video{display:block;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)
     <div class="sub">腕立て砲撃RPG</div>
     <div class="instructions">
       カメラの前で<strong>腕立て伏せ</strong>をしよう！<br>
-      <em>肘の曲げ具合</em>で砲撃の角度が変わる<br>
-      <strong>1秒キープ</strong>で角度ロック →<em>腕を伸ばして発射</em>！<br>
-      放物線でモンスターを狙い撃て！
+      <em>腕を曲げる深さ</em>で砲撃の狙いが変わる<br>
+      <strong>腕を伸ばす</strong>と発射！<br>
+      少しキープすると精度UP！無理せずマイペースで
     </div>
     <div class="best-records" id="bestRecords"></div>
     <button class="btn" id="startBtn">START</button>
@@ -143,8 +143,8 @@ let launchAngle = 45;
 let angleLocked = false;
 let angleStableStart = 0;
 let lastStableAngle = -1;
-const LOCK_TIME = 1000;
-const ANGLE_TOLERANCE = 8;
+const LOCK_TIME = 600;
+const ANGLE_TOLERANCE = 15;
 
 // 砲弾
 let projectile = null;
@@ -458,11 +458,12 @@ function detectPushUp(lm) {
     if (!angleLocked) {
       // スムージング
       launchAngle = launchAngle * 0.7 + newAngle * 0.3;
+      // ロック判定はスムージング後の値で行う
       if (lastStableAngle < 0) {
-        lastStableAngle = newAngle;
+        lastStableAngle = launchAngle;
         angleStableStart = now;
-      } else if (Math.abs(newAngle - lastStableAngle) > ANGLE_TOLERANCE) {
-        lastStableAngle = newAngle;
+      } else if (Math.abs(launchAngle - lastStableAngle) > ANGLE_TOLERANCE) {
+        lastStableAngle = launchAngle;
         angleStableStart = now;
       } else if (now - angleStableStart >= LOCK_TIME) {
         angleLocked = true;
@@ -472,15 +473,23 @@ function detectPushUp(lm) {
     }
   }
 
-  // UP → 発射
+  // UP → 発射 (ロック有無に関わらず発射。ロックなしは精度低下)
   if (prevPoseState === 'down' && poseState === 'up') {
-    if (angleLocked) {
-      fireProjectile();
-      totalReps++;
-      repEl.textContent = totalReps;
+    totalReps++;
+    repEl.textContent = totalReps;
+    if (!angleLocked) {
+      // ロックなし発射: ランダムに角度がブレる (±12°)
+      launchAngle += (Math.random() - 0.5) * 24;
+      launchAngle = Math.max(5, Math.min(80, launchAngle));
     }
+    fireProjectile();
     angleLocked = false;
     lastStableAngle = -1;
+
+    // 休憩プロンプト (5レップごと)
+    if (totalReps > 0 && totalReps % 5 === 0) {
+      showRestPrompt();
+    }
   }
 }
 
@@ -603,20 +612,30 @@ function onHit() {
 }
 
 function onMiss(landX, W) {
-  streak = 0;
-  streakEl.textContent = '0';
+  streak = Math.max(0, streak - 1); // リセットではなく-1
+  streakEl.textContent = streak;
   shakeIntensity = 3;
   shakeDecay = 0.8;
 
   const mx = W * monster.dist;
-  if (landX < mx - MONSTER_HIT_RADIUS) {
-    showDamage('届かない！もっと深く', '#f84');
-  } else if (landX > mx + MONSTER_HIT_RADIUS) {
-    showDamage('飛びすぎ！もっと浅く', '#48f');
+  const diff = landX - mx;
+  if (diff < -MONSTER_HIT_RADIUS * 1.5) {
+    showDamage('おしい！もう少し深く曲げてみて', '#f84');
+  } else if (diff < -MONSTER_HIT_RADIUS) {
+    showDamage('あと少し！', '#fa0');
+  } else if (diff > MONSTER_HIT_RADIUS * 1.5) {
+    showDamage('おしい！少し浅めに曲げてみて', '#48f');
+  } else if (diff > MONSTER_HIT_RADIUS) {
+    showDamage('あと少し！', '#4af');
   } else {
-    showDamage('MISS', '#fff6');
+    showDamage('おしい！', '#fff8');
   }
   playMissSound();
+}
+
+let restPromptTimer = 0;
+function showRestPrompt() {
+  restPromptTimer = 180; // 3秒間表示 (60fps × 3)
 }
 
 function showDamage(text, color) {
@@ -1213,16 +1232,16 @@ function drawGuide(ctx, W, H) {
     } else {
       ctx.font = '600 15px Rajdhani';
       ctx.fillStyle = '#fffc';
-      ctx.fillText('角度調整中...', cx, cy - 2);
+      ctx.fillText('いい感じ！キープ！', cx, cy - 2);
       ctx.fillStyle = '#fff8';
-      ctx.fillText('1秒キープでロック', cx, cy + 16);
+      ctx.fillText('そのまま腕を伸ばしてもOK', cx, cy + 16);
     }
   } else {
     ctx.font = '600 15px Rajdhani';
     ctx.fillStyle = '#fff8';
-    ctx.fillText('腕立て開始！', cx, cy - 2);
+    ctx.fillText('腕を曲げてみよう！', cx, cy - 2);
     ctx.fillStyle = '#fff6';
-    ctx.fillText('肘を曲げて角度調整', cx, cy + 16);
+    ctx.fillText('曲げ具合で狙いが変わる', cx, cy + 16);
   }
   ctx.restore();
 }
@@ -1275,6 +1294,23 @@ function gameLoop(now) {
 
   drawFloorClear(gCtx, W, H);
   drawGuide(gCtx, W, H);
+
+  // 休憩プロンプト
+  if (restPromptTimer > 0) {
+    restPromptTimer--;
+    gCtx.save();
+    gCtx.globalAlpha = Math.min(1, restPromptTimer / 30);
+    const rpY = H * 0.55;
+    gCtx.fillStyle = '#0009';
+    gCtx.beginPath();
+    gCtx.roundRect(W/2 - 160, rpY - 28, 320, 56, 10);
+    gCtx.fill();
+    gCtx.font = '700 20px Rajdhani';
+    gCtx.fillStyle = '#0f0';
+    gCtx.textAlign = 'center';
+    gCtx.fillText(totalReps + '回達成！無理せず休憩してね', W/2, rpY + 6);
+    gCtx.restore();
+  }
 
   requestAnimationFrame(gameLoop);
 }
