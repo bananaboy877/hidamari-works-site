@@ -552,7 +552,7 @@ function updateProjectile(dt, W, H) {
   if (projectile.y >= groundY) {
     const landX = projectile.x;
     projectile.active = false;
-    spawnExplosion(landX, groundY, '#888', false);
+    spawnExplosion(landX, groundY, '#888888', false);
     onMiss(landX, W);
     return;
   }
@@ -667,7 +667,7 @@ function spawnExplosion(x, y, color, isHit) {
     }
     playExplosionSound();
   } else {
-    explosions.push({ x, y, life: 0.7, phase: 'core', size: 20, color: '#888' });
+    explosions.push({ x, y, life: 0.7, phase: 'core', size: 20, color: '#888888' });
     for (let i = 0; i < 6; i++) {
       const a = -Math.PI * Math.random();
       const spd = 1.5 + Math.random() * 3;
