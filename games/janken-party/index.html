@@ -672,6 +672,20 @@ function playSE(name) {
   playAudio('audio/' + name);
 }
 
+// TTS読み上げ
+function speakTTS(text) {
+  return new Promise(resolve => {
+    if (!window.speechSynthesis) { resolve(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.rate = 1.2;
+    u.onend = resolve;
+    u.onerror = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
 // ========================================
 // 画面遷移システム
 // ========================================
@@ -2649,6 +2663,12 @@ registerGame('speed', {
     scoreDiv.textContent = '0点';
     container.appendChild(scoreDiv);
 
+    // 「正解！」オーバーレイ
+    const seikaiOverlay = document.createElement('div');
+    seikaiOverlay.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.5);font-size:80px;font-weight:900;color:#43a047;opacity:0;transition:all 0.3s;z-index:30;text-shadow:0 0 20px #43a04780;pointer-events:none;';
+    seikaiOverlay.textContent = '正解！';
+    container.appendChild(seikaiOverlay);
+
     // えつこ画像表示エリア（正解時に左側に表示）
     const ETSUKO_COUNT = 30;
     const etsukoWrap = document.createElement('div');
@@ -2932,13 +2952,24 @@ registerGame('speed', {
           new Promise(r => setTimeout(r, 2000))
         ]).then(goNext);
       }
-      if (roundedSec > 0) {
-        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
-        stopAllAudio();
-        playAudio(timeFile).then(playPraiseThenNext);
-      } else {
-        playPraiseThenNext();
-      }
+      // 「正解！」表示 + TTS → タイム読み上げ → 褒め → 次
+      seikaiOverlay.style.opacity = '1';
+      seikaiOverlay.style.transform = 'translate(-50%,-50%) scale(1)';
+      setTimeout(() => {
+        seikaiOverlay.style.opacity = '0';
+        seikaiOverlay.style.transform = 'translate(-50%,-50%) scale(0.5)';
+      }, 1000);
+
+      speakTTS('正解').then(() => {
+        if (self._destroyed || !answeredPhase) return;
+        if (roundedSec > 0) {
+          const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
+          stopAllAudio();
+          playAudio(timeFile).then(playPraiseThenNext);
+        } else {
+          playPraiseThenNext();
+        }
+      });
 
       if (reactionMs <= 1000) {
         helpDiv.textContent = '超はやい！' + praise;
