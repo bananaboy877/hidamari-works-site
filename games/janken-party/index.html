@@ -2960,7 +2960,8 @@ registerGame('speed', {
         seikaiOverlay.style.transform = 'translate(-50%,-50%) scale(0.5)';
       }, 1000);
 
-      speakTTS('正解').then(() => {
+      stopAllAudio();
+      playAudio('audio/seikai.wav').then(() => {
         if (self._destroyed || !answeredPhase) return;
         if (roundedSec > 0) {
           const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
