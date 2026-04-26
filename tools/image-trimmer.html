@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>画像トリミングツール - 白背景の中身だけ切り出し</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #fbf7f0;
+    --bg-card: #ffffff;
+    --bg-soft: #f4ede0;
+    --ink: #2a2520;
+    --ink-soft: #6a615a;
+    --ink-mute: #9a918a;
+    --accent: #e07a3a;
+    --accent-soft: #fcdcc4;
+    --accent-deep: #b85a1c;
+    --line: #e8dfd0;
+    --good: #4a8a4a;
+    --shadow-sm: 0 1px 2px rgba(60,40,20,.06);
+    --shadow-md: 0 4px 16px rgba(60,40,20,.08);
+    --shadow-lg: 0 12px 40px rgba(60,40,20,.12);
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 22px;
+    --check-bg: #fefcf8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "M PLUS Rounded 1c", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(224,122,58,0.06), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(224,122,58,0.05), transparent 35%);
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .logo {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+  }
+  .logo svg { width: 26px; height: 26px; color: white; }
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+  .tagline {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    background: var(--bg-card);
+    border: 2px dashed var(--line);
+    border-radius: var(--radius-lg);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .drop-zone:hover {
+    border-color: var(--accent);
+    background: var(--bg-card);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    transform: scale(1.005);
+  }
+  .drop-zone .icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 12px;
+    background: var(--accent-soft);
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    color: var(--accent-deep);
+  }
+  .drop-zone .icon svg { width: 28px; height: 28px; }
+  .drop-zone .title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .drop-zone .sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .drop-zone .or {
+    display: inline-block;
+    margin: 12px 0 4px;
+    color: var(--ink-mute);
+    font-size: 12px;
+  }
+  .browse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .browse-btn:hover {
+    background: var(--accent-deep);
+    transform: translateY(-1px);
+  }
+  #fileInput { display: none; }
+
+  /* Settings card */
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-top: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--line);
+  }
+  .card h2 {
+    margin: 0 0 18px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2::before {
+    content: "";
+    width: 4px; height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px;
+  }
+
+  .field { }
+  .field-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .field-label .hint {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-weight: 500;
+  }
+  .field-value {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent-deep);
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  /* Slider */
+  input[type="range"] {
+    width: 100%;
+    height: 28px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: var(--bg-soft);
+    border-radius: 3px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-top: -8px;
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: var(--bg-soft);
+    border-radius: 3px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: none;
+    cursor: grab;
+  }
+
+  /* Number input */
+  .num-input {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--bg-card);
+    width: fit-content;
+  }
+  .num-input button {
+    width: 32px; height: 36px;
+    background: var(--bg-soft);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .num-input button:hover { background: var(--accent-soft); }
+  .num-input input {
+    width: 64px;
+    height: 36px;
+    text-align: center;
+    border: none;
+    background: var(--bg-card);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .num-input input:focus { outline: none; }
+
+  /* Radio cards */
+  .radio-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .radio-card {
+    position: relative;
+    cursor: pointer;
+  }
+  .radio-card input { position: absolute; opacity: 0; pointer-events: none; }
+  .radio-card .inner {
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.15s;
+    background: var(--bg-card);
+  }
+  .radio-card:hover .inner {
+    border-color: var(--accent);
+    background: var(--check-bg);
+  }
+  .radio-card input:checked + .inner {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 3px rgba(224,122,58,0.12);
+  }
+  .swatch {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .swatch.white { background: white; }
+  .swatch.transparent {
+    background-image:
+      linear-gradient(45deg, #ccc 25%, transparent 25%),
+      linear-gradient(-45deg, #ccc 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #ccc 75%),
+      linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+    background-color: white;
+  }
+  .swatch.original {
+    background: linear-gradient(135deg, #fff 0%, #f0e8d8 100%);
+  }
+  .swatch.custom {
+    background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #ffe66d);
+  }
+  .radio-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .radio-label small {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-mute);
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  /* Color picker */
+  .color-pick-row {
+    display: none;
+    margin-top: 8px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-soft);
+    border-radius: var(--radius-sm);
+  }
+  .color-pick-row.active { display: flex; }
+  .color-pick-row label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  input[type="color"] {
+    width: 36px; height: 36px;
+    border: 2px solid white;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    padding: 0;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+
+  /* Toggle switch */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--check-bg);
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--line);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-row:hover { border-color: var(--accent); }
+  .toggle-row.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .toggle-text {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .toggle-text small {
+    display: block;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .switch {
+    width: 42px; height: 24px;
+    background: var(--ink-mute);
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: var(--shadow-sm);
+  }
+  .toggle-row.active .switch { background: var(--accent); }
+  .toggle-row.active .switch::after { transform: translateX(18px); }
+  .toggle-row input { display: none; }
+
+  /* Advanced */
+  details.advanced {
+    margin-top: 14px;
+    border-top: 1px dashed var(--line);
+    padding-top: 14px;
+  }
+  details.advanced summary {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  details.advanced summary::-webkit-details-marker { display: none; }
+  details.advanced summary::before {
+    content: "▸";
+    transition: transform 0.2s;
+    color: var(--accent);
+  }
+  details.advanced[open] summary::before { transform: rotate(90deg); }
+  details.advanced > div { margin-top: 12px; }
+
+  /* Action bar */
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: var(--shadow-md);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+  .btn-secondary {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--accent-soft); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+  }
+  .btn-ghost:hover { color: var(--accent-deep); }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* Status bar */
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    min-height: 20px;
+  }
+  .status .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ink-mute);
+  }
+  .status.processing .dot { background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+  .status.done .dot { background: var(--good); }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.5; }
+  }
+
+  /* Preview grid */
+  #previewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+  }
+  .thumb {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+  }
+  .thumb:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .thumb-preview {
+    aspect-ratio: 1 / 1;
+    background-image:
+      linear-gradient(45deg, #f0e8d8 25%, transparent 25%),
+      linear-gradient(-45deg, #f0e8d8 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #f0e8d8 75%),
+      linear-gradient(-45deg, transparent 75%, #f0e8d8 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    background-color: #fbf7f0;
+    display: grid;
+    place-items: center;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .thumb-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .thumb-info {
+    padding: 10px 14px 12px;
+    border-top: 1px solid var(--line);
+  }
+  .thumb-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .thumb-meta {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-family: "JetBrains Mono", monospace;
+    margin-top: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .thumb-dl {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--accent);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .thumb-dl:hover { background: var(--accent-soft); }
+  .thumb.error .thumb-preview {
+    background: #fef0e8;
+  }
+  .thumb.error .thumb-name { color: #b85a1c; }
+
+  .empty {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--ink-mute);
+    font-size: 13px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .wrap { padding: 20px 14px 60px; }
+    .card { padding: 18px 18px; }
+    .settings-grid { gap: 18px; }
+    .drop-zone { padding: 32px 18px; }
+    h1 { font-size: 19px; }
+    .actions { flex-direction: column; }
+    .actions .btn { width: 100%; justify-content: center; }
+  }
+
+  /* Tip footer */
+  .tips {
+    margin-top: 28px;
+    padding: 16px 20px;
+    background: var(--accent-soft);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    border-left: 4px solid var(--accent);
+  }
+  .tips strong { color: var(--accent-deep); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M9 9h6v6H9z" />
+      </svg>
+    </div>
+    <div>
+      <h1>画像トリミングツール</h1>
+      <p class="tagline">白背景の画像から、中身だけを自動で切り出します</p>
+    </div>
+  </header>
+
+  <!-- Drop zone -->
+  <div class="drop-zone" id="dropZone">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+    </div>
+    <div class="title">画像をここにドロップ</div>
+    <div class="sub">PNG / JPG / WebP に対応(複数まとめてOK)</div>
+    <div class="or">または</div>
+    <br/>
+    <button class="browse-btn" type="button" id="browseBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+      画像を選ぶ
+    </button>
+    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" multiple />
+  </div>
+
+  <!-- Settings -->
+  <div class="card">
+    <h2>設定</h2>
+    <div class="settings-grid">
+
+      <!-- Padding amount -->
+      <div class="field">
+        <div class="field-label">
+          <span>余白の大きさ</span>
+          <span class="hint">トリミング後に追加する余白</span>
+        </div>
+        <div class="num-input">
+          <button type="button" data-step="-10">−</button>
+          <input type="number" id="paddingInput" value="20" min="0" max="500" step="1" />
+          <button type="button" data-step="10">+</button>
+          <span style="padding: 0 12px; font-size: 12px; color: var(--ink-mute); font-weight: 600;">px</span>
+        </div>
+      </div>
+
+      <!-- Padding color -->
+      <div class="field">
+        <div class="field-label">
+          <span>余白の色</span>
+          <span class="hint">追加した余白の塗り</span>
+        </div>
+        <div class="radio-grid" id="padColorGroup">
+          <label class="radio-card">
+            <input type="radio" name="padColor" value="white" checked />
+            <div class="inner">
+              <div class="swatch white"></div>
+              <div class="radio-label">白<small>おすすめ</small></div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="padColor" value="original" />
+            <div class="inner">
+              <div class="swatch original"></div>
+              <div class="radio-label">元の色<small>画像の隅から自動取得</small></div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="padColor" value="transparent" />
+            <div class="inner">
+              <div class="swatch transparent"></div>
+              <div class="radio-label">透明<small>PNGで保存</small></div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="padColor" value="custom" />
+            <div class="inner">
+              <div class="swatch custom"></div>
+              <div class="radio-label">カスタム<small>好きな色を指定</small></div>
+            </div>
+          </label>
+        </div>
+        <div class="color-pick-row" id="colorPickRow">
+          <label for="customColor">色を選んでください:</label>
+          <input type="color" id="customColor" value="#f4ede0" />
+        </div>
+      </div>
+
+      <!-- Transparent toggle -->
+      <div class="field">
+        <div class="field-label">
+          <span>背景の透過</span>
+          <span class="hint">画像内の白色を透明に</span>
+        </div>
+        <label class="toggle-row" id="transparentToggle">
+          <input type="checkbox" id="makeTransparent" />
+          <div class="toggle-text">
+            背景を透過する
+            <small>白い部分を透明に置き換えてPNGで保存</small>
+          </div>
+          <div class="switch"></div>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- Advanced -->
+    <details class="advanced">
+      <summary>詳細設定(背景の判定基準)</summary>
+      <div class="field">
+        <div class="field-label">
+          <span>背景としてみなす明るさのしきい値</span>
+          <span class="field-value" id="thresholdValue">240</span>
+        </div>
+        <input type="range" id="thresholdSlider" min="180" max="255" value="240" />
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink-mute); margin-top:4px;">
+          <span>厳しめ(汚れも残す)</span>
+          <span>緩め(白っぽい色も背景に)</span>
+        </div>
+      </div>
+    </details>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" id="processBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        処理する
+      </button>
+      <button class="btn btn-secondary" id="downloadAllBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ZIPで一括ダウンロード
+      </button>
+      <button class="btn btn-ghost" id="clearBtn" disabled>すべてクリア</button>
+    </div>
+
+    <div class="status" id="status">
+      <div class="dot"></div>
+      <span id="statusText">画像を読み込んでください</span>
+    </div>
+  </div>
+
+  <!-- Preview grid -->
+  <div class="card">
+    <h2>プレビュー</h2>
+    <div id="previewGrid">
+      <div class="empty" id="emptyMsg">処理結果はここに表示されます</div>
+    </div>
+  </div>
+
+  <div class="tips">
+    💡 <strong>使い方のヒント:</strong>
+    白背景の写真や絵から、被写体だけをきれいに切り抜きたいときに使えます。
+    まず画像をドロップ → 設定はそのままでOK → 「処理する」を押すだけ。
+    結果が思った通りでないときは「詳細設定」のしきい値を少し動かしてみてください。
+    すべての処理はあなたのブラウザ内で完結し、画像はどこにも送信されません。
+  </div>
+
+</div>
+
+<script>
+//=============================================================
+// State
+//=============================================================
+const state = {
+  files: [],     // {id, file, name, img, originalUrl}
+  results: [],   // {id, blob, url, width, height, name}
+};
+let nextId = 1;
+
+//=============================================================
+// DOM
+//=============================================================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const browseBtn = document.getElementById('browseBtn');
+const paddingInput = document.getElementById('paddingInput');
+const colorPickRow = document.getElementById('colorPickRow');
+const customColorInput = document.getElementById('customColor');
+const transparentToggle = document.getElementById('transparentToggle');
+const makeTransparentInput = document.getElementById('makeTransparent');
+const thresholdSlider = document.getElementById('thresholdSlider');
+const thresholdValue = document.getElementById('thresholdValue');
+const processBtn = document.getElementById('processBtn');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusEl = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const previewGrid = document.getElementById('previewGrid');
+const emptyMsg = document.getElementById('emptyMsg');
+
+//=============================================================
+// File handling
+//=============================================================
+browseBtn.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('click', (e) => {
+  if (e.target.closest('button')) return;
+  fileInput.click();
+});
+
+['dragenter', 'dragover'].forEach(ev => {
+  dropZone.addEventListener(ev, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add('drag-over');
+  });
+});
+['dragleave', 'drop'].forEach(ev => {
+  dropZone.addEventListener(ev, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove('drag-over');
+  });
+});
+dropZone.addEventListener('drop', e => {
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  addFiles(files);
+});
+fileInput.addEventListener('change', e => {
+  addFiles(Array.from(e.target.files));
+  fileInput.value = '';
+});
+
+async function addFiles(files) {
+  for (const f of files) {
+    const id = nextId++;
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await loadImage(url);
+      state.files.push({ id, file: f, name: f.name, img, originalUrl: url });
+    } catch (err) {
+      console.error('Failed to load', f.name, err);
+    }
+  }
+  refreshUI();
+}
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+//=============================================================
+// UI updates
+//=============================================================
+paddingInput.addEventListener('input', clamp);
+paddingInput.addEventListener('change', clamp);
+function clamp() {
+  let v = parseInt(paddingInput.value, 10);
+  if (isNaN(v) || v < 0) v = 0;
+  if (v > 500) v = 500;
+  paddingInput.value = v;
+}
+document.querySelectorAll('.num-input button[data-step]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const step = parseInt(btn.dataset.step, 10);
+    paddingInput.value = Math.max(0, Math.min(500, parseInt(paddingInput.value, 10) + step));
+  });
+});
+
+document.querySelectorAll('input[name="padColor"]').forEach(r => {
+  r.addEventListener('change', () => {
+    colorPickRow.classList.toggle('active', r.checked && r.value === 'custom');
+  });
+});
+
+transparentToggle.addEventListener('click', e => {
+  if (e.target.tagName === 'INPUT') return;
+  e.preventDefault();
+  makeTransparentInput.checked = !makeTransparentInput.checked;
+  transparentToggle.classList.toggle('active', makeTransparentInput.checked);
+});
+makeTransparentInput.addEventListener('change', () => {
+  transparentToggle.classList.toggle('active', makeTransparentInput.checked);
+});
+
+thresholdSlider.addEventListener('input', () => {
+  thresholdValue.textContent = thresholdSlider.value;
+});
+
+clearBtn.addEventListener('click', () => {
+  state.files.forEach(f => URL.revokeObjectURL(f.originalUrl));
+  state.results.forEach(r => URL.revokeObjectURL(r.url));
+  state.files = [];
+  state.results = [];
+  refreshUI();
+});
+
+function refreshUI() {
+  const hasFiles = state.files.length > 0;
+  const hasResults = state.results.length > 0;
+  processBtn.disabled = !hasFiles;
+  downloadAllBtn.disabled = !hasResults;
+  clearBtn.disabled = !hasFiles && !hasResults;
+
+  if (hasFiles && !hasResults) {
+    setStatus('idle', `${state.files.length}枚の画像が読み込まれました。「処理する」を押してください`);
+  } else if (!hasFiles && !hasResults) {
+    setStatus('idle', '画像を読み込んでください');
+  }
+  renderPreview();
+}
+
+function setStatus(type, text) {
+  statusEl.classList.remove('processing', 'done');
+  if (type === 'processing') statusEl.classList.add('processing');
+  if (type === 'done') statusEl.classList.add('done');
+  statusText.textContent = text;
+}
+
+//=============================================================
+// Image processing
+//=============================================================
+function getOptions() {
+  return {
+    threshold: parseInt(thresholdSlider.value, 10),
+    padding: parseInt(paddingInput.value, 10) || 0,
+    paddingMode: document.querySelector('input[name="padColor"]:checked').value,
+    customColor: customColorInput.value,
+    makeTransparent: makeTransparentInput.checked,
+  };
+}
+
+/**
+ * Find bounding box of non-background pixels.
+ * A pixel is considered background when it is fully opaque AND
+ * all its R,G,B channels are >= threshold (i.e., near-white).
+ */
+function findContentBBox(imageData, threshold) {
+  const { data, width, height } = imageData;
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  // Scan rows from top
+  for (let y = 0; y < height; y++) {
+    let rowHasContent = false;
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+      const isBg = (a < 8) || (r >= threshold && g >= threshold && b >= threshold);
+      if (!isBg) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        rowHasContent = true;
+      }
+    }
+    if (rowHasContent) {
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < 0) return null;
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+
+function makeWhiteTransparent(imageData, threshold) {
+  const { data } = imageData;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i+1], b = data[i+2];
+    if (r >= threshold && g >= threshold && b >= threshold) {
+      data[i+3] = 0;
+    }
+  }
+}
+
+/**
+ * Sample a representative background color from the corners
+ * of the original image (averaged).
+ */
+function sampleCornerColor(imageData) {
+  const { data, width, height } = imageData;
+  const points = [
+    [0, 0], [width-1, 0], [0, height-1], [width-1, height-1],
+    [Math.floor(width/2), 0], [0, Math.floor(height/2)],
+    [width-1, Math.floor(height/2)], [Math.floor(width/2), height-1],
+  ];
+  let r = 0, g = 0, b = 0;
+  for (const [x, y] of points) {
+    const i = (y * width + x) * 4;
+    r += data[i]; g += data[i+1]; b += data[i+2];
+  }
+  const n = points.length;
+  return `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`;
+}
+
+async function processOne(entry, opts) {
+  const { img } = entry;
+  const w = img.naturalWidth, h = img.naturalHeight;
+
+  // Source canvas
+  const src = document.createElement('canvas');
+  src.width = w; src.height = h;
+  const sctx = src.getContext('2d', { willReadFrequently: true });
+  sctx.drawImage(img, 0, 0);
+  const srcData = sctx.getImageData(0, 0, w, h);
+
+  // Find content
+  const bbox = findContentBBox(srcData, opts.threshold);
+  if (!bbox) {
+    throw new Error('画像に被写体が見つかりません(全面が背景色)');
+  }
+
+  // Output canvas
+  const pad = opts.padding;
+  const outW = bbox.w + pad * 2;
+  const outH = bbox.h + pad * 2;
+  const out = document.createElement('canvas');
+  out.width = outW; out.height = outH;
+  const octx = out.getContext('2d', { willReadFrequently: true });
+
+  // Fill background
+  // If makeTransparent is on, we will strip white at the end -> filling
+  // any near-white color is OK because it'll be removed.
+  // If padding mode is 'transparent', leave canvas transparent.
+  let fillColor = null;
+  if (opts.paddingMode === 'transparent') {
+    fillColor = null;
+  } else if (opts.paddingMode === 'white') {
+    fillColor = '#ffffff';
+  } else if (opts.paddingMode === 'original') {
+    fillColor = sampleCornerColor(srcData);
+  } else if (opts.paddingMode === 'custom') {
+    fillColor = opts.customColor;
+  }
+  if (fillColor) {
+    octx.fillStyle = fillColor;
+    octx.fillRect(0, 0, outW, outH);
+  }
+
+  // Draw cropped content
+  octx.drawImage(src, bbox.x, bbox.y, bbox.w, bbox.h, pad, pad, bbox.w, bbox.h);
+
+  // Optional: make white pixels transparent
+  if (opts.makeTransparent) {
+    const od = octx.getImageData(0, 0, outW, outH);
+    makeWhiteTransparent(od, opts.threshold);
+    octx.putImageData(od, 0, 0);
+  }
+
+  // Encode as PNG (always, to support transparency)
+  const blob = await new Promise(res => out.toBlob(res, 'image/png'));
+  return { blob, width: outW, height: outH };
+}
+
+//=============================================================
+// Process button
+//=============================================================
+processBtn.addEventListener('click', async () => {
+  if (state.files.length === 0) return;
+  // Clean previous results
+  state.results.forEach(r => URL.revokeObjectURL(r.url));
+  state.results = [];
+  refreshUI();
+
+  processBtn.disabled = true;
+  downloadAllBtn.disabled = true;
+  clearBtn.disabled = true;
+
+  const opts = getOptions();
+  const total = state.files.length;
+  let okCount = 0;
+  let failCount = 0;
+
+  for (let i = 0; i < total; i++) {
+    const entry = state.files[i];
+    setStatus('processing', `処理中… ${i+1} / ${total}: ${entry.name}`);
+    try {
+      const r = await processOne(entry, opts);
+      const url = URL.createObjectURL(r.blob);
+      const ext = '.png';
+      const baseName = entry.name.replace(/\.[^.]+$/, '');
+      const outName = `${baseName}_trimmed${ext}`;
+      state.results.push({
+        id: entry.id, blob: r.blob, url, width: r.width, height: r.height,
+        name: outName, error: null,
+      });
+      okCount++;
+    } catch (err) {
+      console.error(err);
+      state.results.push({
+        id: entry.id, blob: null, url: null, width: 0, height: 0,
+        name: entry.name, error: err.message || '処理に失敗しました',
+      });
+      failCount++;
+    }
+    renderPreview();
+    // yield to browser so UI updates
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  processBtn.disabled = false;
+  downloadAllBtn.disabled = okCount === 0;
+  clearBtn.disabled = false;
+
+  if (failCount === 0) {
+    setStatus('done', `完了!${okCount}枚すべて処理できました`);
+  } else {
+    setStatus('done', `完了:${okCount}枚成功 / ${failCount}枚失敗`);
+  }
+});
+
+//=============================================================
+// Render preview
+//=============================================================
+function renderPreview() {
+  if (state.files.length === 0 && state.results.length === 0) {
+    previewGrid.innerHTML = '<div class="empty">処理結果はここに表示されます</div>';
+    return;
+  }
+
+  // Build cards: prefer result if available, otherwise show original
+  const cards = [];
+  if (state.results.length > 0) {
+    for (const r of state.results) {
+      cards.push(makeResultCard(r));
+    }
+  } else {
+    for (const f of state.files) {
+      cards.push(makeOriginalCard(f));
+    }
+  }
+  previewGrid.innerHTML = cards.join('');
+
+  // Wire download buttons
+  previewGrid.querySelectorAll('.thumb-dl').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = parseInt(btn.dataset.id, 10);
+      const r = state.results.find(x => x.id === id);
+      if (r && r.url) downloadBlobUrl(r.url, r.name);
+    });
+  });
+}
+
+function makeOriginalCard(f) {
+  return `
+    <div class="thumb">
+      <div class="thumb-preview"><img src="${escapeAttr(f.originalUrl)}" alt="${escapeAttr(f.name)}" /></div>
+      <div class="thumb-info">
+        <div class="thumb-name">${escapeHtml(f.name)}</div>
+        <div class="thumb-meta">
+          <span>${f.img.naturalWidth}×${f.img.naturalHeight}</span>
+          <span style="color:var(--ink-mute)">未処理</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function makeResultCard(r) {
+  if (r.error) {
+    return `
+      <div class="thumb error">
+        <div class="thumb-preview" style="color:var(--accent-deep); font-size:12px; text-align:center; padding:14px;">
+          ⚠️<br/>${escapeHtml(r.error)}
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-name">${escapeHtml(r.name)}</div>
+          <div class="thumb-meta"><span>処理に失敗</span></div>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="thumb">
+      <div class="thumb-preview"><img src="${escapeAttr(r.url)}" alt="${escapeAttr(r.name)}" /></div>
+      <div class="thumb-info">
+        <div class="thumb-name">${escapeHtml(r.name)}</div>
+        <div class="thumb-meta">
+          <span>${r.width}×${r.height}</span>
+          <button class="thumb-dl" data-id="${r.id}">↓ DL</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+function downloadBlobUrl(url, name) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+//=============================================================
+// ZIP download
+//=============================================================
+downloadAllBtn.addEventListener('click', async () => {
+  const successes = state.results.filter(r => r.blob);
+  if (successes.length === 0) return;
+  setStatus('processing', 'ZIPファイルを作成中…');
+  downloadAllBtn.disabled = true;
+
+  const zip = new JSZip();
+  // Avoid duplicate names
+  const used = new Map();
+  for (const r of successes) {
+    let name = r.name;
+    if (used.has(name)) {
+      const n = used.get(name) + 1;
+      used.set(name, n);
+      const dot = name.lastIndexOf('.');
+      name = dot >= 0
+        ? `${name.slice(0,dot)}_${n}${name.slice(dot)}`
+        : `${name}_${n}`;
+    } else {
+      used.set(name, 1);
+    }
+    zip.file(name, r.blob);
+  }
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const zipUrl = URL.createObjectURL(zipBlob);
+  const ts = new Date().toISOString().replace(/[:T]/g,'-').slice(0,19);
+  downloadBlobUrl(zipUrl, `trimmed_${ts}.zip`);
+  setTimeout(() => URL.revokeObjectURL(zipUrl), 60000);
+
+  downloadAllBtn.disabled = false;
+  setStatus('done', `ZIPファイルをダウンロードしました(${successes.length}枚)`);
+});
+
+// Initial render
+refreshUI();
+</script>
+</body>
+</html>
