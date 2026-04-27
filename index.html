@@ -3,282 +3,685 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hidamari Works | 3Dプリンター用パラメトリックツール</title>
-<meta name="description" content="ブラウザだけで3Dプリンター用モデルをカスタマイズ。サイズ自由自在、STLダウンロードですぐ印刷。サーバー不要・完全無料。">
+<title>ひだまりワークス | ぽかぽかなつくりもの</title>
+<meta name="description" content="ツール、ゲーム、アプリ。ひだまりワークスがつくる、ぽかぽかな個人制作の置き場所です。気軽に使ったり、遊んでみてください。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#faf8f5;--surface:#fff;--surface2:#f3f0eb;
-  --border:#e8e2d9;--text:#2c2416;--text2:#6b5e4f;--text3:#9c8e7d;
-  --accent:#b45309;--accent-light:#fef3c7;--accent-dark:#78350f;
-  --green:#059669;--green-light:#d1fae5;
-  --blue:#2563eb;--blue-light:#dbeafe;
-  --shadow:0 1px 3px rgba(44,36,22,0.06),0 6px 20px rgba(44,36,22,0.06);
-  --shadow-lg:0 8px 32px rgba(44,36,22,0.1);
+  --bg: oklch(95% 0.04 75);
+  --bg-dot: oklch(85% 0.06 65 / 0.4);
+  --ink: oklch(22% 0.01 60);
+  --sub: oklch(40% 0.01 60);
+  --panel: #fff;
+  --accent: oklch(72% 0.15 55);
+  --accent-deep: oklch(50% 0.12 55);
+  --accent-ink: #fff;
+  --highlight: oklch(88% 0.12 75);
+  --tag-bg: oklch(94% 0.04 70);
+  --tag-ink: oklch(35% 0.02 60);
+  --logo-fill: oklch(80% 0.14 75);
+  --shadow-base: 4px 5px 0 var(--ink);
+  --shadow-hover: 6px 8px 0 var(--ink);
+  --shadow-pill: 2px 2px 0 var(--ink);
+  --shadow-pill-md: 3px 3px 0 var(--ink);
+  --ease: cubic-bezier(.34, 1.56, .64, 1);
+  --radius-card: 22px;
+  --radius-pill: 999px;
+  --container-w: 1180px;
+  --container-pad: 32px;
+  --card-w: 320px;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'M PLUS Rounded 1c',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "M PLUS Rounded 1c", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+body {
+  background-image: radial-gradient(var(--bg-dot) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+button { font: inherit; cursor: pointer; }
+
+.container {
+  max-width: var(--container-w);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+.is-hidden { display: none !important; }
+
+/* Nav */
+.nav {
+  margin: 20px auto 0;
+  max-width: calc(var(--container-w) - var(--container-pad) * 2);
+  padding: 12px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-base);
+  gap: 16px;
+  position: relative; z-index: 5;
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit;
+}
+.nav-logo {
+  width: 30px; height: 30px;
+  background: var(--logo-fill);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.nav-logo::before, .nav-logo::after {
+  content: ''; position: absolute; top: 9px;
+  width: 4px; height: 4px; border-radius: 50%; background: var(--ink);
+}
+.nav-logo::before { left: 7px; }
+.nav-logo::after { right: 7px; }
+.nav-logo-mouth {
+  position: absolute; bottom: 7px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 4px;
+  border-top: 2px solid var(--ink);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+.nav-brand-text { font-weight: 800; font-size: 14px; }
+.nav-links { display: flex; align-items: center; gap: 22px; font-size: 12px; font-weight: 700; }
+.nav-links a {
+  text-decoration: none;
+  padding: 4px 2px;
+  transition: color .15s;
+}
+.nav-links a:hover { color: var(--accent-deep); }
 
 /* Hero */
-.hero{
-  text-align:center;padding:60px 24px 40px;
-  background:linear-gradient(180deg,var(--accent-light) 0%,var(--bg) 100%);
+.hero {
+  text-align: center;
+  padding: 36px var(--container-pad) 18px;
+  max-width: var(--container-w);
+  margin: 0 auto;
 }
-.hero-logo{
-  display:inline-flex;align-items:center;gap:14px;margin-bottom:20px;
+.hero-pill {
+  display: inline-block;
+  font-size: 11px; font-weight: 800; letter-spacing: .1em;
+  background: var(--panel);
+  color: var(--accent-deep);
+  padding: 5px 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-pill-md);
+  margin-bottom: 18px;
 }
-.hero-mark{
-  width:56px;height:56px;
-  background:linear-gradient(135deg,#f59e0b,#d97706);
-  border-radius:16px;display:flex;align-items:center;justify-content:center;
-  font-size:28px;box-shadow:0 4px 16px rgba(217,119,6,0.3);
+.hero-title {
+  margin: 0 0 14px;
+  font-size: clamp(34px, 4.5vw + 1rem, 52px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  text-wrap: balance;
 }
-.hero-brand{font-size:28px;font-weight:900;color:var(--text);}
-.hero-brand span{color:var(--accent);}
-.hero-tagline{
-  font-size:18px;color:var(--text2);font-weight:500;
-  max-width:500px;margin:0 auto 16px;line-height:1.7;
+.hero-title mark {
+  background: linear-gradient(180deg, transparent 60%, var(--highlight) 60%);
+  color: inherit;
+  padding: 0 2px;
 }
-.hero-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-.badge{
-  font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;
-}
-.badge-free{background:var(--green-light);color:#065f46;}
-.badge-browser{background:var(--blue-light);color:var(--blue);}
-.badge-print{background:var(--accent-light);color:var(--accent-dark);}
-
-/* Tools Grid */
-.tools-section{
-  max-width:900px;margin:0 auto;padding:20px 24px 60px;
-}
-.section-header{
-  text-align:center;margin-bottom:32px;
-}
-.section-title{
-  font-size:14px;font-weight:800;color:var(--accent);
-  text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;
-}
-.section-sub{font-size:22px;font-weight:800;color:var(--text);}
-
-.tools-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
+.hero-sub {
+  margin: 0 auto;
+  font-size: 13.5px;
+  line-height: 1.85;
+  font-weight: 500;
+  color: var(--sub);
+  max-width: 540px;
 }
 
-.tool-card{
-  background:var(--surface);border:1.5px solid var(--border);
-  border-radius:16px;overflow:hidden;
-  transition:all 0.3s;cursor:pointer;text-decoration:none;color:inherit;
-  display:block;
+/* Showcase */
+.showcase { padding: 6px 0 30px; }
+.showcase-head {
+  max-width: var(--container-w);
+  margin: 0 auto;
+  padding: 0 var(--container-pad) 10px;
+  display: flex; justify-content: space-between; align-items: baseline;
+  flex-wrap: wrap; gap: 8px;
 }
-.tool-card:hover{
-  transform:translateY(-4px);box-shadow:var(--shadow-lg);
-  border-color:var(--accent);
+.showcase-head-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.showcase-h2 { font-size: 18px; font-weight: 900; }
+.showcase-hint { font-size: 11px; color: var(--sub); font-weight: 600; }
+.showcase-count { font-size: 11px; color: var(--sub); font-weight: 700; }
+
+.showcase-mask {
+  mask-image: linear-gradient(90deg, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
+}
+.showcase-viewport {
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+  padding: 14px 0;
+}
+.showcase-viewport:active { cursor: grabbing; }
+.showcase-track {
+  display: flex;
+  gap: 18px;
+  will-change: transform;
 }
 
-.tool-visual{
-  height:180px;display:flex;align-items:center;justify-content:center;
-  font-size:64px;
-  position:relative;overflow:hidden;
+.showcase-card {
+  flex: 0 0 auto;
+  width: var(--card-w);
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+  position: relative;
 }
-.tool-visual-desk{background:linear-gradient(135deg,#fef3c7,#fde68a);}
-.tool-visual-shutter{background:linear-gradient(135deg,#dbeafe,#bfdbfe);}
-.tool-visual-coming{background:linear-gradient(135deg,var(--surface2),#e8e2d9);}
-.tool-visual-memo{background:linear-gradient(135deg,#fce4ec,#ffe0b2);}
-.tool-visual-logo{background:linear-gradient(135deg,#2d2d2d,#4a4a4a);}
-.tool-visual-ika{background:linear-gradient(135deg,#0D1117,#1E2A38);}
-.tool-visual-keymap{background:linear-gradient(135deg,#e0f2f1,#b2dfdb);}
-.tool-visual-music{background:linear-gradient(135deg,#1a1714,#3d2e1f);}
-.tool-visual-game{background:linear-gradient(135deg,#87CEEB,#6abf69);}
-.tool-visual-splitter{background:linear-gradient(135deg,#1a1a22,#2a2a36);}
-.tool-visual-pushrpg{background:linear-gradient(135deg,#0a0a1a,#1a0a2a);}
-.tool-visual-trimmer{background:linear-gradient(135deg,#fcdcc4,#fbf7f0);}
+.showcase-card[data-tilt="-1"] { transform: rotate(-1deg); }
+.showcase-card[data-tilt="1"]  { transform: rotate(1deg); }
+.showcase-card:hover {
+  transform: translateY(-3px) rotate(0deg);
+  box-shadow: 7px 9px 0 var(--accent);
+}
+.showcase-card-thumb { height: 180px; padding: 8px 8px 0; position: relative; }
+.showcase-card-ribbon {
+  position: absolute; top: 0; left: 0;
+  background: var(--ink); color: var(--panel);
+  padding: 4px 12px;
+  border-radius: 0 0 14px 0;
+  border: 2px solid var(--ink);
+  border-top: none; border-left: none;
+  font-size: 9.5px; font-weight: 800; letter-spacing: .08em;
+  transform: translate(-2px, -2px);
+}
+.showcase-card-badge {
+  position: absolute; top: -6px; right: -6px;
+  background: var(--accent); color: var(--accent-ink);
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  border: 2px solid var(--ink);
+  font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
+  transform: rotate(8deg);
+}
+.showcase-card-body { padding: 14px 18px 16px; }
+.showcase-card-tag {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  background: var(--tag-bg); color: var(--tag-ink);
+  padding: 3px 10px; border-radius: var(--radius-pill);
+  margin-bottom: 8px;
+  border: 1.5px solid var(--ink);
+}
+.showcase-card-title { font-size: 16px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
+.showcase-card-desc {
+  font-size: 11.5px; color: var(--sub); line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
-.tool-body{padding:18px 20px;}
-.tool-title{font-size:16px;font-weight:800;margin-bottom:4px;}
-.tool-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;}
-.tool-tags{display:flex;gap:6px;flex-wrap:wrap;}
-.tool-tag{
-  font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;
-  background:var(--surface2);color:var(--text3);
+/* Sticker (CSS-only thumbnail; future image swap via :has(img)) */
+.sticker {
+  width: 100%; height: 100%;
+  background: oklch(90% 0.10 var(--hue));
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
 }
-.tool-tag-new{background:#fae8ff;color:#86198f;}
+.sticker::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 30%,
+    oklch(96% 0.10 calc(var(--hue) + 10)) 0%,
+    transparent 65%);
+}
+.sticker::after {
+  content: ''; position: absolute;
+  top: -30%; left: 50%;
+  width: 160%; height: 160%;
+  transform: translate(-50%, 0) rotate(calc(var(--hue) * 1.1deg));
+  background: repeating-conic-gradient(from 0deg,
+    transparent 0deg 10deg,
+    oklch(94% 0.10 calc(var(--hue) + 5) / .35) 10deg 14deg);
+  opacity: .55;
+}
+.sticker-label {
+  position: absolute; bottom: 10px; left: 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 9px;
+  color: rgba(60, 40, 20, .65);
+  letter-spacing: .05em;
+  z-index: 1;
+}
+.sticker:has(img) { background: none; }
+.sticker:has(img)::before, .sticker:has(img)::after { display: none; }
+.sticker img { width: 100%; height: 100%; object-fit: cover; }
 
-.coming-soon{
-  position:absolute;top:12px;right:12px;
-  background:var(--text3);color:#fff;font-size:10px;font-weight:700;
-  padding:3px 10px;border-radius:12px;letter-spacing:0.5px;
+/* Works section */
+.works-head {
+  max-width: var(--container-w); margin: 0 auto;
+  padding: 12px var(--container-pad) 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; flex-wrap: wrap;
 }
+.works-h2 { font-size: 22px; font-weight: 900; }
+.filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill {
+  border: 2px solid var(--ink);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 800;
+  box-shadow: var(--shadow-pill);
+  transition: transform .15s, box-shadow .15s, background .15s, color .15s;
+}
+.pill:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.pill.is-active {
+  background: var(--ink); color: var(--panel);
+  box-shadow: none; transform: none;
+}
+.works-grid-wrap { padding: 8px var(--container-pad) 50px; max-width: var(--container-w); margin: 0 auto; }
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+.works-empty {
+  text-align: center; padding: 32px 16px;
+  color: var(--sub); font-size: 13px;
+}
+
+.card {
+  display: block;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+  position: relative;
+}
+.card:hover { transform: rotate(-1.2deg) translateY(-2px); box-shadow: -6px 8px 0 var(--ink); }
+.card:nth-child(even):hover { transform: rotate(1.2deg) translateY(-2px); box-shadow: 6px 8px 0 var(--ink); }
+.card-thumb { height: 130px; padding: 8px 8px 0; position: relative; }
+.card-hot {
+  position: absolute; top: -6px; right: -6px;
+  background: var(--accent); color: var(--accent-ink);
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  border: 2px solid var(--ink);
+  font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
+  transform: rotate(8deg);
+}
+.card-body { padding: 14px 16px; }
+.card-tag {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  background: var(--tag-bg); color: var(--tag-ink);
+  padding: 3px 10px; border-radius: var(--radius-pill);
+  margin-bottom: 8px;
+  border: 1.5px solid var(--ink);
+}
+.card-title { font-size: 14px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
+.card-desc {
+  font-size: 11px; color: var(--sub); line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Placeholder (About / Notes) */
+.placeholder {
+  max-width: var(--container-w);
+  margin: 0 auto 26px;
+  padding: 0 var(--container-pad);
+}
+.placeholder-card {
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base);
+  padding: 24px 28px;
+  display: flex; align-items: center; gap: 18px;
+  flex-wrap: wrap;
+}
+.placeholder-card h2 { font-size: 20px; font-weight: 900; }
+.placeholder-card p { font-size: 13px; color: var(--sub); line-height: 1.7; }
 
 /* Footer */
-.footer{
-  text-align:center;padding:30px 24px;
-  border-top:1px solid var(--border);
-  font-size:12px;color:var(--text3);
+.footer {
+  max-width: var(--container-w);
+  margin: 0 auto 24px;
+  padding: 0 var(--container-pad);
 }
-.footer a{color:var(--accent);text-decoration:none;font-weight:600;}
+.footer-inner {
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base);
+  padding: 20px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+  font-size: 12px; font-weight: 700;
+}
+.footer-social { display: flex; gap: 10px; flex-wrap: wrap; }
+.footer-social a {
+  text-decoration: none; color: inherit;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  transition: background .15s, color .15s;
+}
+.footer-social a:hover { background: var(--tag-bg); color: var(--accent-deep); }
+
+/* Focus */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.card:focus-visible, .showcase-card:focus-visible { outline-offset: 6px; }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  :root { --container-pad: 24px; --card-w: 280px; }
+  .nav-links { gap: 14px; }
+  .works-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .showcase-card-thumb { height: 160px; }
+}
+@media (max-width: 767px) {
+  :root { --container-pad: 18px; --card-w: 240px; }
+  .nav { padding: 10px 14px; }
+  .nav-links { gap: 12px; font-size: 11px; }
+  .nav-brand-text { font-size: 13px; }
+  .hero { padding: 24px var(--container-pad) 12px; }
+  .hero-pill { font-size: 10.5px; }
+  .works-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .works-h2 { font-size: 18px; }
+  .showcase-h2 { font-size: 16px; }
+  .showcase-card-thumb { height: 140px; padding: 6px 6px 0; }
+  .showcase-card-title { font-size: 14px; }
+  .showcase-card-body { padding: 12px 14px 14px; }
+  .card-thumb { height: 110px; padding: 6px 6px 0; }
+  .card-body { padding: 12px 12px; }
+  .placeholder-card { padding: 18px 20px; }
+  .placeholder-card h2 { font-size: 17px; }
+  .footer-inner { padding: 16px 18px; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card, .showcase-card, .pill, .nav-links a, .footer-social a { transition: none; }
+  .card:hover, .card:nth-child(even):hover, .showcase-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-base);
+  }
+  html { scroll-behavior: auto; }
+}
+html { scroll-behavior: smooth; }
 </style>
 </head>
 <body>
 
-<section class="hero">
-  <div class="hero-logo">
-    <div class="hero-mark">☀️</div>
-    <div class="hero-brand"><span>Hidamari</span> Works</div>
+<nav class="nav" aria-label="Site">
+  <a class="nav-brand" href="/">
+    <span class="nav-logo" aria-hidden="true">
+      <span class="nav-logo-mouth"></span>
+    </span>
+    <span class="nav-brand-text">ひだまりワークス</span>
+  </a>
+  <div class="nav-links">
+    <a href="#works">Works</a>
+    <a href="#about">About</a>
+    <a href="#notes">Notes</a>
   </div>
-  <p class="hero-tagline">
-    ブラウザだけで3Dプリンター用モデルをカスタマイズ。<br>
-    サイズを自由に変えて、STLをダウンロード。すぐ印刷。
-  </p>
-  <div class="hero-badges">
-    <span class="badge badge-free">🆓 完全無料</span>
-    <span class="badge badge-browser">🌐 サーバー不要</span>
-    <span class="badge badge-print">🖨 STLダウンロード</span>
+</nav>
+
+<header class="hero">
+  <div class="hero-pill">☼ ぽかぽか個人制作</div>
+  <h1 class="hero-title">
+    <mark>ぽかぽか</mark>な つくりもの、あつめました。
+  </h1>
+  <p class="hero-sub">ツール、ゲーム、アプリ。気軽に使ったり、遊んでみてください。</p>
+</header>
+
+<section class="showcase" aria-labelledby="showcase-h2">
+  <div class="showcase-head">
+    <div class="showcase-head-left">
+      <h2 id="showcase-h2" class="showcase-h2">★ いま人気のつくりもの</h2>
+      <span class="showcase-hint">hover で停止 · ドラッグでスクロール</span>
+    </div>
+    <div class="showcase-count" aria-live="polite"></div>
   </div>
-</section>
-
-<section class="tools-section">
-  <div class="section-header">
-    <div class="section-title">Tools</div>
-    <div class="section-sub">パラメトリックツール</div>
-  </div>
-
-  <div class="tools-grid">
-    <a class="tool-card" href="tools/pop-memo.html">
-      <div class="tool-visual tool-visual-memo">🍬</div>
-      <div class="tool-body">
-        <div class="tool-title">PoP MeMo!</div>
-        <div class="tool-desc">ポップでカラフルなメモアプリ。気分やエフェクトを選んで、楽しくメモを残そう。</div>
-        <div class="tool-tags">
-          <span class="tool-tag">カラフル</span>
-          <span class="tool-tag">メモ管理</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="tools/pop-memo-ika.html">
-      <div class="tool-visual tool-visual-ika">🦑</div>
-      <div class="tool-body">
-        <div class="tool-title">PoP MeMo! イカスミ</div>
-        <div class="tool-desc">イカスミダークテーマのメモアプリ。深海の闇に浮かぶメモで、落ち着いて書こう。</div>
-        <div class="tool-tags">
-          <span class="tool-tag">ダークテーマ</span>
-          <span class="tool-tag">メモ管理</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="tools/logo-gradient.html">
-      <div class="tool-visual tool-visual-logo">🎨</div>
-      <div class="tool-body">
-        <div class="tool-title">ロゴ グラデーション＆外縁生成</div>
-        <div class="tool-desc">画像をアップロードして、グラデーションや外縁（アウトライン）を自動生成。ロゴ加工に。</div>
-        <div class="tool-tags">
-          <span class="tool-tag">画像加工</span>
-          <span class="tool-tag">グラデーション</span>
-          <span class="tool-tag">アウトライン</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="tools/grid-keymap-editor.html">
-      <div class="tool-visual tool-visual-keymap">⌨</div>
-      <div class="tool-body">
-        <div class="tool-title">かんたんキー設定ツール</div>
-        <div class="tool-desc">拡張キーボードのボタンに好きなキーを割り当て。Web Serial対応でブラウザから直接設定。</div>
-        <div class="tool-tags">
-          <span class="tool-tag-new tool-tag">✨ NEW</span>
-          <span class="tool-tag">キーマップ</span>
-          <span class="tool-tag">Chrome/Edge</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="tools/ace-step-prompt-builder.html">
-      <div class="tool-visual tool-visual-music">🎵</div>
-      <div class="tool-body">
-        <div class="tool-title">ACE-Step Prompt Builder</div>
-        <div class="tool-desc">AI音楽生成用のプロンプトをかんたん作成。ジャンル・楽器・ムードを選んでコピー。</div>
-        <div class="tool-tags">
-          <span class="tool-tag-new tool-tag">✨ NEW</span>
-          <span class="tool-tag">AI音楽</span>
-          <span class="tool-tag">プロンプト生成</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="games/janken-party/index.html">
-      <div class="tool-visual tool-visual-game">🎪</div>
-      <div class="tool-body">
-        <div class="tool-title">どうぶつ運動会</div>
-        <div class="tool-desc">じゃんけんコントローラーで遊ぶリハビリ向けミニゲーム集。9種のゲームで楽しく運動。</div>
-        <div class="tool-tags">
-          <span class="tool-tag-new tool-tag">✨ NEW</span>
-          <span class="tool-tag">リハビリ</span>
-          <span class="tool-tag">3ボタン操作</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="tools/image-splitter.html">
-      <div class="tool-visual tool-visual-splitter">✂️</div>
-      <div class="tool-body">
-        <div class="tool-title">画像グリッド分割ツール</div>
-        <div class="tool-desc">画像をグリッドに分割。カットラインをドラッグで自由に調整、個別・一括ダウンロード対応。</div>
-        <div class="tool-tags">
-          <span class="tool-tag-new tool-tag">✨ NEW</span>
-          <span class="tool-tag">画像分割</span>
-          <span class="tool-tag">ドラッグ調整</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="tools/image-trimmer.html">
-      <div class="tool-visual tool-visual-trimmer">🖼️</div>
-      <div class="tool-body">
-        <div class="tool-title">画像トリミングツール</div>
-        <div class="tool-desc">白背景の画像から、中身だけを自動で切り出し。複数画像の一括処理、透明化、余白調整に対応。</div>
-        <div class="tool-tags">
-          <span class="tool-tag-new tool-tag">✨ NEW</span>
-          <span class="tool-tag">自動トリミング</span>
-          <span class="tool-tag">一括処理</span>
-        </div>
-      </div>
-    </a>
-
-    <a class="tool-card" href="games/push-rpg/index.html">
-      <div class="tool-visual tool-visual-pushrpg">💪</div>
-      <div class="tool-body">
-        <div class="tool-title">PUSH QUEST 腕立てRPG</div>
-        <div class="tool-desc">腕立て伏せでモンスターを倒す筋トレRPG。カメラでポーズ検出、タイミングで大ダメージ。</div>
-        <div class="tool-tags">
-          <span class="tool-tag-new tool-tag">✨ NEW</span>
-          <span class="tool-tag">筋トレ</span>
-          <span class="tool-tag">カメラ検出</span>
-        </div>
-      </div>
-    </a>
-
-    <div class="tool-card" style="cursor:default;opacity:0.7;">
-      <div class="tool-visual tool-visual-coming" style="font-size:48px;">
-        🔜
-        <div class="coming-soon">COMING SOON</div>
-      </div>
-      <div class="tool-body">
-        <div class="tool-title">次のツールは？</div>
-        <div class="tool-desc">リクエスト募集中！「こんなの欲しい」があればお気軽にどうぞ。</div>
-        <div class="tool-tags">
-          <span class="tool-tag">ケーブルホルダー？</span>
-          <span class="tool-tag">引き出し仕切り？</span>
-        </div>
-      </div>
+  <div class="showcase-mask">
+    <div class="showcase-viewport">
+      <div class="showcase-track"></div>
     </div>
   </div>
 </section>
 
+<section id="works" class="works" aria-labelledby="works-h2">
+  <div class="works-head">
+    <h2 id="works-h2" class="works-h2">✦ All Works</h2>
+    <div class="filter-pills" role="group" aria-label="カテゴリフィルター">
+      <button class="pill is-active" type="button" data-cat="all" aria-pressed="true">すべて</button>
+      <button class="pill" type="button" data-cat="tool" aria-pressed="false">ツール</button>
+      <button class="pill" type="button" data-cat="game" aria-pressed="false">ゲーム</button>
+    </div>
+  </div>
+  <div class="works-grid-wrap">
+    <div class="works-grid"></div>
+    <div class="works-empty is-hidden">該当する作品はありません。</div>
+  </div>
+</section>
+
+<section id="about" class="placeholder" aria-labelledby="about-h2">
+  <div class="placeholder-card">
+    <h2 id="about-h2">✿ About</h2>
+    <p>このセクションは準備中です。近日公開予定。</p>
+  </div>
+</section>
+
+<section id="notes" class="placeholder" aria-labelledby="notes-h2">
+  <div class="placeholder-card">
+    <h2 id="notes-h2">✎ Notes</h2>
+    <p>Coming Soon — つくりものの裏話やメモを書いていきます。</p>
+  </div>
+</section>
+
 <footer class="footer">
-  <p>© 2026 <a href="https://hidamari-works.com">Hidamari Works</a> — Made with ☀️</p>
+  <div class="footer-inner">
+    <div>© 2021–2026 hidamari works ✿</div>
+    <div class="footer-social">
+      <a href="#" aria-label="X (Twitter)">X</a>
+      <a href="#" aria-label="GitHub">GitHub</a>
+      <a href="#" aria-label="Zenn">Zenn</a>
+      <a href="#" aria-label="Mail">Mail</a>
+    </div>
+  </div>
 </footer>
 
+<script>
+(() => {
+  const WORKS = [
+    { slug:'pop-memo',       title:'PoP MeMo!',                en:'Pop Memo',         cat:'tool', tag:'Web',        hue:340, href:'tools/pop-memo.html',                 desc:'ポップでカラフルなメモアプリ。気分やエフェクトを選んで、楽しくメモを残そう。',                                  featured:false },
+    { slug:'pop-memo-ika',   title:'PoP MeMo! イカスミ',       en:'Ika Sumi Memo',    cat:'tool', tag:'Web',        hue:230, href:'tools/pop-memo-ika.html',             desc:'イカスミダークテーマのメモアプリ。深海の闇に浮かぶメモで、落ち着いて書こう。',                                featured:false },
+    { slug:'logo-gradient',  title:'ロゴ グラデーション',      en:'Logo Gradient',    cat:'tool', tag:'Web',        hue:280, href:'tools/logo-gradient.html',            desc:'画像をアップロードして、グラデーションや外縁を自動生成。ロゴ加工に。',                                       featured:false },
+    { slug:'grid-keymap',    title:'かんたんキー設定',         en:'Keymap Editor',    cat:'tool', tag:'Web Serial', hue:170, href:'tools/grid-keymap-editor.html',       desc:'拡張キーボードのボタンに好きなキーを割り当て。Web Serialでブラウザから直接設定。',                              featured:true  },
+    { slug:'ace-step',       title:'ACE-Step Prompt Builder',  en:'ACE-Step Builder', cat:'tool', tag:'Web',        hue:30,  href:'tools/ace-step-prompt-builder.html',  desc:'AI音楽生成用のプロンプトをかんたん作成。ジャンル・楽器・ムードを選んでコピー。',                                featured:true  },
+    { slug:'janken-party',   title:'どうぶつ運動会',           en:'Animal Sports',    cat:'game', tag:'Browser',    hue:130, href:'games/janken-party/index.html',       desc:'じゃんけんコントローラーで遊ぶリハビリ向けミニゲーム集。9種のゲームで楽しく運動。',                            featured:true  },
+    { slug:'image-splitter', title:'画像グリッド分割',         en:'Image Splitter',   cat:'tool', tag:'Web',        hue:250, href:'tools/image-splitter.html',           desc:'画像をグリッドに分割。カットラインをドラッグで自由に調整、個別・一括ダウンロード対応。',                       featured:true  },
+    { slug:'push-rpg',       title:'PUSH QUEST 腕立てRPG',     en:'Push Quest',       cat:'game', tag:'Browser',    hue:290, href:'games/push-rpg/index.html',           desc:'腕立て伏せでモンスターを倒す筋トレRPG。カメラでポーズ検出、タイミングで大ダメージ。',                          featured:true  },
+    { slug:'image-trimmer',  title:'画像トリミング',           en:'Image Trimmer',    cat:'tool', tag:'Web',        hue:50,  href:'tools/image-trimmer.html',            desc:'白背景の画像から、中身だけを自動で切り出し。一括処理・透明化・余白調整に対応。',                              featured:true  },
+  ];
+
+  const $  = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function showcaseCardHTML(w, i) {
+    const tilt = i % 2 === 0 ? -1 : 1;
+    return `
+      <a class="showcase-card" data-tilt="${tilt}" href="${esc(w.href)}">
+        <div class="showcase-card-thumb">
+          <div class="sticker" style="--hue:${w.hue}">
+            <span class="sticker-label">[ ${esc(w.en)} ]</span>
+          </div>
+          <div class="showcase-card-ribbon">★ FEATURED</div>
+          <div class="showcase-card-badge">♡ NEW</div>
+        </div>
+        <div class="showcase-card-body">
+          <span class="showcase-card-tag">${esc(w.tag)}</span>
+          <div class="showcase-card-title">${esc(w.title)}</div>
+          <div class="showcase-card-desc">${esc(w.desc)}</div>
+        </div>
+      </a>`;
+  }
+  function gridCardHTML(w) {
+    return `
+      <a class="card" data-cat="${esc(w.cat)}" href="${esc(w.href)}">
+        <div class="card-thumb">
+          <div class="sticker" style="--hue:${w.hue}">
+            <span class="sticker-label">[ ${esc(w.en)} ]</span>
+          </div>
+          ${w.featured ? '<div class="card-hot">★ HOT</div>' : ''}
+        </div>
+        <div class="card-body">
+          <span class="card-tag">${esc(w.tag)}</span>
+          <div class="card-title">${esc(w.title)}</div>
+          <div class="card-desc">${esc(w.desc)}</div>
+        </div>
+      </a>`;
+  }
+
+  // Render showcase (featured items, doubled for seamless loop)
+  const featured = WORKS.filter(w => w.featured);
+  const doubled = [...featured, ...featured];
+  $('.showcase-track').innerHTML = doubled.map((w, i) => showcaseCardHTML(w, i)).join('');
+  $('.showcase-count').textContent = `${featured.length} 件`;
+
+  // Render grid (all 9 works)
+  $('.works-grid').innerHTML = WORKS.map(w => gridCardHTML(w)).join('');
+
+  // Filter pills
+  const Filter = {
+    init() {
+      $$('.filter-pills .pill').forEach(btn => {
+        btn.addEventListener('click', () => Filter.apply(btn.dataset.cat, btn));
+      });
+    },
+    apply(cat, activeBtn) {
+      $$('.filter-pills .pill').forEach(b => {
+        const on = b === activeBtn;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      let visible = 0;
+      $$('.works-grid .card').forEach(card => {
+        const show = cat === 'all' || card.dataset.cat === cat;
+        card.classList.toggle('is-hidden', !show);
+        if (show) visible++;
+      });
+      const empty = $('.works-empty');
+      if (empty) empty.classList.toggle('is-hidden', visible > 0);
+    },
+  };
+  Filter.init();
+
+  // Marquee (auto-scroll featured showcase)
+  const Marquee = {
+    state: {
+      offset: 0,
+      paused: false,
+      lastTs: 0,
+      drag: { down:false, startX:0, startOffset:0, didDrag:false, pointerId:0 },
+      rafId: 0,
+    },
+    track: null, viewport: null, mql: null,
+    init(viewport, track) {
+      this.viewport = viewport; this.track = track;
+      this.mql = matchMedia('(prefers-reduced-motion: reduce)');
+      viewport.addEventListener('mouseenter', () => this.state.paused = true);
+      viewport.addEventListener('mouseleave', () => this.state.paused = false);
+      viewport.addEventListener('focusin',    () => this.state.paused = true);
+      viewport.addEventListener('focusout',   () => this.state.paused = false);
+      viewport.addEventListener('pointerdown',   e => this.onDown(e));
+      viewport.addEventListener('pointermove',   e => this.onMove(e));
+      viewport.addEventListener('pointerup',     e => this.onUp(e));
+      viewport.addEventListener('pointercancel', e => this.onUp(e));
+      this.mql.addEventListener('change', () => this.sync());
+      const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+      ready.then(() => this.sync());
+    },
+    sync() {
+      cancelAnimationFrame(this.state.rafId);
+      this.state.rafId = 0;
+      if (!this.mql.matches) this.start();
+    },
+    start() {
+      this.state.lastTs = performance.now();
+      const loop = (now) => {
+        const s = this.state;
+        const dt = Math.min((now - s.lastTs) / 1000, 0.1);
+        s.lastTs = now;
+        if (!s.paused && !s.drag.down && this.track) {
+          const halfWidth = this.track.scrollWidth / 2;
+          if (halfWidth > 0) {
+            s.offset -= 28 * dt;
+            if (s.offset <= -halfWidth) s.offset += halfWidth;
+            this.track.style.transform = `translateX(${s.offset}px)`;
+          }
+        }
+        s.rafId = requestAnimationFrame(loop);
+      };
+      this.state.rafId = requestAnimationFrame(loop);
+    },
+    onDown(e) {
+      const s = this.state;
+      s.drag = { down:true, startX:e.clientX, startOffset:s.offset, didDrag:false, pointerId:e.pointerId };
+      try { this.viewport.setPointerCapture(e.pointerId); } catch(_) {}
+    },
+    onMove(e) {
+      const s = this.state;
+      if (!s.drag.down) return;
+      const dx = e.clientX - s.drag.startX;
+      if (Math.abs(dx) > 4) s.drag.didDrag = true;
+      let next = s.drag.startOffset + dx;
+      const hw = this.track.scrollWidth / 2;
+      if (hw > 0) {
+        while (next <= -hw) next += hw;
+        while (next > 0)    next -= hw;
+      }
+      s.offset = next;
+      this.track.style.transform = `translateX(${next}px)`;
+    },
+    onUp(e) {
+      const s = this.state;
+      s.drag.down = false;
+      try { this.viewport.releasePointerCapture(s.drag.pointerId); } catch(_) {}
+    },
+    didDrag()    { return this.state.drag.didDrag; },
+    consumeDrag(){ this.state.drag.didDrag = false; },
+  };
+  Marquee.init($('.showcase-viewport'), $('.showcase-track'));
+
+  // Click guard — cancel showcase navigation if a drag occurred
+  $$('.showcase-card').forEach(a => a.addEventListener('click', e => {
+    if (Marquee.didDrag()) { e.preventDefault(); Marquee.consumeDrag(); }
+  }));
+})();
+</script>
 </body>
 </html>
