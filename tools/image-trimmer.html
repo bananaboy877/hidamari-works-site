@@ -429,6 +429,76 @@
   .toggle-row.active .switch::after { transform: translateX(18px); }
   .toggle-row input { display: none; }
 
+  /* Aspect ratio pills */
+  .aspect-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .aspect-pill {
+    position: relative;
+    cursor: pointer;
+  }
+  .aspect-pill input { position: absolute; opacity: 0; pointer-events: none; }
+  .aspect-pill span {
+    display: inline-block;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--bg-card);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .aspect-pill:hover span {
+    border-color: var(--accent);
+    color: var(--accent-deep);
+  }
+  .aspect-pill input:checked + span {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    box-shadow: 0 0 0 3px rgba(224,122,58,0.12);
+  }
+  .aspect-custom-row {
+    display: none;
+    margin-top: 8px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-soft);
+    border-radius: var(--radius-sm);
+  }
+  .aspect-custom-row.active { display: flex; }
+  .aspect-custom-row label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .aspect-custom-row input {
+    width: 64px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    border: 1.5px solid var(--line);
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    color: var(--ink);
+    text-align: center;
+  }
+  .aspect-custom-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .aspect-custom-row .colon {
+    font-weight: 800;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+
   /* Advanced */
   details.advanced {
     margin-top: 14px;
@@ -710,6 +780,29 @@
     <h2>設定</h2>
     <div class="settings-grid">
 
+      <!-- Aspect ratio -->
+      <div class="field">
+        <div class="field-label">
+          <span>アスペクト比</span>
+          <span class="hint">トリム後に余白を足してこの比率に揃える</span>
+        </div>
+        <div class="aspect-grid" id="aspectGroup">
+          <label class="aspect-pill"><input type="radio" name="aspect" value="none" checked /><span>なし</span></label>
+          <label class="aspect-pill"><input type="radio" name="aspect" value="1:1" /><span>1:1</span></label>
+          <label class="aspect-pill"><input type="radio" name="aspect" value="4:3" /><span>4:3</span></label>
+          <label class="aspect-pill"><input type="radio" name="aspect" value="16:9" /><span>16:9</span></label>
+          <label class="aspect-pill"><input type="radio" name="aspect" value="3:4" /><span>3:4</span></label>
+          <label class="aspect-pill"><input type="radio" name="aspect" value="9:16" /><span>9:16</span></label>
+          <label class="aspect-pill"><input type="radio" name="aspect" value="custom" /><span>カスタム</span></label>
+        </div>
+        <div class="aspect-custom-row" id="aspectCustomRow">
+          <label for="aspectW">比率:</label>
+          <input type="number" id="aspectW" min="1" max="100" step="1" value="1" />
+          <span class="colon">:</span>
+          <input type="number" id="aspectH" min="1" max="100" step="1" value="1" />
+        </div>
+      </div>
+
       <!-- Padding amount -->
       <div class="field">
         <div class="field-label">
@@ -858,6 +951,9 @@ const colorPickRow = document.getElementById('colorPickRow');
 const customColorInput = document.getElementById('customColor');
 const transparentToggle = document.getElementById('transparentToggle');
 const makeTransparentInput = document.getElementById('makeTransparent');
+const aspectCustomRow = document.getElementById('aspectCustomRow');
+const aspectWInput = document.getElementById('aspectW');
+const aspectHInput = document.getElementById('aspectH');
 const thresholdSlider = document.getElementById('thresholdSlider');
 const thresholdValue = document.getElementById('thresholdValue');
 const processBtn = document.getElementById('processBtn');
@@ -947,6 +1043,21 @@ document.querySelectorAll('input[name="padColor"]').forEach(r => {
   });
 });
 
+document.querySelectorAll('input[name="aspect"]').forEach(r => {
+  r.addEventListener('change', () => {
+    if (!r.checked) return;
+    aspectCustomRow.classList.toggle('active', r.value === 'custom');
+  });
+});
+[aspectWInput, aspectHInput].forEach(inp => {
+  inp.addEventListener('change', () => {
+    let v = parseInt(inp.value, 10);
+    if (isNaN(v) || v < 1) v = 1;
+    if (v > 100) v = 100;
+    inp.value = v;
+  });
+});
+
 transparentToggle.addEventListener('click', e => {
   if (e.target.tagName === 'INPUT') return;
   e.preventDefault();
@@ -995,12 +1106,22 @@ function setStatus(type, text) {
 // Image processing
 //=============================================================
 function getOptions() {
+  const aspectVal = document.querySelector('input[name="aspect"]:checked').value;
+  let aspectW = 0, aspectH = 0;
+  if (aspectVal === 'custom') {
+    aspectW = Math.max(1, parseInt(aspectWInput.value, 10) || 1);
+    aspectH = Math.max(1, parseInt(aspectHInput.value, 10) || 1);
+  } else if (aspectVal !== 'none') {
+    const [w, h] = aspectVal.split(':').map(Number);
+    aspectW = w; aspectH = h;
+  }
   return {
     threshold: parseInt(thresholdSlider.value, 10),
     padding: parseInt(paddingInput.value, 10) || 0,
     paddingMode: document.querySelector('input[name="padColor"]:checked').value,
     customColor: customColorInput.value,
     makeTransparent: makeTransparentInput.checked,
+    aspect: aspectVal === 'none' ? null : { w: aspectW, h: aspectH },
   };
 }
 
@@ -1081,10 +1202,29 @@ async function processOne(entry, opts) {
     throw new Error('画像に被写体が見つかりません(全面が背景色)');
   }
 
-  // Output canvas
+  // Step 1: aspect-ratio padding around the trimmed content (no upscale, only pad)
+  let aspectW = bbox.w, aspectH = bbox.h;
+  let aspectOffsetX = 0, aspectOffsetY = 0;
+  if (opts.aspect) {
+    const targetRatio = opts.aspect.w / opts.aspect.h;
+    const currentRatio = bbox.w / bbox.h;
+    if (currentRatio > targetRatio) {
+      // wider than target → pad vertically
+      aspectH = Math.round(bbox.w / targetRatio);
+      aspectW = bbox.w;
+    } else if (currentRatio < targetRatio) {
+      // taller than target → pad horizontally
+      aspectW = Math.round(bbox.h * targetRatio);
+      aspectH = bbox.h;
+    }
+    aspectOffsetX = Math.floor((aspectW - bbox.w) / 2);
+    aspectOffsetY = Math.floor((aspectH - bbox.h) / 2);
+  }
+
+  // Step 2: overall padding around the aspect-adjusted area
   const pad = opts.padding;
-  const outW = bbox.w + pad * 2;
-  const outH = bbox.h + pad * 2;
+  const outW = aspectW + pad * 2;
+  const outH = aspectH + pad * 2;
   const out = document.createElement('canvas');
   out.width = outW; out.height = outH;
   const octx = out.getContext('2d', { willReadFrequently: true });
@@ -1108,8 +1248,10 @@ async function processOne(entry, opts) {
     octx.fillRect(0, 0, outW, outH);
   }
 
-  // Draw cropped content
-  octx.drawImage(src, bbox.x, bbox.y, bbox.w, bbox.h, pad, pad, bbox.w, bbox.h);
+  // Draw cropped content centered within the aspect box, then offset by overall padding
+  const drawX = pad + aspectOffsetX;
+  const drawY = pad + aspectOffsetY;
+  octx.drawImage(src, bbox.x, bbox.y, bbox.w, bbox.h, drawX, drawY, bbox.w, bbox.h);
 
   // Optional: make white pixels transparent
   if (opts.makeTransparent) {
