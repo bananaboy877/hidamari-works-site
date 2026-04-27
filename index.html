@@ -301,7 +301,7 @@ button { font: inherit; cursor: pointer; }
 .works-grid-wrap { padding: 8px var(--container-pad) 50px; max-width: var(--container-w); margin: 0 auto; }
 .works-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 22px;
 }
 .works-empty {
@@ -323,7 +323,7 @@ button { font: inherit; cursor: pointer; }
 }
 .card:hover { transform: rotate(-1.2deg) translateY(-2px); box-shadow: -6px 8px 0 var(--ink); }
 .card:nth-child(even):hover { transform: rotate(1.2deg) translateY(-2px); box-shadow: 6px 8px 0 var(--ink); }
-.card-thumb { height: 130px; padding: 8px 8px 0; position: relative; }
+.card-thumb { height: 160px; padding: 8px 8px 0; position: relative; }
 .card-hot {
   position: absolute; top: -6px; right: -6px;
   background: var(--accent); color: var(--accent-ink);
@@ -341,9 +341,9 @@ button { font: inherit; cursor: pointer; }
   margin-bottom: 8px;
   border: 1.5px solid var(--ink);
 }
-.card-title { font-size: 14px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
+.card-title { font-size: 15px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
 .card-desc {
-  font-size: 11px; color: var(--sub); line-height: 1.55;
+  font-size: 11.5px; color: var(--sub); line-height: 1.55;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -398,7 +398,8 @@ button { font: inherit; cursor: pointer; }
 @media (max-width: 1023px) {
   :root { --container-pad: 24px; --card-w: 280px; }
   .nav-links { gap: 14px; }
-  .works-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .works-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .card-thumb { height: 170px; }
   .showcase-card-thumb { height: 160px; }
 }
 @media (max-width: 767px) {
@@ -415,6 +416,8 @@ button { font: inherit; cursor: pointer; }
   .showcase-card-title { font-size: 14px; }
   .showcase-card-body { padding: 12px 14px 14px; }
   .card-thumb { height: 110px; padding: 6px 6px 0; }
+  .card-title { font-size: 14px; }
+  .card-desc { font-size: 11px; }
   .card-body { padding: 12px 12px; }
   .placeholder-card { padding: 18px 20px; }
   .placeholder-card h2 { font-size: 17px; }
