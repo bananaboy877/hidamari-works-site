@@ -1022,14 +1022,15 @@ function setupPresets(elId, colors, onPick) {
 }
 setupPresets('outlinePresets', PRESET_OUTLINE_COLORS, (c) => {
   $('outlineColor').value = c;
+  state.settings.outlineColor = c;
   updateColorUI('outline', c);
   reprocessAll();
 });
 setupPresets('fillPresets', PRESET_FILL_COLORS, (c) => {
   $('fillColor').value = c;
-  updateColorUI('fill', c);
   state.settings.customFillColor = c;
-  reprocessAll();
+  updateColorUI('fill', c);
+  if (state.settings.fillType === 'custom') reprocessAll();
 });
 
 // === Color UI helpers ===
@@ -1085,8 +1086,6 @@ document.querySelectorAll('.bg-toggle').forEach((btn) => {
 function applyBgMode() {
   const mode = state.bgMode;
   document.querySelectorAll('.image-preview').forEach((el) => {
-    el.style.backgroundImage = '';
-    el.style.backgroundColor = '';
     if (mode === 'checker') {
       el.style.backgroundColor = '#fafaf7';
       el.style.backgroundImage =
@@ -1094,12 +1093,12 @@ function applyBgMode() {
         'linear-gradient(-45deg, #e8e3d5 25%, transparent 25%),' +
         'linear-gradient(45deg, transparent 75%, #e8e3d5 75%),' +
         'linear-gradient(-45deg, transparent 75%, #e8e3d5 75%)';
-    } else if (mode === 'white') {
-      el.style.backgroundColor = '#ffffff';
-    } else if (mode === 'black') {
-      el.style.backgroundColor = '#1f1d18';
-    } else if (mode === 'warm') {
-      el.style.backgroundColor = '#ede6d3';
+    } else {
+      // 'none' overrides the CSS-rule gradient; '' would let it leak through
+      el.style.backgroundImage = 'none';
+      if (mode === 'white')      el.style.backgroundColor = '#ffffff';
+      else if (mode === 'black') el.style.backgroundColor = '#1f1d18';
+      else if (mode === 'warm')  el.style.backgroundColor = '#ede6d3';
     }
   });
 }
