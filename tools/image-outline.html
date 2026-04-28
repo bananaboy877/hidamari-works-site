@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>画像縁取りツール — Hidamari Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f1e8;
+  --bg-warm: #ede6d3;
+  --surface: #fffefb;
+  --border: #e0d8c4;
+  --border-strong: #c8bea3;
+  --text: #1f1d18;
+  --text-muted: #6e695b;
+  --text-soft: #9a9482;
+  --accent: #d97c2a;
+  --accent-hover: #b86619;
+  --accent-soft: #f7e4c8;
+  --accent-glow: rgba(217, 124, 42, 0.12);
+  --shadow-sm: 0 1px 2px rgba(31, 29, 24, 0.04), 0 2px 6px rgba(31, 29, 24, 0.04);
+  --shadow-md: 0 2px 4px rgba(31, 29, 24, 0.06), 0 8px 24px rgba(31, 29, 24, 0.08);
+  --shadow-lg: 0 4px 12px rgba(31, 29, 24, 0.08), 0 16px 40px rgba(31, 29, 24, 0.10);
+  --serif: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --sans: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Menlo", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  padding: 32px 24px 80px;
+  background-image:
+    radial-gradient(circle at 20% 0%, var(--accent-glow) 0%, transparent 40%),
+    radial-gradient(circle at 80% 30%, rgba(200, 190, 163, 0.15) 0%, transparent 50%);
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* === Header === */
+header {
+  margin-bottom: 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.brand-mark {
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  margin-right: 4px;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+h1 .accent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 6px;
+  font-weight: 400;
+}
+
+.header-meta {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-soft);
+  letter-spacing: 0.05em;
+}
+
+.header-meta .ver {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* === Layout === */
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* === Panel === */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-title {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.panel-title-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-soft);
+  margin-right: 8px;
+  letter-spacing: 0.1em;
+}
+
+.panel-body {
+  padding: 20px;
+}
+
+.controls {
+  position: sticky;
+  top: 24px;
+}
+
+/* === Controls === */
+.control-group {
+  margin-bottom: 22px;
+}
+
+.control-group:last-child { margin-bottom: 0; }
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.control-value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  background: var(--accent-soft);
+  padding: 1px 8px;
+  border-radius: 3px;
+}
+
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 18px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: 1px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  margin-top: -6px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: 1px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.color-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-swatch {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  background-color: #fafafa;
+  background-image:
+    linear-gradient(45deg, #ddd 25%, transparent 25%),
+    linear-gradient(-45deg, #ddd 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ddd 75%),
+    linear-gradient(-45deg, transparent 75%, #ddd 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+}
+
+.color-swatch input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.color-swatch-fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.color-hex {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.color-presets {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.preset {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  position: relative;
+}
+
+.preset:hover {
+  transform: scale(1.12);
+  z-index: 1;
+}
+
+.preset.checker {
+  background-color: #fafafa;
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%);
+  background-size: 6px 6px;
+  background-position: 0 0, 3px 3px;
+}
+
+/* Radio group */
+.radio-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  transition: all 0.15s;
+  user-select: none;
+  background: var(--surface);
+}
+
+.radio-label:hover {
+  border-color: var(--border-strong);
+  background: var(--bg);
+}
+
+.radio-label input[type="radio"] {
+  display: none;
+}
+
+.radio-label input[type="radio"]:checked ~ .radio-text {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.radio-label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.radio-text {
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: var(--text);
+  color: var(--surface);
+  border: 1px solid var(--text);
+  border-radius: 3px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.btn-accent:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+/* Dropzone */
+.dropzone {
+  position: relative;
+  border: 2px dashed var(--border-strong);
+  border-radius: 4px;
+  padding: 56px 24px;
+  text-align: center;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+}
+
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropzone-icon {
+  font-family: var(--serif);
+  font-size: 36px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.dropzone-text {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.dropzone-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.dropzone input[type="file"] {
+  display: none;
+}
+
+/* Result toolbar */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.toolbar-info {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.toolbar-info .count {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0 4px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Image grid */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.image-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+
+.image-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.image-preview {
+  position: relative;
+  aspect-ratio: 1;
+  background-color: #fafaf7;
+  background-image:
+    linear-gradient(45deg, #e8e3d5 25%, transparent 25%),
+    linear-gradient(-45deg, #e8e3d5 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e8e3d5 75%),
+    linear-gradient(-45deg, transparent 75%, #e8e3d5 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.image-preview canvas, .image-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.image-info {
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.image-name {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  margin-right: 6px;
+}
+
+.image-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.icon-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.icon-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-soft);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.empty-mark {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 48px;
+  color: var(--border-strong);
+  margin-bottom: 12px;
+}
+
+.empty-text {
+  font-family: var(--serif);
+  font-size: 14px;
+}
+
+/* Footer */
+footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-soft);
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+}
+
+footer .vert {
+  display: inline-block;
+  width: 1px;
+  height: 10px;
+  background: var(--border-strong);
+  margin: 0 10px;
+  vertical-align: middle;
+}
+
+/* Loading state */
+.processing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 254, 251, 0.75);
+  font-family: var(--serif);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.processing { animation: pulse 1.2s ease-in-out infinite; }
+
+/* Tooltip-style help */
+.help {
+  font-size: 11px;
+  color: var(--text-soft);
+  margin-top: 6px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Bg toggle for preview */
+.bg-toggles {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.bg-toggle {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.bg-toggle:hover { background: var(--bg); }
+
+.bg-toggle.active {
+  background: var(--text);
+  color: var(--surface);
+  border-color: var(--text);
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div>
+        <h1>画像縁取り<span class="accent">／</span>色変換ツール</h1>
+        <p class="subtitle">透過PNGに縁取りを足し、シルエットの色を自由に変える</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="ver">v1.0</div>
+      <div>HIDAMARI WORKS</div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ===== Controls ===== -->
+    <aside class="controls">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="panel-title-num">01</span>設定
+          </div>
+        </div>
+        <div class="panel-body">
+
+          <!-- Outline width -->
+          <div class="control-group">
+            <label class="control-label">
+              <span>縁取り幅</span>
+              <span class="control-value" id="outlineWidthValue">8px</span>
+            </label>
+            <input type="range" id="outlineWidth" min="0" max="50" value="8" step="1">
+            <div class="help">0で縁取りなし</div>
+          </div>
+
+          <!-- Outline color -->
+          <div class="control-group">
+            <label class="control-label">
+              <span>縁取り色</span>
+            </label>
+            <div class="color-input">
+              <div class="color-swatch">
+                <div class="color-swatch-fill" id="outlineColorFill"></div>
+                <input type="color" id="outlineColor" value="#ffffff">
+              </div>
+              <span class="color-hex" id="outlineColorHex">#FFFFFF</span>
+            </div>
+            <div class="color-presets" id="outlinePresets"></div>
+          </div>
+
+          <!-- Fill type -->
+          <div class="control-group">
+            <label class="control-label">
+              <span>シルエットの色</span>
+            </label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="fillType" value="original" checked>
+                <span class="radio-text">そのまま</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="fillType" value="white">
+                <span class="radio-text">白抜き</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="fillType" value="black">
+                <span class="radio-text">黒</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="fillType" value="custom">
+                <span class="radio-text">任意の色</span>
+              </label>
+            </div>
+            <div class="control-group" style="margin-top:12px; margin-bottom:0;" id="customColorWrap" hidden>
+              <div class="color-input">
+                <div class="color-swatch">
+                  <div class="color-swatch-fill" id="fillColorFill"></div>
+                  <input type="color" id="fillColor" value="#d97c2a">
+                </div>
+                <span class="color-hex" id="fillColorHex">#D97C2A</span>
+              </div>
+              <div class="color-presets" id="fillPresets"></div>
+            </div>
+          </div>
+
+          <!-- Preview background -->
+          <div class="control-group">
+            <label class="control-label">
+              <span>プレビュー背景</span>
+            </label>
+            <div class="bg-toggles" id="bgToggles">
+              <button class="bg-toggle active" data-bg="checker">透明</button>
+              <button class="bg-toggle" data-bg="white">白</button>
+              <button class="bg-toggle" data-bg="black">黒</button>
+              <button class="bg-toggle" data-bg="warm">暖色</button>
+            </div>
+            <div class="help">出力PNGには影響しません</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main ===== -->
+    <main>
+      <div id="dropzone" class="dropzone">
+        <div class="dropzone-icon">＋</div>
+        <div class="dropzone-text">画像をドラッグ&ドロップ／クリックして選択</div>
+        <div class="dropzone-hint">PNG・JPEG・WebP に対応 ／ 複数選択可</div>
+        <input type="file" id="fileInput" accept="image/*" multiple>
+      </div>
+
+      <div class="toolbar" id="toolbar" hidden>
+        <div class="toolbar-info">
+          IMAGES <span class="count" id="imageCount">0</span> 件読み込み中
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-ghost btn-sm" id="clearBtn">すべてクリア</button>
+          <button class="btn btn-accent btn-sm" id="downloadAllBtn">すべてダウンロード</button>
+        </div>
+      </div>
+
+      <div class="image-grid" id="imageGrid"></div>
+
+      <div class="empty" id="emptyState">
+        <div class="empty-mark">＿</div>
+        <div class="empty-text">画像がまだ読み込まれていません</div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <div>
+      画像処理はすべてブラウザ内で完結 <span class="vert"></span> サーバー送信なし
+    </div>
+    <div>HIDAMARI WORKS · IMAGE OUTLINE TOOL</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// 距離変換（Chamfer Distance Transform: 2-pass）
+// 各ピクセルから最も近い「内側」ピクセル（alpha>0）までの近似ユークリッド距離を計算
+// 計算量はO(W*H)。半径によらず一定なので、太い縁取りでも高速。
+// ============================================================
+function distanceTransform(alphaMask, w, h) {
+  const INF = 1e9;
+  const dist = new Float32Array(w * h);
+  const D1 = 1.0;
+  const D2 = 1.4142135623730951;
+
+  for (let i = 0; i < w * h; i++) {
+    dist[i] = alphaMask[i] > 0 ? 0 : INF;
+  }
+
+  // Forward pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (dist[i] === 0) continue;
+      let d = dist[i];
+      if (y > 0) {
+        if (x > 0) { const v = dist[i - w - 1] + D2; if (v < d) d = v; }
+        const v1 = dist[i - w] + D1; if (v1 < d) d = v1;
+        if (x < w - 1) { const v = dist[i - w + 1] + D2; if (v < d) d = v; }
+      }
+      if (x > 0) { const v = dist[i - 1] + D1; if (v < d) d = v; }
+      dist[i] = d;
+    }
+  }
+
+  // Backward pass
+  for (let y = h - 1; y >= 0; y--) {
+    for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x;
+      let d = dist[i];
+      if (y < h - 1) {
+        if (x < w - 1) { const v = dist[i + w + 1] + D2; if (v < d) d = v; }
+        const v1 = dist[i + w] + D1; if (v1 < d) d = v1;
+        if (x > 0) { const v = dist[i + w - 1] + D2; if (v < d) d = v; }
+      }
+      if (x < w - 1) { const v = dist[i + 1] + D1; if (v < d) d = v; }
+      dist[i] = d;
+    }
+  }
+
+  return dist;
+}
+
+// hex → RGB
+function hexToRgb(hex) {
+  const m = hex.replace('#', '');
+  return {
+    r: parseInt(m.slice(0, 2), 16),
+    g: parseInt(m.slice(2, 4), 16),
+    b: parseInt(m.slice(4, 6), 16),
+  };
+}
+
+// ============================================================
+// 画像処理：縁取り追加 + 色塗りつぶし
+// ============================================================
+function processImage(srcCanvas, settings) {
+  const W = settings.outlineWidth;
+  const padding = Math.ceil(W) + 2;
+  const w = srcCanvas.width + padding * 2;
+  const h = srcCanvas.height + padding * 2;
+
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(srcCanvas, padding, padding);
+
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const src = imgData.data;
+
+  // Build alpha mask（alpha > 0 を「内側」とする）
+  const alphaMask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    alphaMask[i] = src[i * 4 + 3] > 0 ? 1 : 0;
+  }
+
+  // Distance transform
+  const dist = (W > 0) ? distanceTransform(alphaMask, w, h) : null;
+
+  // Determine fill color
+  const oRGB = hexToRgb(settings.outlineColor);
+  let fRGB = null;
+  if (settings.fillType === 'white') fRGB = { r: 255, g: 255, b: 255 };
+  else if (settings.fillType === 'black') fRGB = { r: 0, g: 0, b: 0 };
+  else if (settings.fillType === 'custom') fRGB = hexToRgb(settings.customFillColor);
+
+  // Output
+  const outData = ctx.createImageData(w, h);
+  const dst = outData.data;
+
+  for (let i = 0; i < w * h; i++) {
+    const idx = i * 4;
+    const origA = src[idx + 3] / 255;
+
+    // Outline alpha — ピクセルから最も近い内側までの距離 d を使った滑らかなエッジ
+    // d <= W-0.5 → 1, d >= W+0.5 → 0, 中間は線形（1pxのアンチエイリアス）
+    let outlineA = 0;
+    if (dist !== null) {
+      const d = dist[i];
+      outlineA = Math.max(0, Math.min(1, W + 0.5 - d));
+    }
+
+    // Foreground color
+    let fgR, fgG, fgB;
+    if (fRGB && origA > 0) {
+      fgR = fRGB.r; fgG = fRGB.g; fgB = fRGB.b;
+    } else {
+      fgR = src[idx]; fgG = src[idx + 1]; fgB = src[idx + 2];
+    }
+
+    // Source-over compositing: foreground (元画像) over background (縁取り色)
+    const fa = origA;
+    const ba = outlineA;
+    const finalA = fa + ba * (1 - fa);
+
+    if (finalA > 0) {
+      const wf = fa / finalA;
+      const wb = (ba * (1 - fa)) / finalA;
+      dst[idx]     = Math.round(fgR * wf + oRGB.r * wb);
+      dst[idx + 1] = Math.round(fgG * wf + oRGB.g * wb);
+      dst[idx + 2] = Math.round(fgB * wf + oRGB.b * wb);
+      dst[idx + 3] = Math.round(finalA * 255);
+    } else {
+      dst[idx] = 0; dst[idx + 1] = 0; dst[idx + 2] = 0; dst[idx + 3] = 0;
+    }
+  }
+
+  ctx.putImageData(outData, 0, 0);
+  return out;
+}
+
+// ============================================================
+// State & UI
+// ============================================================
+const state = {
+  images: [], // {id, name, originalCanvas, cardEl, canvasEl, processing}
+  settings: {
+    outlineWidth: 8,
+    outlineColor: '#ffffff',
+    fillType: 'original',
+    customFillColor: '#d97c2a',
+  },
+  bgMode: 'checker',
+  nextId: 1,
+};
+
+const PRESET_OUTLINE_COLORS = ['#ffffff', '#000000', '#d97c2a', '#e63946', '#2a9d8f', '#264653'];
+const PRESET_FILL_COLORS = ['#d97c2a', '#e63946', '#2a9d8f', '#264653', '#7209b7', '#f4a261'];
+
+// DOM
+const $ = (id) => document.getElementById(id);
+const dropzone = $('dropzone');
+const fileInput = $('fileInput');
+const imageGrid = $('imageGrid');
+const emptyState = $('emptyState');
+const toolbar = $('toolbar');
+const imageCount = $('imageCount');
+const clearBtn = $('clearBtn');
+const downloadAllBtn = $('downloadAllBtn');
+
+// === Setup color presets ===
+function setupPresets(elId, colors, onPick) {
+  const wrap = $(elId);
+  wrap.innerHTML = '';
+  colors.forEach((c) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset';
+    btn.style.background = c;
+    btn.title = c;
+    btn.addEventListener('click', () => onPick(c));
+    wrap.appendChild(btn);
+  });
+}
+setupPresets('outlinePresets', PRESET_OUTLINE_COLORS, (c) => {
+  $('outlineColor').value = c;
+  updateColorUI('outline', c);
+  reprocessAll();
+});
+setupPresets('fillPresets', PRESET_FILL_COLORS, (c) => {
+  $('fillColor').value = c;
+  updateColorUI('fill', c);
+  state.settings.customFillColor = c;
+  reprocessAll();
+});
+
+// === Color UI helpers ===
+function updateColorUI(kind, hex) {
+  const fill = $(kind + 'ColorFill');
+  const label = $(kind + 'ColorHex');
+  if (fill) fill.style.background = hex;
+  if (label) label.textContent = hex.toUpperCase();
+}
+updateColorUI('outline', state.settings.outlineColor);
+updateColorUI('fill', state.settings.customFillColor);
+
+// === Outline width ===
+$('outlineWidth').addEventListener('input', (e) => {
+  state.settings.outlineWidth = parseInt(e.target.value, 10);
+  $('outlineWidthValue').textContent = state.settings.outlineWidth + 'px';
+  reprocessAll();
+});
+
+// === Outline color ===
+$('outlineColor').addEventListener('input', (e) => {
+  state.settings.outlineColor = e.target.value;
+  updateColorUI('outline', e.target.value);
+  reprocessAll();
+});
+
+// === Fill type ===
+document.querySelectorAll('input[name="fillType"]').forEach((r) => {
+  r.addEventListener('change', (e) => {
+    state.settings.fillType = e.target.value;
+    $('customColorWrap').hidden = (e.target.value !== 'custom');
+    reprocessAll();
+  });
+});
+
+// === Custom fill color ===
+$('fillColor').addEventListener('input', (e) => {
+  state.settings.customFillColor = e.target.value;
+  updateColorUI('fill', e.target.value);
+  if (state.settings.fillType === 'custom') reprocessAll();
+});
+
+// === Background toggle ===
+document.querySelectorAll('.bg-toggle').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.bg-toggle').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.bgMode = btn.dataset.bg;
+    applyBgMode();
+  });
+});
+
+function applyBgMode() {
+  const mode = state.bgMode;
+  document.querySelectorAll('.image-preview').forEach((el) => {
+    el.style.backgroundImage = '';
+    el.style.backgroundColor = '';
+    if (mode === 'checker') {
+      el.style.backgroundColor = '#fafaf7';
+      el.style.backgroundImage =
+        'linear-gradient(45deg, #e8e3d5 25%, transparent 25%),' +
+        'linear-gradient(-45deg, #e8e3d5 25%, transparent 25%),' +
+        'linear-gradient(45deg, transparent 75%, #e8e3d5 75%),' +
+        'linear-gradient(-45deg, transparent 75%, #e8e3d5 75%)';
+    } else if (mode === 'white') {
+      el.style.backgroundColor = '#ffffff';
+    } else if (mode === 'black') {
+      el.style.backgroundColor = '#1f1d18';
+    } else if (mode === 'warm') {
+      el.style.backgroundColor = '#ede6d3';
+    }
+  });
+}
+
+// === Dropzone ===
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+['dragenter', 'dragover'].forEach((ev) => {
+  dropzone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach((ev) => {
+  dropzone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+  });
+});
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  handleFiles(e.dataTransfer.files);
+});
+
+// === File handling ===
+async function handleFiles(fileList) {
+  const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
+  for (const file of files) {
+    await loadImage(file);
+  }
+  fileInput.value = '';
+}
+
+function loadImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+
+        const id = state.nextId++;
+        const item = {
+          id,
+          name: file.name,
+          originalCanvas: canvas,
+          cardEl: null,
+          canvasEl: null,
+        };
+        state.images.push(item);
+        renderCard(item);
+        processOne(item);
+        updateUIVisibility();
+        resolve();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// === Render card ===
+function renderCard(item) {
+  const card = document.createElement('div');
+  card.className = 'image-card';
+  card.dataset.id = item.id;
+
+  const preview = document.createElement('div');
+  preview.className = 'image-preview';
+
+  const canvas = document.createElement('canvas');
+  preview.appendChild(canvas);
+
+  const info = document.createElement('div');
+  info.className = 'image-info';
+
+  const name = document.createElement('div');
+  name.className = 'image-name';
+  name.textContent = item.name;
+  name.title = item.name;
+
+  const actions = document.createElement('div');
+  actions.className = 'image-actions';
+
+  // Download button
+  const dlBtn = document.createElement('button');
+  dlBtn.className = 'icon-btn';
+  dlBtn.title = 'ダウンロード';
+  dlBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v10M3 7l5 4 5-4M2 14h12"/></svg>';
+  dlBtn.addEventListener('click', () => downloadOne(item));
+
+  // Remove button
+  const rmBtn = document.createElement('button');
+  rmBtn.className = 'icon-btn';
+  rmBtn.title = '削除';
+  rmBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V2h4v2M5 4l1 10h4l1-10"/></svg>';
+  rmBtn.addEventListener('click', () => removeOne(item));
+
+  actions.appendChild(dlBtn);
+  actions.appendChild(rmBtn);
+  info.appendChild(name);
+  info.appendChild(actions);
+
+  card.appendChild(preview);
+  card.appendChild(info);
+
+  item.cardEl = card;
+  item.canvasEl = canvas;
+  imageGrid.appendChild(card);
+
+  // Apply current bg mode
+  applyBgMode();
+}
+
+// === Process single image ===
+function processOne(item) {
+  // Show processing indicator
+  const preview = item.cardEl.querySelector('.image-preview');
+  let p = preview.querySelector('.processing');
+  if (!p) {
+    p = document.createElement('div');
+    p.className = 'processing';
+    p.textContent = '処理中…';
+    preview.appendChild(p);
+  }
+
+  // Async: yield to next frame so UI updates
+  requestAnimationFrame(() => {
+    try {
+      const result = processImage(item.originalCanvas, state.settings);
+      const ctx = item.canvasEl.getContext('2d');
+      item.canvasEl.width = result.width;
+      item.canvasEl.height = result.height;
+      ctx.drawImage(result, 0, 0);
+      item.processedCanvas = result;
+    } catch (err) {
+      console.error('処理エラー:', err);
+    }
+    if (p && p.parentNode) p.parentNode.removeChild(p);
+  });
+}
+
+// === Reprocess all (debounced) ===
+let reprocessTimer = null;
+function reprocessAll() {
+  if (reprocessTimer) clearTimeout(reprocessTimer);
+  reprocessTimer = setTimeout(() => {
+    state.images.forEach(processOne);
+  }, 80);
+}
+
+// === Download ===
+function downloadOne(item) {
+  if (!item.processedCanvas) return;
+  item.processedCanvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const base = item.name.replace(/\.[^.]+$/, '');
+    a.download = base + '_outlined.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }, 'image/png');
+}
+
+async function downloadAll() {
+  for (const item of state.images) {
+    downloadOne(item);
+    // Stagger downloads slightly to avoid browser issues
+    await new Promise((r) => setTimeout(r, 120));
+  }
+}
+
+downloadAllBtn.addEventListener('click', downloadAll);
+
+// === Remove ===
+function removeOne(item) {
+  state.images = state.images.filter((i) => i.id !== item.id);
+  if (item.cardEl && item.cardEl.parentNode) {
+    item.cardEl.parentNode.removeChild(item.cardEl);
+  }
+  updateUIVisibility();
+}
+
+clearBtn.addEventListener('click', () => {
+  if (state.images.length === 0) return;
+  if (!confirm(state.images.length + ' 件の画像をすべて削除しますか？')) return;
+  state.images.forEach((item) => {
+    if (item.cardEl && item.cardEl.parentNode) {
+      item.cardEl.parentNode.removeChild(item.cardEl);
+    }
+  });
+  state.images = [];
+  updateUIVisibility();
+});
+
+function updateUIVisibility() {
+  const has = state.images.length > 0;
+  emptyState.hidden = has;
+  toolbar.hidden = !has;
+  imageCount.textContent = state.images.length;
+}
+
+updateUIVisibility();
+
+</script>
+</body>
+</html>
