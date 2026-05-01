@@ -407,6 +407,34 @@ body {
 }
 
 /* ========================================
+   雪玉ころがし: 雪国背景 + 降雪
+   ======================================== */
+.snowball-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(180deg, #cfe5f7 0%, #e6f1fa 45%, #f8fbfd 75%, #ffffff 100%);
+  pointer-events: none;
+  overflow: hidden;
+}
+.snowball-bg .ground {
+  position: absolute; left: -20px; right: -20px; bottom: -10px; height: 110px;
+  background: #ffffff;
+  border-radius: 50% 50% 0 0 / 80% 80% 0 0;
+  box-shadow: 0 -2px 0 rgba(255,255,255,0.9);
+}
+.snowflake {
+  position: absolute; top: -16px;
+  background: #fff; border-radius: 50%;
+  opacity: 0.85;
+  box-shadow: 0 0 4px rgba(255,255,255,0.9);
+  animation: snowfall linear infinite;
+  will-change: transform;
+}
+@keyframes snowfall {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(40px, 1100px, 0); }
+}
+
+/* ========================================
    名前登録画面
    ======================================== */
 #screen-register {
@@ -3222,10 +3250,36 @@ registerGame('speed', {
 
     // タイトル（非表示）
 
+    // 雪玉ころがし: 雪国背景 + 降雪
+    if (self.yukidamaMode) {
+      // 空グラデーションを container 自身の背景に (paint最下層、主表示を隠さない)
+      container.style.background = 'linear-gradient(180deg, #cfe5f7 0%, #e6f1fa 45%, #f8fbfd 75%, #ffffff 100%)';
+      // 雪原 (画面下端の白い盛り上がり)
+      const ground = document.createElement('div');
+      ground.style.cssText = 'position:absolute;left:-20px;right:-20px;bottom:-10px;height:120px;background:#fff;border-radius:50% 50% 0 0 / 80% 80% 0 0;z-index:1;pointer-events:none;';
+      container.appendChild(ground);
+      // 降雪 50粒 (前景レイヤー、主表示の手前に降らせて雰囲気を出す)
+      for (let i = 0; i < 50; i++) {
+        const flake = document.createElement('div');
+        flake.className = 'snowflake';
+        const size = 4 + Math.random() * 10;
+        const dur = 7 + Math.random() * 8;
+        const delay = Math.random() * dur;
+        flake.style.left = (Math.random() * 100) + '%';
+        flake.style.width = size + 'px';
+        flake.style.height = size + 'px';
+        flake.style.animationDuration = dur + 's';
+        flake.style.animationDelay = '-' + delay + 's';
+        flake.style.opacity = (0.5 + Math.random() * 0.4).toFixed(2);
+        flake.style.zIndex = '2';
+        container.appendChild(flake);
+      }
+    }
+
     // 動物
     const animalDiv = document.createElement('div');
     animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
-    animalDiv.innerHTML = getAnimalSVG('cheetah', 100);
+    animalDiv.innerHTML = getAnimalSVG(self.animal || 'cheetah', 100);
     container.appendChild(animalDiv);
 
     // 問題番号
@@ -3271,15 +3325,17 @@ registerGame('speed', {
     let yukidamaPillar = null;
     let yukidamaCounter = null;
     if (self.yukidamaMode) {
-      const YUKI_MIN = 32, YUKI_MAX_PX = 96;
+      const YUKI_MIN = 60;        // 開始サイズ (見えやすく)
+      const YUKI_MAX_PX = 220;    // 雪玉MAXサイズ
+      const PILLAR_BALL_PX = 110; // 雪柱の各ボール (積み上げ視認性のため少し小さめ)
       yukidamaWrap = document.createElement('div');
-      yukidamaWrap.style.cssText = 'position:absolute;bottom:30px;right:50px;z-index:15;display:flex;flex-direction:column;align-items:center;pointer-events:none;max-height:880px;';
+      yukidamaWrap.style.cssText = 'position:absolute;bottom:30px;right:50px;z-index:15;display:flex;flex-direction:column;align-items:center;pointer-events:none;';
       yukidamaCounter = document.createElement('div');
-      yukidamaCounter.style.cssText = 'font-size:24px;font-weight:900;color:#1565c0;background:rgba(255,255,255,0.9);padding:6px 18px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:10px;white-space:nowrap;';
+      yukidamaCounter.style.cssText = 'font-size:28px;font-weight:900;color:#1565c0;background:rgba(255,255,255,0.92);padding:8px 22px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:14px;white-space:nowrap;';
       yukidamaPillar = document.createElement('div');
       yukidamaPillar.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
       yukidamaCurrentBall = document.createElement('div');
-      yukidamaCurrentBall.style.cssText = 'background:radial-gradient(circle at 35% 30%,#fff 0%,#e3f2fd 70%,#bbdefb 100%);border-radius:50%;border:4px solid #fff;box-shadow:0 6px 14px rgba(0,0,0,0.2);transition:width 0.4s ease,height 0.4s ease;flex-shrink:0;';
+      yukidamaCurrentBall.style.cssText = 'background:radial-gradient(circle at 35% 28%,#fff 0%,#e3f2fd 65%,#bbdefb 100%);border-radius:50%;border:5px solid #fff;box-shadow:0 8px 18px rgba(0,0,0,0.22);transition:width 0.35s ease,height 0.35s ease,transform 0.18s ease;flex-shrink:0;';
       yukidamaWrap.appendChild(yukidamaCounter);
       yukidamaWrap.appendChild(yukidamaPillar);
       yukidamaWrap.appendChild(yukidamaCurrentBall);
@@ -3295,7 +3351,7 @@ registerGame('speed', {
           yukidamaPillar.innerHTML = '';
           for (let i = 0; i < y.pillarHeight; i++) {
             const ball = document.createElement('div');
-            ball.style.cssText = 'background:radial-gradient(circle at 35% 30%,#fff 0%,#e3f2fd 70%,#90caf9 100%);border-radius:50%;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.18);width:' + YUKI_MAX_PX + 'px;height:' + YUKI_MAX_PX + 'px;margin-bottom:-12px;';
+            ball.style.cssText = 'background:radial-gradient(circle at 35% 28%,#fff 0%,#e3f2fd 65%,#90caf9 100%);border-radius:50%;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.18);width:' + PILLAR_BALL_PX + 'px;height:' + PILLAR_BALL_PX + 'px;margin-bottom:-14px;';
             yukidamaPillar.appendChild(ball);
           }
         }
@@ -3303,8 +3359,8 @@ registerGame('speed', {
           ? '⛄ ' + y.pillarHeight + '体 / 雪玉 ' + y.currentSize + ' / ' + YUKIDAMA_MAX
           : '雪玉 ' + y.currentSize + ' / ' + YUKIDAMA_MAX;
         if (animate) {
-          yukidamaCurrentBall.style.transform = 'scale(1.18)';
-          setTimeout(() => { yukidamaCurrentBall.style.transform = 'scale(1)'; }, 180);
+          yukidamaCurrentBall.style.transform = 'scale(1.15)';
+          setTimeout(() => { yukidamaCurrentBall.style.transform = 'scale(1)'; }, 200);
         }
       };
       self._updateYukidamaWidget(false);
