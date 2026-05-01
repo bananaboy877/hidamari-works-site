@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>名前TTS 3層フォールバック テスト</title>
+<style>
+  :root {
+    --pink: #ff80a6; --pink-dark: #d94e7a;
+    --blue: #6cb4ff; --blue-dark: #2d7fd6;
+    --bg: #fffaf2; --text: #2c2c2c;
+    --muted: #8a8a8a; --section: #fff3d8;
+    --layer1: #d4f0c8; --layer2: #ffe9b0; --layer3: #ffd0d0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+    margin: 0; padding: 24px; max-width: 1000px; margin: 0 auto;
+    background: var(--bg); color: var(--text);
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  section {
+    background: var(--section); border-radius: 16px;
+    padding: 16px 20px 20px; margin-bottom: 20px;
+  }
+  section h2 {
+    margin: 0 0 12px; font-size: 16px; color: #6b4f1d;
+    letter-spacing: 0.05em;
+  }
+  .input-row {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  input[type="text"] {
+    font-family: inherit; font-size: 18px; padding: 10px 14px;
+    border: 2px solid #ccc; border-radius: 10px;
+    width: 200px;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--pink-dark); }
+  .gender { display: flex; gap: 8px; }
+  .gender label {
+    padding: 8px 14px; border: 2px solid #ccc; border-radius: 999px;
+    cursor: pointer; font-weight: 600; font-size: 14px;
+  }
+  .gender input { display: none; }
+  .gender input:checked + label.f { background: var(--pink); border-color: var(--pink); color: white; }
+  .gender input:checked + label.m { background: var(--blue); border-color: var(--blue); color: white; }
+  button.primary {
+    padding: 10px 20px; border: none; border-radius: 10px;
+    background: var(--text); color: white;
+    font-family: inherit; font-weight: 700; font-size: 14px;
+    cursor: pointer;
+  }
+  button.primary:hover { filter: brightness(1.15); }
+  .samples {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+  }
+  .sample-btn {
+    padding: 6px 12px; border: 1px solid #ccc; background: white;
+    border-radius: 999px; cursor: pointer; font-size: 13px;
+    font-family: inherit;
+  }
+  .sample-btn[data-g="F"] { border-color: var(--pink); color: var(--pink-dark); }
+  .sample-btn[data-g="M"] { border-color: var(--blue); color: var(--blue-dark); }
+  .sample-btn:hover { background: #fff8; }
+  .log {
+    font-family: "SF Mono", Consolas, monospace; font-size: 13px;
+    background: white; border-radius: 10px; padding: 12px 16px;
+    max-height: 300px; overflow-y: auto;
+  }
+  .log-entry {
+    padding: 8px 12px; margin-bottom: 6px; border-radius: 8px;
+    border-left: 4px solid;
+  }
+  .log-entry.l1 { background: var(--layer1); border-color: #4caf50; }
+  .log-entry.l2 { background: var(--layer2); border-color: #ff9800; }
+  .log-entry.l3 { background: var(--layer3); border-color: #f44336; }
+  .log-entry .layer-tag { font-weight: 700; margin-right: 8px; }
+  .voices-list {
+    font-size: 12px; color: var(--muted);
+    background: white; border-radius: 10px; padding: 10px 14px;
+    max-height: 150px; overflow-y: auto;
+  }
+  .voices-list .picked {
+    color: var(--pink-dark); font-weight: 700;
+  }
+  .stats {
+    display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px;
+    color: var(--muted); margin-top: 8px;
+  }
+  .stat { padding: 4px 12px; background: white; border-radius: 999px; }
+  .stat strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<h1>名前TTS 3層フォールバック テスト</h1>
+<p class="meta">層1: VoiceVox既知名 → 層2: 50音あだ名 → 層3: Web Speech API</p>
+
+<section>
+  <h2>名前を呼んでもらう</h2>
+  <div class="input-row">
+    <input type="text" id="reading" placeholder="ひらがなで入力（例: たかし）" autocomplete="off">
+    <div class="gender">
+      <input type="radio" name="g" value="F" id="gF" checked>
+      <label for="gF" class="f">♀ 女性</label>
+      <input type="radio" name="g" value="M" id="gM">
+      <label for="gM" class="m">♂ 男性</label>
+    </div>
+    <button class="primary" id="speak">▶ 呼んでもらう</button>
+  </div>
+  <div class="stats" id="stats">
+    <span class="stat">既知名: <strong id="cnt-known">読込中</strong></span>
+    <span class="stat">あだ名カバー: <strong id="cnt-initial">69音</strong></span>
+    <span class="stat">Web Speech: <strong id="cnt-voices">確認中</strong></span>
+  </div>
+</section>
+
+<section>
+  <h2>サンプル試聴</h2>
+  <div id="samples-known"><strong>層1サンプル (既知名):</strong><div class="samples" id="s-known"></div></div>
+  <div style="margin-top:12px"><strong>層2サンプル (未登録の頭文字あり):</strong>
+    <div class="samples">
+      <button class="sample-btn" data-r="ななこ" data-g="F">ななこ ♀</button>
+      <button class="sample-btn" data-r="けん"   data-g="M">けん ♂</button>
+      <button class="sample-btn" data-r="ぱとりっく" data-g="M">ぱとりっく ♂</button>
+      <button class="sample-btn" data-r="ぐらん" data-g="M">ぐらん ♂</button>
+    </div>
+  </div>
+  <div style="margin-top:12px"><strong>層3サンプル (Web Speech):</strong>
+    <div class="samples">
+      <button class="sample-btn" data-r="マイケル" data-g="M">マイケル ♂ (カナ)</button>
+      <button class="sample-btn" data-r="John"   data-g="M">John ♂ (英字)</button>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>再生ログ</h2>
+  <div class="log" id="log"><em style="color:#888">まだ何も再生していません。上から名前を入力するか、サンプルをクリック。</em></div>
+</section>
+
+<section>
+  <h2>このブラウザの日本語ボイス</h2>
+  <div class="voices-list" id="voices"></div>
+</section>
+
+<script>
+// ===== State =====
+const KNOWN_INITIALS = new Set(
+  "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ"
+  + "がぎぐげござじずぜぞだぢづでどばびぶべぼ"
+  + "ぱぴぷぺぽ"
+);
+let KNOWN_NAMES = new Set();
+let KNOWN_NAMES_DATA = []; // [{reading, gender}]
+let pickedJaVoice = null;
+let allJaVoices = [];
+
+// ===== Layer 3: Web Speech API =====
+function initVoices() {
+  const all = speechSynthesis.getVoices();
+  allJaVoices = all.filter(v => v.lang && v.lang.toLowerCase().startsWith("ja"));
+  // 優先順位
+  const priority = [
+    /Nanami.*Online/i,
+    /Nanami/i,
+    /Kyoko/i,
+    /Otoya/i,
+    /Google.*日本語/i,
+    /Google.*Japanese/i,
+  ];
+  for (const p of priority) {
+    const found = allJaVoices.find(v => p.test(v.name));
+    if (found) { pickedJaVoice = found; break; }
+  }
+  if (!pickedJaVoice && allJaVoices.length) pickedJaVoice = allJaVoices[0];
+  renderVoices();
+  document.getElementById("cnt-voices").textContent = allJaVoices.length + "件";
+}
+function renderVoices() {
+  const el = document.getElementById("voices");
+  if (!allJaVoices.length) { el.innerHTML = "<em>日本語ボイスが見つかりません。Edge/Chromeで開いてみてください。</em>"; return; }
+  el.innerHTML = allJaVoices.map(v => {
+    const picked = v === pickedJaVoice ? " (★ 採用)" : "";
+    const cls = v === pickedJaVoice ? "picked" : "";
+    return `<div class="${cls}">${v.name} <span style="opacity:0.6">[${v.lang}${v.localService ? "" : " online"}]</span>${picked}</div>`;
+  }).join("");
+}
+speechSynthesis.addEventListener?.("voiceschanged", initVoices);
+initVoices();
+
+// ===== Layer 1+2 data load =====
+fetch("audio/names/full/index.json")
+  .then(r => r.json())
+  .then(d => {
+    KNOWN_NAMES = new Set(d.names);
+    document.getElementById("cnt-known").textContent = d.count + "名前";
+    renderKnownSamples();
+  })
+  .catch(() => {
+    document.getElementById("cnt-known").textContent = "未生成";
+  });
+
+// 試聴サンプル（data/showa_names.json から軽量版を別途持つよりは index.json から取る）
+function renderKnownSamples() {
+  const samples = ["たかし","ようこ","ふみ","きよし","みちこ","しげる","ひろし","えつこ","せつこ","あきら"];
+  const wrap = document.getElementById("s-known");
+  wrap.innerHTML = samples
+    .filter(r => KNOWN_NAMES.has(r))
+    .map(r => {
+      // gender推定: 末尾「こ」「み」「え」は女性寄り、「し」「お」「る」「ろう」は男性寄り（雑だが試聴用）
+      const g = /[こみえこ]$|^(ふみ|きみ|きく|うめ|はな|ちよ|やす|あい|さち|しず|とき|とみ|よし|まさ|ゆき|きよ|なつ|はる)$/.test(r) ? "F" : "M";
+      return `<button class="sample-btn" data-r="${r}" data-g="${g}">${r} ${g==="F"?"♀":"♂"}</button>`;
+    }).join("");
+  wrap.querySelectorAll(".sample-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      document.getElementById("reading").value = b.dataset.r;
+      document.querySelector(`input[name=g][value=${b.dataset.g}]`).checked = true;
+      doSpeak();
+    });
+  });
+}
+
+// ===== speakName: 3層フォールバック =====
+function speakName(reading, gender) {
+  const suffix = gender === "F" ? "chan" : "san";
+  // 層1
+  if (KNOWN_NAMES.has(reading)) {
+    const file = `audio/names/full/${reading}.wav`;
+    return { layer: 1, file, text: reading, play: () => playWav(file) };
+  }
+  // 層2
+  const initial = reading[0];
+  if (initial && KNOWN_INITIALS.has(initial)) {
+    const file = `audio/names/name_${initial}_${suffix}.wav`;
+    const text = initial + (gender === "F" ? "っちゃん" : "っさん");
+    return { layer: 2, file, text, play: () => playWav(file) };
+  }
+  // 層3
+  const text = reading + (gender === "F" ? "さん" : "さん");
+  return {
+    layer: 3, voice: pickedJaVoice ? pickedJaVoice.name : "(none)", text,
+    play: () => playWebSpeech(text)
+  };
+}
+
+function playWav(file) {
+  return new Promise((resolve) => {
+    stopAll();
+    const a = new Audio(file);
+    currentAudio = a;
+    a.addEventListener("ended", resolve);
+    a.addEventListener("error", () => {
+      addLog({ layer: 0, text: `⚠ ${file} の再生に失敗（ファイル未存在？）`, error: true });
+      resolve();
+    });
+    a.play().catch(() => resolve());
+  });
+}
+
+function playWebSpeech(text) {
+  return new Promise((resolve) => {
+    stopAll();
+    const u = new SpeechSynthesisUtterance(text);
+    if (pickedJaVoice) u.voice = pickedJaVoice;
+    u.lang = "ja-JP";
+    u.rate = 0.85;
+    u.pitch = 1.0;
+    u.onend = resolve;
+    u.onerror = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
+let currentAudio = null;
+function stopAll() {
+  if (currentAudio) { try { currentAudio.pause(); } catch(e){} currentAudio = null; }
+  try { speechSynthesis.cancel(); } catch(e) {}
+}
+
+// ===== UI wiring =====
+function doSpeak() {
+  const reading = document.getElementById("reading").value.trim();
+  if (!reading) return;
+  const gender = document.querySelector("input[name=g]:checked").value;
+  const result = speakName(reading, gender);
+  addLog(result);
+  result.play();
+}
+
+function addLog(r) {
+  const log = document.getElementById("log");
+  if (log.querySelector("em")) log.innerHTML = "";
+  const entry = document.createElement("div");
+  if (r.error) {
+    entry.innerHTML = r.text;
+    entry.className = "log-entry l3";
+  } else {
+    entry.className = `log-entry l${r.layer}`;
+    const tag = r.layer === 1 ? "層1 既知名" : r.layer === 2 ? "層2 あだ名" : "層3 Web Speech";
+    const detail = r.layer === 3 ? `voice: ${r.voice}` : `file: ${r.file}`;
+    entry.innerHTML = `<span class="layer-tag">${tag}</span><strong>${r.text}</strong><br><span style="opacity:0.7;font-size:11px">${detail}</span>`;
+  }
+  log.insertBefore(entry, log.firstChild);
+}
+
+document.getElementById("speak").addEventListener("click", doSpeak);
+document.getElementById("reading").addEventListener("keypress", e => { if (e.key === "Enter") doSpeak(); });
+document.querySelectorAll(".sample-btn[data-r]").forEach(b => {
+  if (!b.parentElement.id || b.parentElement.id !== "s-known") {
+    b.addEventListener("click", () => {
+      document.getElementById("reading").value = b.dataset.r;
+      document.querySelector(`input[name=g][value=${b.dataset.g}]`).checked = true;
+      doSpeak();
+    });
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1004 @@
+{
+  "generated_at": "2026-05-02T08:03:10",
+  "speaker_id": 3,
+  "count": 199,
+  "names": [
+    "あい",
+    "あいか",
+    "あきえ",
+    "あきお",
+    "あきこ",
+    "あきら",
+    "あけみ",
+    "あさこ",
+    "あつこ",
+    "あつし",
+    "あや",
+    "いくお",
+    "いくこ",
+    "いさお",
+    "いさむ",
+    "いたる",
+    "いちろう",
+    "うめ",
+    "えいこ",
+    "えいじ",
+    "えつこ",
+    "えみこ",
+    "えりこ",
+    "おさむ",
+    "かおり",
+    "かずお",
+    "かずき",
+    "かずこ",
+    "かずひろ",
+    "かつお",
+    "かつひこ",
+    "かよこ",
+    "きく",
+    "きぬ",
+    "きみ",
+    "きみこ",
+    "きょうこ",
+    "きよ",
+    "きよこ",
+    "きよし",
+    "きよひこ",
+    "くにひこ",
+    "くみこ",
+    "けいこ",
+    "けんいち",
+    "けんじ",
+    "けんすけ",
+    "こうじ",
+    "こうへい",
+    "ごろう",
+    "さおり",
+    "さだお",
+    "さち",
+    "さちこ",
+    "さとし",
+    "さとる",
+    "さぶろう",
+    "さやか",
+    "しげる",
+    "しず",
+    "しゅんすけ",
+    "しょういち",
+    "しょうじ",
+    "しろう",
+    "しんいち",
+    "しんじ",
+    "じゅんこ",
+    "じろう",
+    "すえ",
+    "すすむ",
+    "せいいち",
+    "せいじ",
+    "せつこ",
+    "たかお",
+    "たかこ",
+    "たかし",
+    "たかひろ",
+    "たくや",
+    "たけ",
+    "たけし",
+    "ただいち",
+    "ただお",
+    "ただし",
+    "たろう",
+    "ちえこ",
+    "ちかこ",
+    "ちよ",
+    "ちよこ",
+    "つとむ",
+    "つねお",
+    "つよし",
+    "てつお",
+    "とおる",
+    "とき",
+    "とし",
+    "としお",
+    "としこ",
+    "とみ",
+    "とみこ",
+    "ともお",
+    "ともこ",
+    "ともみ",
+    "ともや",
+    "ともゆき",
+    "なおき",
+    "なおこ",
+    "なおと",
+    "なおみ",
+    "なおや",
+    "なつ",
+    "なつこ",
+    "なつみ",
+    "のぶ",
+    "のぶこ",
+    "のぼる",
+    "のりお",
+    "のりこ",
+    "はつ",
+    "はな",
+    "はる",
+    "はるこ",
+    "ひさお",
+    "ひさこ",
+    "ひでお",
+    "ひでき",
+    "ひでこ",
+    "ひとし",
+    "ひろき",
+    "ひろこ",
+    "ひろし",
+    "ひろみ",
+    "ふくこ",
+    "ふさえ",
+    "ふじ",
+    "ふみ",
+    "ふみえ",
+    "ふみお",
+    "ふみこ",
+    "まきこ",
+    "まこと",
+    "まさ",
+    "まさお",
+    "まさき",
+    "まさこ",
+    "まさひこ",
+    "まさひろ",
+    "まさる",
+    "ます",
+    "ますみ",
+    "まちこ",
+    "まつ",
+    "まなぶ",
+    "まなみ",
+    "まもる",
+    "まゆみ",
+    "まりこ",
+    "みえこ",
+    "みき",
+    "みちこ",
+    "みつ",
+    "みつえ",
+    "みつお",
+    "みなこ",
+    "みのる",
+    "みほ",
+    "みゆき",
+    "みよこ",
+    "もとき",
+    "やす",
+    "やすお",
+    "やすこ",
+    "やよい",
+    "ゆうこ",
+    "ゆうじ",
+    "ゆかり",
+    "ゆき",
+    "ゆきお",
+    "ゆきこ",
+    "ゆずる",
+    "ゆたか",
+    "ゆみこ",
+    "ようこ",
+    "ようじ",
+    "ようすけ",
+    "ようた",
+    "よし",
+    "よしえ",
+    "よしお",
+    "よしこ",
+    "よしひこ",
+    "よしゆき",
+    "よね",
+    "りえ",
+    "りつこ",
+    "りょういち",
+    "りょうじ",
+    "りょうすけ",
+    "りん",
+    "ろくろう"
+  ],
+  "names_data": [
+    {
+      "reading": "あい",
+      "gender": "F"
+    },
+    {
+      "reading": "あいか",
+      "gender": "F"
+    },
+    {
+      "reading": "あきえ",
+      "gender": "F"
+    },
+    {
+      "reading": "あきお",
+      "gender": "M"
+    },
+    {
+      "reading": "あきこ",
+      "gender": "F"
+    },
+    {
+      "reading": "あきら",
+      "gender": "M"
+    },
+    {
+      "reading": "あけみ",
+      "gender": "F"
+    },
+    {
+      "reading": "あさこ",
+      "gender": "F"
+    },
+    {
+      "reading": "あつこ",
+      "gender": "F"
+    },
+    {
+      "reading": "あつし",
+      "gender": "M"
+    },
+    {
+      "reading": "あや",
+      "gender": "F"
+    },
+    {
+      "reading": "いくお",
+      "gender": "M"
+    },
+    {
+      "reading": "いくこ",
+      "gender": "F"
+    },
+    {
+      "reading": "いさお",
+      "gender": "M"
+    },
+    {
+      "reading": "いさむ",
+      "gender": "M"
+    },
+    {
+      "reading": "いたる",
+      "gender": "M"
+    },
+    {
+      "reading": "いちろう",
+      "gender": "M"
+    },
+    {
+      "reading": "うめ",
+      "gender": "F"
+    },
+    {
+      "reading": "えいこ",
+      "gender": "F"
+    },
+    {
+      "reading": "えいじ",
+      "gender": "M"
+    },
+    {
+      "reading": "えつこ",
+      "gender": "F"
+    },
+    {
+      "reading": "えみこ",
+      "gender": "F"
+    },
+    {
+      "reading": "えりこ",
+      "gender": "F"
+    },
+    {
+      "reading": "おさむ",
+      "gender": "M"
+    },
+    {
+      "reading": "かおり",
+      "gender": "F"
+    },
+    {
+      "reading": "かずお",
+      "gender": "M"
+    },
+    {
+      "reading": "かずき",
+      "gender": "M"
+    },
+    {
+      "reading": "かずこ",
+      "gender": "F"
+    },
+    {
+      "reading": "かずひろ",
+      "gender": "M"
+    },
+    {
+      "reading": "かつお",
+      "gender": "M"
+    },
+    {
+      "reading": "かつひこ",
+      "gender": "M"
+    },
+    {
+      "reading": "かよこ",
+      "gender": "F"
+    },
+    {
+      "reading": "きく",
+      "gender": "F"
+    },
+    {
+      "reading": "きぬ",
+      "gender": "F"
+    },
+    {
+      "reading": "きみ",
+      "gender": "F"
+    },
+    {
+      "reading": "きみこ",
+      "gender": "F"
+    },
+    {
+      "reading": "きょうこ",
+      "gender": "F"
+    },
+    {
+      "reading": "きよ",
+      "gender": "F"
+    },
+    {
+      "reading": "きよこ",
+      "gender": "F"
+    },
+    {
+      "reading": "きよし",
+      "gender": "M"
+    },
+    {
+      "reading": "きよひこ",
+      "gender": "M"
+    },
+    {
+      "reading": "くにひこ",
+      "gender": "M"
+    },
+    {
+      "reading": "くみこ",
+      "gender": "F"
+    },
+    {
+      "reading": "けいこ",
+      "gender": "F"
+    },
+    {
+      "reading": "けんいち",
+      "gender": "M"
+    },
+    {
+      "reading": "けんじ",
+      "gender": "M"
+    },
+    {
+      "reading": "けんすけ",
+      "gender": "M"
+    },
+    {
+      "reading": "こうじ",
+      "gender": "M"
+    },
+    {
+      "reading": "こうへい",
+      "gender": "M"
+    },
+    {
+      "reading": "ごろう",
+      "gender": "M"
+    },
+    {
+      "reading": "さおり",
+      "gender": "F"
+    },
+    {
+      "reading": "さだお",
+      "gender": "M"
+    },
+    {
+      "reading": "さち",
+      "gender": "F"
+    },
+    {
+      "reading": "さちこ",
+      "gender": "F"
+    },
+    {
+      "reading": "さとし",
+      "gender": "M"
+    },
+    {
+      "reading": "さとる",
+      "gender": "M"
+    },
+    {
+      "reading": "さぶろう",
+      "gender": "M"
+    },
+    {
+      "reading": "さやか",
+      "gender": "F"
+    },
+    {
+      "reading": "しげる",
+      "gender": "M"
+    },
+    {
+      "reading": "しず",
+      "gender": "F"
+    },
+    {
+      "reading": "しゅんすけ",
+      "gender": "M"
+    },
+    {
+      "reading": "しょういち",
+      "gender": "M"
+    },
+    {
+      "reading": "しょうじ",
+      "gender": "M"
+    },
+    {
+      "reading": "しろう",
+      "gender": "M"
+    },
+    {
+      "reading": "しんいち",
+      "gender": "M"
+    },
+    {
+      "reading": "しんじ",
+      "gender": "M"
+    },
+    {
+      "reading": "じゅんこ",
+      "gender": "F"
+    },
+    {
+      "reading": "じろう",
+      "gender": "M"
+    },
+    {
+      "reading": "すえ",
+      "gender": "F"
+    },
+    {
+      "reading": "すすむ",
+      "gender": "M"
+    },
+    {
+      "reading": "せいいち",
+      "gender": "M"
+    },
+    {
+      "reading": "せいじ",
+      "gender": "M"
+    },
+    {
+      "reading": "せつこ",
+      "gender": "F"
+    },
+    {
+      "reading": "たかお",
+      "gender": "M"
+    },
+    {
+      "reading": "たかこ",
+      "gender": "F"
+    },
+    {
+      "reading": "たかし",
+      "gender": "M"
+    },
+    {
+      "reading": "たかひろ",
+      "gender": "M"
+    },
+    {
+      "reading": "たくや",
+      "gender": "M"
+    },
+    {
+      "reading": "たけ",
+      "gender": "F"
+    },
+    {
+      "reading": "たけし",
+      "gender": "M"
+    },
+    {
+      "reading": "ただいち",
+      "gender": "M"
+    },
+    {
+      "reading": "ただお",
+      "gender": "M"
+    },
+    {
+      "reading": "ただし",
+      "gender": "M"
+    },
+    {
+      "reading": "たろう",
+      "gender": "M"
+    },
+    {
+      "reading": "ちえこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ちかこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ちよ",
+      "gender": "F"
+    },
+    {
+      "reading": "ちよこ",
+      "gender": "F"
+    },
+    {
+      "reading": "つとむ",
+      "gender": "M"
+    },
+    {
+      "reading": "つねお",
+      "gender": "M"
+    },
+    {
+      "reading": "つよし",
+      "gender": "M"
+    },
+    {
+      "reading": "てつお",
+      "gender": "M"
+    },
+    {
+      "reading": "とおる",
+      "gender": "M"
+    },
+    {
+      "reading": "とき",
+      "gender": "F"
+    },
+    {
+      "reading": "とし",
+      "gender": "F"
+    },
+    {
+      "reading": "としお",
+      "gender": "M"
+    },
+    {
+      "reading": "としこ",
+      "gender": "F"
+    },
+    {
+      "reading": "とみ",
+      "gender": "F"
+    },
+    {
+      "reading": "とみこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ともお",
+      "gender": "M"
+    },
+    {
+      "reading": "ともこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ともみ",
+      "gender": "F"
+    },
+    {
+      "reading": "ともや",
+      "gender": "M"
+    },
+    {
+      "reading": "ともゆき",
+      "gender": "M"
+    },
+    {
+      "reading": "なおき",
+      "gender": "M"
+    },
+    {
+      "reading": "なおこ",
+      "gender": "F"
+    },
+    {
+      "reading": "なおと",
+      "gender": "M"
+    },
+    {
+      "reading": "なおみ",
+      "gender": "F"
+    },
+    {
+      "reading": "なおや",
+      "gender": "M"
+    },
+    {
+      "reading": "なつ",
+      "gender": "F"
+    },
+    {
+      "reading": "なつこ",
+      "gender": "F"
+    },
+    {
+      "reading": "なつみ",
+      "gender": "F"
+    },
+    {
+      "reading": "のぶ",
+      "gender": "F"
+    },
+    {
+      "reading": "のぶこ",
+      "gender": "F"
+    },
+    {
+      "reading": "のぼる",
+      "gender": "M"
+    },
+    {
+      "reading": "のりお",
+      "gender": "M"
+    },
+    {
+      "reading": "のりこ",
+      "gender": "F"
+    },
+    {
+      "reading": "はつ",
+      "gender": "F"
+    },
+    {
+      "reading": "はな",
+      "gender": "F"
+    },
+    {
+      "reading": "はる",
+      "gender": "F"
+    },
+    {
+      "reading": "はるこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ひさお",
+      "gender": "M"
+    },
+    {
+      "reading": "ひさこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ひでお",
+      "gender": "M"
+    },
+    {
+      "reading": "ひでき",
+      "gender": "M"
+    },
+    {
+      "reading": "ひでこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ひとし",
+      "gender": "M"
+    },
+    {
+      "reading": "ひろき",
+      "gender": "M"
+    },
+    {
+      "reading": "ひろこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ひろし",
+      "gender": "M"
+    },
+    {
+      "reading": "ひろみ",
+      "gender": "F"
+    },
+    {
+      "reading": "ふくこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ふさえ",
+      "gender": "F"
+    },
+    {
+      "reading": "ふじ",
+      "gender": "F"
+    },
+    {
+      "reading": "ふみ",
+      "gender": "F"
+    },
+    {
+      "reading": "ふみえ",
+      "gender": "F"
+    },
+    {
+      "reading": "ふみお",
+      "gender": "M"
+    },
+    {
+      "reading": "ふみこ",
+      "gender": "F"
+    },
+    {
+      "reading": "まきこ",
+      "gender": "F"
+    },
+    {
+      "reading": "まこと",
+      "gender": "M"
+    },
+    {
+      "reading": "まさ",
+      "gender": "F"
+    },
+    {
+      "reading": "まさお",
+      "gender": "M"
+    },
+    {
+      "reading": "まさき",
+      "gender": "M"
+    },
+    {
+      "reading": "まさこ",
+      "gender": "F"
+    },
+    {
+      "reading": "まさひこ",
+      "gender": "M"
+    },
+    {
+      "reading": "まさひろ",
+      "gender": "M"
+    },
+    {
+      "reading": "まさる",
+      "gender": "M"
+    },
+    {
+      "reading": "ます",
+      "gender": "F"
+    },
+    {
+      "reading": "ますみ",
+      "gender": "F"
+    },
+    {
+      "reading": "まちこ",
+      "gender": "F"
+    },
+    {
+      "reading": "まつ",
+      "gender": "F"
+    },
+    {
+      "reading": "まなぶ",
+      "gender": "M"
+    },
+    {
+      "reading": "まなみ",
+      "gender": "F"
+    },
+    {
+      "reading": "まもる",
+      "gender": "M"
+    },
+    {
+      "reading": "まゆみ",
+      "gender": "F"
+    },
+    {
+      "reading": "まりこ",
+      "gender": "F"
+    },
+    {
+      "reading": "みえこ",
+      "gender": "F"
+    },
+    {
+      "reading": "みき",
+      "gender": "F"
+    },
+    {
+      "reading": "みちこ",
+      "gender": "F"
+    },
+    {
+      "reading": "みつ",
+      "gender": "F"
+    },
+    {
+      "reading": "みつえ",
+      "gender": "F"
+    },
+    {
+      "reading": "みつお",
+      "gender": "M"
+    },
+    {
+      "reading": "みなこ",
+      "gender": "F"
+    },
+    {
+      "reading": "みのる",
+      "gender": "M"
+    },
+    {
+      "reading": "みほ",
+      "gender": "F"
+    },
+    {
+      "reading": "みゆき",
+      "gender": "F"
+    },
+    {
+      "reading": "みよこ",
+      "gender": "F"
+    },
+    {
+      "reading": "もとき",
+      "gender": "M"
+    },
+    {
+      "reading": "やす",
+      "gender": "F"
+    },
+    {
+      "reading": "やすお",
+      "gender": "M"
+    },
+    {
+      "reading": "やすこ",
+      "gender": "F"
+    },
+    {
+      "reading": "やよい",
+      "gender": "F"
+    },
+    {
+      "reading": "ゆうこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ゆうじ",
+      "gender": "M"
+    },
+    {
+      "reading": "ゆかり",
+      "gender": "F"
+    },
+    {
+      "reading": "ゆき",
+      "gender": "F"
+    },
+    {
+      "reading": "ゆきお",
+      "gender": "M"
+    },
+    {
+      "reading": "ゆきこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ゆずる",
+      "gender": "M"
+    },
+    {
+      "reading": "ゆたか",
+      "gender": "M"
+    },
+    {
+      "reading": "ゆみこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ようこ",
+      "gender": "F"
+    },
+    {
+      "reading": "ようじ",
+      "gender": "M"
+    },
+    {
+      "reading": "ようすけ",
+      "gender": "M"
+    },
+    {
+      "reading": "ようた",
+      "gender": "M"
+    },
+    {
+      "reading": "よし",
+      "gender": "F"
+    },
+    {
+      "reading": "よしえ",
+      "gender": "F"
+    },
+    {
+      "reading": "よしお",
+      "gender": "M"
+    },
+    {
+      "reading": "よしこ",
+      "gender": "F"
+    },
+    {
+      "reading": "よしひこ",
+      "gender": "M"
+    },
+    {
+      "reading": "よしゆき",
+      "gender": "M"
+    },
+    {
+      "reading": "よね",
+      "gender": "F"
+    },
+    {
+      "reading": "りえ",
+      "gender": "F"
+    },
+    {
+      "reading": "りつこ",
+      "gender": "F"
+    },
+    {
+      "reading": "りょういち",
+      "gender": "M"
+    },
+    {
+      "reading": "りょうじ",
+      "gender": "M"
+    },
+    {
+      "reading": "りょうすけ",
+      "gender": "M"
+    },
+    {
+      "reading": "りん",
+      "gender": "F"
+    },
+    {
+      "reading": "ろくろう",
+      "gender": "M"
+    }
+  ]
+}

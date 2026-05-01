@@ -1,0 +1,1590 @@
+{
+  "version": "2026-05-01",
+  "speaker_id": 3,
+  "speaker_name": "ずんだもん",
+  "note": "高齢者(1925-1965年生まれ)に頻出する名前のひらがな読み。同じ読みに複数の漢字表記がある場合は1エントリに集約。kanji_examplesは参考表示用",
+  "names": [
+    {
+      "reading": "ふみ",
+      "gender": "F",
+      "kanji_examples": [
+        "文",
+        "史"
+      ]
+    },
+    {
+      "reading": "きみ",
+      "gender": "F",
+      "kanji_examples": [
+        "君",
+        "喜美"
+      ]
+    },
+    {
+      "reading": "とみ",
+      "gender": "F",
+      "kanji_examples": [
+        "富",
+        "登美"
+      ]
+    },
+    {
+      "reading": "とき",
+      "gender": "F",
+      "kanji_examples": [
+        "時",
+        "登紀"
+      ]
+    },
+    {
+      "reading": "きく",
+      "gender": "F",
+      "kanji_examples": [
+        "菊"
+      ]
+    },
+    {
+      "reading": "うめ",
+      "gender": "F",
+      "kanji_examples": [
+        "梅"
+      ]
+    },
+    {
+      "reading": "はな",
+      "gender": "F",
+      "kanji_examples": [
+        "花",
+        "華"
+      ]
+    },
+    {
+      "reading": "よし",
+      "gender": "F",
+      "kanji_examples": [
+        "吉",
+        "芳",
+        "美"
+      ]
+    },
+    {
+      "reading": "たけ",
+      "gender": "F",
+      "kanji_examples": [
+        "竹"
+      ]
+    },
+    {
+      "reading": "ちよ",
+      "gender": "F",
+      "kanji_examples": [
+        "千代"
+      ]
+    },
+    {
+      "reading": "やす",
+      "gender": "F",
+      "kanji_examples": [
+        "安",
+        "康"
+      ]
+    },
+    {
+      "reading": "あい",
+      "gender": "F",
+      "kanji_examples": [
+        "愛"
+      ]
+    },
+    {
+      "reading": "さち",
+      "gender": "F",
+      "kanji_examples": [
+        "幸",
+        "祥"
+      ]
+    },
+    {
+      "reading": "しず",
+      "gender": "F",
+      "kanji_examples": [
+        "静"
+      ]
+    },
+    {
+      "reading": "とし",
+      "gender": "F",
+      "kanji_examples": [
+        "敏",
+        "俊"
+      ]
+    },
+    {
+      "reading": "のぶ",
+      "gender": "F",
+      "kanji_examples": [
+        "信",
+        "伸"
+      ]
+    },
+    {
+      "reading": "はつ",
+      "gender": "F",
+      "kanji_examples": [
+        "初",
+        "八重"
+      ]
+    },
+    {
+      "reading": "まつ",
+      "gender": "F",
+      "kanji_examples": [
+        "松"
+      ]
+    },
+    {
+      "reading": "よね",
+      "gender": "F",
+      "kanji_examples": [
+        "米"
+      ]
+    },
+    {
+      "reading": "きぬ",
+      "gender": "F",
+      "kanji_examples": [
+        "絹"
+      ]
+    },
+    {
+      "reading": "ゆき",
+      "gender": "F",
+      "kanji_examples": [
+        "雪",
+        "幸"
+      ]
+    },
+    {
+      "reading": "きよ",
+      "gender": "F",
+      "kanji_examples": [
+        "清"
+      ]
+    },
+    {
+      "reading": "なつ",
+      "gender": "F",
+      "kanji_examples": [
+        "夏"
+      ]
+    },
+    {
+      "reading": "はる",
+      "gender": "F",
+      "kanji_examples": [
+        "春",
+        "治"
+      ]
+    },
+    {
+      "reading": "ふじ",
+      "gender": "F",
+      "kanji_examples": [
+        "藤",
+        "富士"
+      ]
+    },
+    {
+      "reading": "みつ",
+      "gender": "F",
+      "kanji_examples": [
+        "光",
+        "満"
+      ]
+    },
+    {
+      "reading": "りん",
+      "gender": "F",
+      "kanji_examples": [
+        "凛",
+        "鈴"
+      ]
+    },
+    {
+      "reading": "すえ",
+      "gender": "F",
+      "kanji_examples": [
+        "末"
+      ]
+    },
+    {
+      "reading": "まさ",
+      "gender": "F",
+      "kanji_examples": [
+        "昌",
+        "雅"
+      ]
+    },
+    {
+      "reading": "ます",
+      "gender": "F",
+      "kanji_examples": [
+        "益",
+        "満寿"
+      ]
+    },
+    {
+      "reading": "かずこ",
+      "gender": "F",
+      "kanji_examples": [
+        "和子"
+      ]
+    },
+    {
+      "reading": "さちこ",
+      "gender": "F",
+      "kanji_examples": [
+        "幸子"
+      ]
+    },
+    {
+      "reading": "ようこ",
+      "gender": "F",
+      "kanji_examples": [
+        "洋子",
+        "陽子",
+        "容子"
+      ]
+    },
+    {
+      "reading": "せつこ",
+      "gender": "F",
+      "kanji_examples": [
+        "節子"
+      ]
+    },
+    {
+      "reading": "ひさこ",
+      "gender": "F",
+      "kanji_examples": [
+        "久子"
+      ]
+    },
+    {
+      "reading": "みちこ",
+      "gender": "F",
+      "kanji_examples": [
+        "美智子",
+        "道子"
+      ]
+    },
+    {
+      "reading": "けいこ",
+      "gender": "F",
+      "kanji_examples": [
+        "恵子",
+        "慶子",
+        "啓子"
+      ]
+    },
+    {
+      "reading": "きょうこ",
+      "gender": "F",
+      "kanji_examples": [
+        "京子",
+        "恭子"
+      ]
+    },
+    {
+      "reading": "よしこ",
+      "gender": "F",
+      "kanji_examples": [
+        "良子",
+        "佳子",
+        "嘉子"
+      ]
+    },
+    {
+      "reading": "のりこ",
+      "gender": "F",
+      "kanji_examples": [
+        "紀子",
+        "典子",
+        "則子"
+      ]
+    },
+    {
+      "reading": "じゅんこ",
+      "gender": "F",
+      "kanji_examples": [
+        "順子",
+        "純子"
+      ]
+    },
+    {
+      "reading": "ひろこ",
+      "gender": "F",
+      "kanji_examples": [
+        "弘子",
+        "裕子",
+        "広子"
+      ]
+    },
+    {
+      "reading": "あきこ",
+      "gender": "F",
+      "kanji_examples": [
+        "明子",
+        "暁子",
+        "秋子"
+      ]
+    },
+    {
+      "reading": "なおこ",
+      "gender": "F",
+      "kanji_examples": [
+        "直子"
+      ]
+    },
+    {
+      "reading": "ふみこ",
+      "gender": "F",
+      "kanji_examples": [
+        "文子",
+        "史子"
+      ]
+    },
+    {
+      "reading": "ちよこ",
+      "gender": "F",
+      "kanji_examples": [
+        "千代子"
+      ]
+    },
+    {
+      "reading": "みよこ",
+      "gender": "F",
+      "kanji_examples": [
+        "美代子"
+      ]
+    },
+    {
+      "reading": "まさこ",
+      "gender": "F",
+      "kanji_examples": [
+        "雅子",
+        "正子",
+        "昌子"
+      ]
+    },
+    {
+      "reading": "えみこ",
+      "gender": "F",
+      "kanji_examples": [
+        "恵美子"
+      ]
+    },
+    {
+      "reading": "えつこ",
+      "gender": "F",
+      "kanji_examples": [
+        "悦子",
+        "越子"
+      ]
+    },
+    {
+      "reading": "としこ",
+      "gender": "F",
+      "kanji_examples": [
+        "敏子",
+        "俊子"
+      ]
+    },
+    {
+      "reading": "まりこ",
+      "gender": "F",
+      "kanji_examples": [
+        "真理子",
+        "麻里子"
+      ]
+    },
+    {
+      "reading": "とみこ",
+      "gender": "F",
+      "kanji_examples": [
+        "富子"
+      ]
+    },
+    {
+      "reading": "やすこ",
+      "gender": "F",
+      "kanji_examples": [
+        "康子",
+        "泰子",
+        "靖子"
+      ]
+    },
+    {
+      "reading": "きよこ",
+      "gender": "F",
+      "kanji_examples": [
+        "清子"
+      ]
+    },
+    {
+      "reading": "はるこ",
+      "gender": "F",
+      "kanji_examples": [
+        "春子",
+        "治子"
+      ]
+    },
+    {
+      "reading": "あつこ",
+      "gender": "F",
+      "kanji_examples": [
+        "敦子",
+        "篤子"
+      ]
+    },
+    {
+      "reading": "みえこ",
+      "gender": "F",
+      "kanji_examples": [
+        "美恵子",
+        "三枝子"
+      ]
+    },
+    {
+      "reading": "ちえこ",
+      "gender": "F",
+      "kanji_examples": [
+        "智恵子",
+        "千恵子"
+      ]
+    },
+    {
+      "reading": "きみこ",
+      "gender": "F",
+      "kanji_examples": [
+        "君子",
+        "喜美子"
+      ]
+    },
+    {
+      "reading": "のぶこ",
+      "gender": "F",
+      "kanji_examples": [
+        "信子",
+        "伸子"
+      ]
+    },
+    {
+      "reading": "かよこ",
+      "gender": "F",
+      "kanji_examples": [
+        "佳代子",
+        "嘉代子"
+      ]
+    },
+    {
+      "reading": "あさこ",
+      "gender": "F",
+      "kanji_examples": [
+        "朝子",
+        "麻子"
+      ]
+    },
+    {
+      "reading": "ゆみこ",
+      "gender": "F",
+      "kanji_examples": [
+        "由美子",
+        "弓子"
+      ]
+    },
+    {
+      "reading": "まちこ",
+      "gender": "F",
+      "kanji_examples": [
+        "真知子",
+        "町子"
+      ]
+    },
+    {
+      "reading": "ちかこ",
+      "gender": "F",
+      "kanji_examples": [
+        "千賀子",
+        "智香子"
+      ]
+    },
+    {
+      "reading": "みなこ",
+      "gender": "F",
+      "kanji_examples": [
+        "美奈子"
+      ]
+    },
+    {
+      "reading": "ゆうこ",
+      "gender": "F",
+      "kanji_examples": [
+        "祐子",
+        "優子",
+        "裕子"
+      ]
+    },
+    {
+      "reading": "ともこ",
+      "gender": "F",
+      "kanji_examples": [
+        "智子",
+        "友子"
+      ]
+    },
+    {
+      "reading": "たかこ",
+      "gender": "F",
+      "kanji_examples": [
+        "孝子",
+        "貴子",
+        "隆子"
+      ]
+    },
+    {
+      "reading": "えいこ",
+      "gender": "F",
+      "kanji_examples": [
+        "栄子",
+        "英子"
+      ]
+    },
+    {
+      "reading": "ゆきこ",
+      "gender": "F",
+      "kanji_examples": [
+        "幸子",
+        "雪子"
+      ]
+    },
+    {
+      "reading": "いくこ",
+      "gender": "F",
+      "kanji_examples": [
+        "郁子"
+      ]
+    },
+    {
+      "reading": "りつこ",
+      "gender": "F",
+      "kanji_examples": [
+        "律子"
+      ]
+    },
+    {
+      "reading": "くみこ",
+      "gender": "F",
+      "kanji_examples": [
+        "久美子"
+      ]
+    },
+    {
+      "reading": "なつこ",
+      "gender": "F",
+      "kanji_examples": [
+        "夏子",
+        "奈津子"
+      ]
+    },
+    {
+      "reading": "なつみ",
+      "gender": "F",
+      "kanji_examples": [
+        "夏美",
+        "菜津美"
+      ]
+    },
+    {
+      "reading": "ひろみ",
+      "gender": "F",
+      "kanji_examples": [
+        "浩美",
+        "裕美",
+        "弘美"
+      ]
+    },
+    {
+      "reading": "ますみ",
+      "gender": "F",
+      "kanji_examples": [
+        "真澄",
+        "麻純"
+      ]
+    },
+    {
+      "reading": "やよい",
+      "gender": "F",
+      "kanji_examples": [
+        "弥生"
+      ]
+    },
+    {
+      "reading": "まなみ",
+      "gender": "F",
+      "kanji_examples": [
+        "愛美",
+        "真奈美"
+      ]
+    },
+    {
+      "reading": "まきこ",
+      "gender": "F",
+      "kanji_examples": [
+        "真紀子"
+      ]
+    },
+    {
+      "reading": "えりこ",
+      "gender": "F",
+      "kanji_examples": [
+        "絵里子",
+        "恵理子"
+      ]
+    },
+    {
+      "reading": "なおみ",
+      "gender": "F",
+      "kanji_examples": [
+        "直美",
+        "尚美"
+      ]
+    },
+    {
+      "reading": "かおり",
+      "gender": "F",
+      "kanji_examples": [
+        "香織",
+        "かおり"
+      ]
+    },
+    {
+      "reading": "さおり",
+      "gender": "F",
+      "kanji_examples": [
+        "早織",
+        "沙織"
+      ]
+    },
+    {
+      "reading": "まゆみ",
+      "gender": "F",
+      "kanji_examples": [
+        "真弓",
+        "真由美"
+      ]
+    },
+    {
+      "reading": "りえ",
+      "gender": "F",
+      "kanji_examples": [
+        "理恵",
+        "里絵"
+      ]
+    },
+    {
+      "reading": "みき",
+      "gender": "F",
+      "kanji_examples": [
+        "美樹",
+        "美希"
+      ]
+    },
+    {
+      "reading": "みほ",
+      "gender": "F",
+      "kanji_examples": [
+        "美穂",
+        "美保"
+      ]
+    },
+    {
+      "reading": "あや",
+      "gender": "F",
+      "kanji_examples": [
+        "彩",
+        "綾"
+      ]
+    },
+    {
+      "reading": "さやか",
+      "gender": "F",
+      "kanji_examples": [
+        "清香",
+        "さやか"
+      ]
+    },
+    {
+      "reading": "ゆかり",
+      "gender": "F",
+      "kanji_examples": [
+        "紫",
+        "ゆかり"
+      ]
+    },
+    {
+      "reading": "みゆき",
+      "gender": "F",
+      "kanji_examples": [
+        "美雪",
+        "美幸"
+      ]
+    },
+    {
+      "reading": "ふくこ",
+      "gender": "F",
+      "kanji_examples": [
+        "福子"
+      ]
+    },
+    {
+      "reading": "あきえ",
+      "gender": "F",
+      "kanji_examples": [
+        "明恵",
+        "昭恵"
+      ]
+    },
+    {
+      "reading": "よしえ",
+      "gender": "F",
+      "kanji_examples": [
+        "芳江",
+        "良江"
+      ]
+    },
+    {
+      "reading": "ふみえ",
+      "gender": "F",
+      "kanji_examples": [
+        "文江"
+      ]
+    },
+    {
+      "reading": "ひでこ",
+      "gender": "F",
+      "kanji_examples": [
+        "秀子",
+        "英子"
+      ]
+    },
+    {
+      "reading": "あけみ",
+      "gender": "F",
+      "kanji_examples": [
+        "明美"
+      ]
+    },
+    {
+      "reading": "ともみ",
+      "gender": "F",
+      "kanji_examples": [
+        "智美",
+        "知美"
+      ]
+    },
+    {
+      "reading": "きよし",
+      "gender": "M",
+      "kanji_examples": [
+        "清",
+        "潔"
+      ]
+    },
+    {
+      "reading": "しげる",
+      "gender": "M",
+      "kanji_examples": [
+        "茂",
+        "重",
+        "繁"
+      ]
+    },
+    {
+      "reading": "いさむ",
+      "gender": "M",
+      "kanji_examples": [
+        "勇",
+        "勲"
+      ]
+    },
+    {
+      "reading": "ひろし",
+      "gender": "M",
+      "kanji_examples": [
+        "弘",
+        "博",
+        "浩",
+        "裕",
+        "宏"
+      ]
+    },
+    {
+      "reading": "ただし",
+      "gender": "M",
+      "kanji_examples": [
+        "正",
+        "忠",
+        "雅"
+      ]
+    },
+    {
+      "reading": "すすむ",
+      "gender": "M",
+      "kanji_examples": [
+        "進",
+        "晋"
+      ]
+    },
+    {
+      "reading": "たけし",
+      "gender": "M",
+      "kanji_examples": [
+        "武",
+        "猛",
+        "健"
+      ]
+    },
+    {
+      "reading": "みのる",
+      "gender": "M",
+      "kanji_examples": [
+        "実",
+        "稔"
+      ]
+    },
+    {
+      "reading": "まこと",
+      "gender": "M",
+      "kanji_examples": [
+        "誠",
+        "真",
+        "信"
+      ]
+    },
+    {
+      "reading": "まなぶ",
+      "gender": "M",
+      "kanji_examples": [
+        "学"
+      ]
+    },
+    {
+      "reading": "まもる",
+      "gender": "M",
+      "kanji_examples": [
+        "守",
+        "護"
+      ]
+    },
+    {
+      "reading": "おさむ",
+      "gender": "M",
+      "kanji_examples": [
+        "修",
+        "治",
+        "理"
+      ]
+    },
+    {
+      "reading": "のぼる",
+      "gender": "M",
+      "kanji_examples": [
+        "昇",
+        "登",
+        "陞"
+      ]
+    },
+    {
+      "reading": "まさる",
+      "gender": "M",
+      "kanji_examples": [
+        "勝",
+        "優",
+        "賢"
+      ]
+    },
+    {
+      "reading": "ゆたか",
+      "gender": "M",
+      "kanji_examples": [
+        "豊"
+      ]
+    },
+    {
+      "reading": "ひとし",
+      "gender": "M",
+      "kanji_examples": [
+        "仁",
+        "均",
+        "等"
+      ]
+    },
+    {
+      "reading": "たかし",
+      "gender": "M",
+      "kanji_examples": [
+        "隆",
+        "孝",
+        "崇",
+        "敬",
+        "貴志"
+      ]
+    },
+    {
+      "reading": "あきら",
+      "gender": "M",
+      "kanji_examples": [
+        "明",
+        "晃",
+        "章",
+        "亮",
+        "彰"
+      ]
+    },
+    {
+      "reading": "さとる",
+      "gender": "M",
+      "kanji_examples": [
+        "悟",
+        "暁"
+      ]
+    },
+    {
+      "reading": "いさお",
+      "gender": "M",
+      "kanji_examples": [
+        "功",
+        "勲"
+      ]
+    },
+    {
+      "reading": "とおる",
+      "gender": "M",
+      "kanji_examples": [
+        "徹",
+        "透",
+        "亨"
+      ]
+    },
+    {
+      "reading": "つよし",
+      "gender": "M",
+      "kanji_examples": [
+        "剛",
+        "強",
+        "毅"
+      ]
+    },
+    {
+      "reading": "いたる",
+      "gender": "M",
+      "kanji_examples": [
+        "至",
+        "達"
+      ]
+    },
+    {
+      "reading": "ゆずる",
+      "gender": "M",
+      "kanji_examples": [
+        "譲"
+      ]
+    },
+    {
+      "reading": "つとむ",
+      "gender": "M",
+      "kanji_examples": [
+        "勉",
+        "努",
+        "孜"
+      ]
+    },
+    {
+      "reading": "あつし",
+      "gender": "M",
+      "kanji_examples": [
+        "敦",
+        "篤",
+        "厚"
+      ]
+    },
+    {
+      "reading": "さとし",
+      "gender": "M",
+      "kanji_examples": [
+        "聡",
+        "智",
+        "敏"
+      ]
+    },
+    {
+      "reading": "ひでき",
+      "gender": "M",
+      "kanji_examples": [
+        "秀樹",
+        "英樹"
+      ]
+    },
+    {
+      "reading": "なおき",
+      "gender": "M",
+      "kanji_examples": [
+        "直樹"
+      ]
+    },
+    {
+      "reading": "かずき",
+      "gender": "M",
+      "kanji_examples": [
+        "和樹",
+        "一輝"
+      ]
+    },
+    {
+      "reading": "まさき",
+      "gender": "M",
+      "kanji_examples": [
+        "正樹",
+        "雅樹"
+      ]
+    },
+    {
+      "reading": "もとき",
+      "gender": "M",
+      "kanji_examples": [
+        "元樹"
+      ]
+    },
+    {
+      "reading": "いちろう",
+      "gender": "M",
+      "kanji_examples": [
+        "一郎"
+      ]
+    },
+    {
+      "reading": "じろう",
+      "gender": "M",
+      "kanji_examples": [
+        "二郎",
+        "次郎"
+      ]
+    },
+    {
+      "reading": "さぶろう",
+      "gender": "M",
+      "kanji_examples": [
+        "三郎"
+      ]
+    },
+    {
+      "reading": "しろう",
+      "gender": "M",
+      "kanji_examples": [
+        "四郎"
+      ]
+    },
+    {
+      "reading": "ごろう",
+      "gender": "M",
+      "kanji_examples": [
+        "五郎"
+      ]
+    },
+    {
+      "reading": "ろくろう",
+      "gender": "M",
+      "kanji_examples": [
+        "六郎"
+      ]
+    },
+    {
+      "reading": "たろう",
+      "gender": "M",
+      "kanji_examples": [
+        "太郎"
+      ]
+    },
+    {
+      "reading": "けんいち",
+      "gender": "M",
+      "kanji_examples": [
+        "健一",
+        "賢一"
+      ]
+    },
+    {
+      "reading": "しんいち",
+      "gender": "M",
+      "kanji_examples": [
+        "真一",
+        "信一"
+      ]
+    },
+    {
+      "reading": "しょういち",
+      "gender": "M",
+      "kanji_examples": [
+        "正一",
+        "省一"
+      ]
+    },
+    {
+      "reading": "りょういち",
+      "gender": "M",
+      "kanji_examples": [
+        "良一",
+        "亮一"
+      ]
+    },
+    {
+      "reading": "せいいち",
+      "gender": "M",
+      "kanji_examples": [
+        "誠一",
+        "清一"
+      ]
+    },
+    {
+      "reading": "ようすけ",
+      "gender": "M",
+      "kanji_examples": [
+        "洋介",
+        "陽介"
+      ]
+    },
+    {
+      "reading": "けんすけ",
+      "gender": "M",
+      "kanji_examples": [
+        "健介",
+        "謙介"
+      ]
+    },
+    {
+      "reading": "りょうすけ",
+      "gender": "M",
+      "kanji_examples": [
+        "良介",
+        "亮介"
+      ]
+    },
+    {
+      "reading": "しゅんすけ",
+      "gender": "M",
+      "kanji_examples": [
+        "俊介",
+        "駿介"
+      ]
+    },
+    {
+      "reading": "よしお",
+      "gender": "M",
+      "kanji_examples": [
+        "義雄",
+        "善雄",
+        "良男"
+      ]
+    },
+    {
+      "reading": "まさお",
+      "gender": "M",
+      "kanji_examples": [
+        "正夫",
+        "雅夫",
+        "政男"
+      ]
+    },
+    {
+      "reading": "かずお",
+      "gender": "M",
+      "kanji_examples": [
+        "和夫",
+        "一雄"
+      ]
+    },
+    {
+      "reading": "あきお",
+      "gender": "M",
+      "kanji_examples": [
+        "昭夫",
+        "明男"
+      ]
+    },
+    {
+      "reading": "ふみお",
+      "gender": "M",
+      "kanji_examples": [
+        "文雄",
+        "史男"
+      ]
+    },
+    {
+      "reading": "てつお",
+      "gender": "M",
+      "kanji_examples": [
+        "哲雄",
+        "鉄夫"
+      ]
+    },
+    {
+      "reading": "のりお",
+      "gender": "M",
+      "kanji_examples": [
+        "紀夫",
+        "典男"
+      ]
+    },
+    {
+      "reading": "ひさお",
+      "gender": "M",
+      "kanji_examples": [
+        "久雄"
+      ]
+    },
+    {
+      "reading": "ひでお",
+      "gender": "M",
+      "kanji_examples": [
+        "秀夫",
+        "英雄"
+      ]
+    },
+    {
+      "reading": "やすお",
+      "gender": "M",
+      "kanji_examples": [
+        "康男",
+        "安男"
+      ]
+    },
+    {
+      "reading": "みつお",
+      "gender": "M",
+      "kanji_examples": [
+        "光夫",
+        "満男"
+      ]
+    },
+    {
+      "reading": "つねお",
+      "gender": "M",
+      "kanji_examples": [
+        "恒夫",
+        "常雄"
+      ]
+    },
+    {
+      "reading": "としお",
+      "gender": "M",
+      "kanji_examples": [
+        "敏夫",
+        "俊男"
+      ]
+    },
+    {
+      "reading": "ゆきお",
+      "gender": "M",
+      "kanji_examples": [
+        "幸雄",
+        "行男"
+      ]
+    },
+    {
+      "reading": "さだお",
+      "gender": "M",
+      "kanji_examples": [
+        "定夫"
+      ]
+    },
+    {
+      "reading": "いくお",
+      "gender": "M",
+      "kanji_examples": [
+        "郁雄"
+      ]
+    },
+    {
+      "reading": "ともお",
+      "gender": "M",
+      "kanji_examples": [
+        "智夫",
+        "友雄"
+      ]
+    },
+    {
+      "reading": "たかお",
+      "gender": "M",
+      "kanji_examples": [
+        "孝雄",
+        "隆男"
+      ]
+    },
+    {
+      "reading": "かつお",
+      "gender": "M",
+      "kanji_examples": [
+        "勝男"
+      ]
+    },
+    {
+      "reading": "けんじ",
+      "gender": "M",
+      "kanji_examples": [
+        "健治",
+        "健司",
+        "賢二"
+      ]
+    },
+    {
+      "reading": "しょうじ",
+      "gender": "M",
+      "kanji_examples": [
+        "省治",
+        "正二"
+      ]
+    },
+    {
+      "reading": "ようじ",
+      "gender": "M",
+      "kanji_examples": [
+        "洋二",
+        "陽二"
+      ]
+    },
+    {
+      "reading": "せいじ",
+      "gender": "M",
+      "kanji_examples": [
+        "誠治",
+        "清司",
+        "政二"
+      ]
+    },
+    {
+      "reading": "りょうじ",
+      "gender": "M",
+      "kanji_examples": [
+        "良治",
+        "亮治"
+      ]
+    },
+    {
+      "reading": "しんじ",
+      "gender": "M",
+      "kanji_examples": [
+        "真治",
+        "信二"
+      ]
+    },
+    {
+      "reading": "ゆうじ",
+      "gender": "M",
+      "kanji_examples": [
+        "雄二",
+        "祐二"
+      ]
+    },
+    {
+      "reading": "こうじ",
+      "gender": "M",
+      "kanji_examples": [
+        "浩二",
+        "光司",
+        "孝司"
+      ]
+    },
+    {
+      "reading": "えいじ",
+      "gender": "M",
+      "kanji_examples": [
+        "栄治",
+        "英治"
+      ]
+    },
+    {
+      "reading": "ひろき",
+      "gender": "M",
+      "kanji_examples": [
+        "弘樹",
+        "宏樹"
+      ]
+    },
+    {
+      "reading": "たかひろ",
+      "gender": "M",
+      "kanji_examples": [
+        "孝弘",
+        "隆博"
+      ]
+    },
+    {
+      "reading": "かずひろ",
+      "gender": "M",
+      "kanji_examples": [
+        "和宏"
+      ]
+    },
+    {
+      "reading": "まさひろ",
+      "gender": "M",
+      "kanji_examples": [
+        "正宏",
+        "雅弘"
+      ]
+    },
+    {
+      "reading": "なおと",
+      "gender": "M",
+      "kanji_examples": [
+        "直人",
+        "尚人"
+      ]
+    },
+    {
+      "reading": "ともゆき",
+      "gender": "M",
+      "kanji_examples": [
+        "智之",
+        "友幸"
+      ]
+    },
+    {
+      "reading": "よしゆき",
+      "gender": "M",
+      "kanji_examples": [
+        "義之",
+        "良幸"
+      ]
+    },
+    {
+      "reading": "かつひこ",
+      "gender": "M",
+      "kanji_examples": [
+        "勝彦"
+      ]
+    },
+    {
+      "reading": "よしひこ",
+      "gender": "M",
+      "kanji_examples": [
+        "義彦",
+        "良彦"
+      ]
+    },
+    {
+      "reading": "くにひこ",
+      "gender": "M",
+      "kanji_examples": [
+        "国彦",
+        "邦彦"
+      ]
+    },
+    {
+      "reading": "まさひこ",
+      "gender": "M",
+      "kanji_examples": [
+        "正彦",
+        "雅彦"
+      ]
+    },
+    {
+      "reading": "きよひこ",
+      "gender": "M",
+      "kanji_examples": [
+        "清彦"
+      ]
+    },
+    {
+      "reading": "なおや",
+      "gender": "M",
+      "kanji_examples": [
+        "直也",
+        "尚也"
+      ]
+    },
+    {
+      "reading": "ともや",
+      "gender": "M",
+      "kanji_examples": [
+        "智也",
+        "友也"
+      ]
+    },
+    {
+      "reading": "たくや",
+      "gender": "M",
+      "kanji_examples": [
+        "拓也",
+        "卓也"
+      ]
+    },
+    {
+      "reading": "ふさえ",
+      "gender": "F",
+      "kanji_examples": [
+        "房江",
+        "房枝"
+      ]
+    },
+    {
+      "reading": "ただお",
+      "gender": "M",
+      "kanji_examples": [
+        "忠男",
+        "忠雄"
+      ]
+    },
+    {
+      "reading": "みつえ",
+      "gender": "F",
+      "kanji_examples": [
+        "光江",
+        "満枝"
+      ]
+    },
+    {
+      "reading": "ようた",
+      "gender": "M",
+      "kanji_examples": [
+        "洋太",
+        "陽太"
+      ]
+    },
+    {
+      "reading": "こうへい",
+      "gender": "M",
+      "kanji_examples": [
+        "浩平",
+        "康平",
+        "耕平"
+      ]
+    },
+    {
+      "reading": "あいか",
+      "gender": "F",
+      "kanji_examples": [
+        "愛佳",
+        "愛香"
+      ]
+    },
+    {
+      "reading": "ただいち",
+      "gender": "M",
+      "kanji_examples": [
+        "忠一"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>あだ名 試聴 — じゃんけんパーティ</title>
+<style>
+  :root {
+    --pink: #ff80a6;
+    --pink-dark: #d94e7a;
+    --blue: #6cb4ff;
+    --blue-dark: #2d7fd6;
+    --bg: #fffaf2;
+    --text: #2c2c2c;
+    --muted: #8a8a8a;
+    --section: #fff3d8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+    margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text);
+  }
+  header {
+    display: flex; align-items: baseline; gap: 16px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  h1 { font-size: 22px; margin: 0; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .filters {
+    display: flex; gap: 8px; margin: 12px 0 24px;
+  }
+  .filter-btn {
+    padding: 8px 16px; border: 2px solid #ccc; background: white;
+    border-radius: 999px; cursor: pointer; font-size: 14px;
+    font-family: inherit; font-weight: 600;
+  }
+  .filter-btn.active {
+    background: var(--text); color: white; border-color: var(--text);
+  }
+  section {
+    margin-bottom: 28px;
+    background: var(--section); border-radius: 16px;
+    padding: 16px 20px 20px;
+  }
+  section h2 {
+    margin: 0 0 12px; font-size: 16px; color: #6b4f1d;
+    letter-spacing: 0.05em;
+  }
+  .grid {
+    display: grid; gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .grid.cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid.cols1 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .cell {
+    background: white; border-radius: 12px; padding: 10px 8px;
+    text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 3px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .cell.playing { border-color: #ffb84d; }
+  .cell .ch {
+    font-size: 28px; font-weight: 700; line-height: 1;
+    margin-bottom: 8px;
+  }
+  .btns { display: flex; gap: 4px; justify-content: center; }
+  .btn {
+    flex: 1; min-width: 0;
+    padding: 8px 4px; border: none; border-radius: 8px;
+    font-family: inherit; font-weight: 700; font-size: 13px;
+    cursor: pointer; color: white;
+    transition: transform 0.05s, filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(0.95); }
+  .btn.chan { background: var(--pink); }
+  .btn.san  { background: var(--blue); }
+  .cell[data-hide="chan"] .btn.chan { display: none; }
+  .cell[data-hide="san"]  .btn.san  { display: none; }
+  .row-actions {
+    display: flex; gap: 8px; margin-bottom: 8px;
+  }
+  .row-btn {
+    padding: 4px 10px; border: 1px solid #ccc; background: white;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+    font-family: inherit;
+  }
+  footer {
+    position: sticky; bottom: 0; left: 0; right: 0;
+    background: white; padding: 12px 20px;
+    border-top: 1px solid #e0e0e0;
+    margin: 0 -24px -24px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 14px;
+  }
+  .now { font-weight: 700; color: var(--pink-dark); }
+  .now.san { color: var(--blue-dark); }
+  .help { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>あだ名 試聴</h1>
+  <span class="meta">VOICEVOX ずんだもん id:3 / speedScale 0.9 / 138音</span>
+</header>
+
+<div class="filters">
+  <button class="filter-btn active" data-filter="both">両方表示</button>
+  <button class="filter-btn" data-filter="chan">♀ ちゃんだけ</button>
+  <button class="filter-btn" data-filter="san">♂ さんだけ</button>
+</div>
+
+<div id="root"></div>
+
+<footer>
+  <span>再生中:</span>
+  <span class="now" id="now">—</span>
+  <span class="help">クリックで再生 / 行ヘッダの ▶ で連続再生</span>
+</footer>
+
+<script>
+const SECTIONS = [
+  { title: '清音 50音', rows: [
+    ['あ','い','う','え','お'],
+    ['か','き','く','け','こ'],
+    ['さ','し','す','せ','そ'],
+    ['た','ち','つ','て','と'],
+    ['な','に','ぬ','ね','の'],
+    ['は','ひ','ふ','へ','ほ'],
+    ['ま','み','む','め','も'],
+    ['や','ゆ','よ'],
+    ['ら','り','る','れ','ろ'],
+    ['わ'],
+  ]},
+  { title: '濁音', rows: [
+    ['が','ぎ','ぐ','げ','ご'],
+    ['ざ','じ','ず','ぜ','ぞ'],
+    ['だ','ぢ','づ','で','ど'],
+    ['ば','び','ぶ','べ','ぼ'],
+  ]},
+  { title: '半濁音', rows: [
+    ['ぱ','ぴ','ぷ','ぺ','ぽ'],
+  ]},
+];
+
+let currentAudio = null;
+let currentCell = null;
+
+function play(ch, gender) {
+  if (currentAudio) { try { currentAudio.pause(); } catch(e){} }
+  if (currentCell) currentCell.classList.remove('playing');
+  const file = `audio/names/name_${ch}_${gender}.wav`;
+  const audio = new Audio(file);
+  currentAudio = audio;
+  const text = ch + (gender === 'chan' ? 'っちゃん' : 'っさん');
+  const nowEl = document.getElementById('now');
+  nowEl.textContent = text;
+  nowEl.className = 'now ' + gender;
+  audio.addEventListener('error', () => {
+    nowEl.textContent = `⚠ ${text} (${file} が見つかりません)`;
+  });
+  audio.play().catch(() => {});
+}
+
+function playSequence(chars, gender, idx) {
+  idx = idx || 0;
+  if (idx >= chars.length) return;
+  const ch = chars[idx];
+  const cell = document.querySelector(`[data-ch="${ch}"]`);
+  if (currentCell) currentCell.classList.remove('playing');
+  if (cell) { cell.classList.add('playing'); currentCell = cell; }
+  if (currentAudio) { try { currentAudio.pause(); } catch(e){} }
+  const audio = new Audio(`audio/names/name_${ch}_${gender}.wav`);
+  currentAudio = audio;
+  const text = ch + (gender === 'chan' ? 'っちゃん' : 'っさん');
+  const nowEl = document.getElementById('now');
+  nowEl.textContent = text;
+  nowEl.className = 'now ' + gender;
+  audio.addEventListener('ended', () => {
+    setTimeout(() => playSequence(chars, gender, idx + 1), 200);
+  });
+  audio.addEventListener('error', () => {
+    nowEl.textContent = `⚠ ${text} スキップ`;
+    setTimeout(() => playSequence(chars, gender, idx + 1), 200);
+  });
+  audio.play().catch(() => {});
+}
+
+function makeCell(ch) {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.dataset.ch = ch;
+  cell.innerHTML = `
+    <div class="ch">${ch}</div>
+    <div class="btns">
+      <button class="btn chan" data-g="chan">ちゃん</button>
+      <button class="btn san" data-g="san">さん</button>
+    </div>
+  `;
+  cell.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (currentCell) currentCell.classList.remove('playing');
+      cell.classList.add('playing');
+      currentCell = cell;
+      play(ch, btn.dataset.g);
+    });
+  });
+  return cell;
+}
+
+function makeSection(sec) {
+  const el = document.createElement('section');
+  const h = document.createElement('h2');
+  h.textContent = sec.title;
+  el.appendChild(h);
+
+  // Row-by-row layout so each row can have its own play-all button
+  sec.rows.forEach(row => {
+    const actions = document.createElement('div');
+    actions.className = 'row-actions';
+    actions.innerHTML = `
+      <button class="row-btn" data-g="chan">▶ ${row.join('')} (ちゃん)</button>
+      <button class="row-btn" data-g="san">▶ ${row.join('')} (さん)</button>
+    `;
+    actions.querySelectorAll('.row-btn').forEach(b => {
+      b.addEventListener('click', () => playSequence(row, b.dataset.g));
+    });
+    el.appendChild(actions);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    row.forEach(ch => grid.appendChild(makeCell(ch)));
+    el.appendChild(grid);
+  });
+  return el;
+}
+
+const root = document.getElementById('root');
+SECTIONS.forEach(sec => root.appendChild(makeSection(sec)));
+
+// filter
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filter;
+    document.querySelectorAll('.cell').forEach(c => {
+      if (f === 'both') c.removeAttribute('data-hide');
+      else c.setAttribute('data-hide', f === 'chan' ? 'san' : 'chan');
+    });
+  });
+});
+</script>
+</body>
+</html>
