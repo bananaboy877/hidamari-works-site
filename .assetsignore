@@ -1,0 +1,30 @@
+# Cloudflare Workers Static Assets — exclusion list
+# (same syntax as .gitignore)
+
+# === Git internals (causes "Asset too large" — the .git pack files exceed 25 MiB) ===
+.git
+.git/
+
+# === Build / cache ===
+.wrangler
+node_modules
+__pycache__
+*.pyc
+
+# === Local tool / agent state ===
+.claude
+.claude/
+.github
+
+# === Dev-only files (not meant to be served) ===
+.assetsignore
+.gitignore
+*.py
+*.backup
+*.zip
+*.b64
+*.log
+
+# === Large unrelated assets ===
+audio/raw
+games/janken-party/audio/raw
