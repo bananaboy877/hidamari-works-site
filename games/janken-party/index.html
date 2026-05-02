@@ -3313,11 +3313,17 @@ registerGame('speed', {
 
     // 雪玉ころがし: 雪が降り終わった町の背景
     if (self.yukidamaMode) {
+      // isolation: 背景レイヤー(z-index:-1)を container 内に閉じ込めて、ゲームUI全部が前に来るようにする
+      container.style.isolation = 'isolate';
       // 空グラデーション (薄紫〜青〜白、降り終わりの落ち着いた空)
       container.style.background = 'linear-gradient(180deg, #c8b8d4 0%, #b8c8de 25%, #cdd9e8 55%, #e5edf3 85%, #f5fafd 100%)';
+      // 背景シーンラッパー: 街/雪原/降雪をまとめて z-index:-1 でゲームUIの後ろに
+      const bgLayer = document.createElement('div');
+      bgLayer.style.cssText = 'position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;';
+      container.appendChild(bgLayer);
       // 街並み + 山のシルエット SVG (画面下半分、雪原の上に立つ)
       const scene = document.createElement('div');
-      scene.style.cssText = 'position:absolute;left:0;right:0;bottom:90px;height:340px;z-index:1;pointer-events:none;';
+      scene.style.cssText = 'position:absolute;left:0;right:0;bottom:90px;height:340px;pointer-events:none;';
       scene.innerHTML =
         '<svg viewBox="0 0 1920 340" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%;display:block;">' +
           // 遠くの山並み (青みがかった灰色)
@@ -3382,11 +3388,11 @@ registerGame('speed', {
           '<polygon points="1740,340 1750,220 1760,240 1765,210 1770,240 1780,220 1790,340" fill="#2a3e2a"/>' +
           '<polygon points="1745,240 1750,220 1755,235 1760,215 1765,235 1770,210 1775,235 1780,220 1785,235" fill="#fff" opacity="0.75"/>' +
         '</svg>';
-      container.appendChild(scene);
+      bgLayer.appendChild(scene);
       // 雪原 (画面下端の白い盛り上がり、街の足元)
       const ground = document.createElement('div');
-      ground.style.cssText = 'position:absolute;left:-20px;right:-20px;bottom:-10px;height:130px;background:#fff;border-radius:50% 50% 0 0 / 80% 80% 0 0;z-index:2;pointer-events:none;box-shadow:inset 0 4px 0 rgba(220,235,250,0.6);';
-      container.appendChild(ground);
+      ground.style.cssText = 'position:absolute;left:-20px;right:-20px;bottom:-10px;height:130px;background:#fff;border-radius:50% 50% 0 0 / 80% 80% 0 0;pointer-events:none;box-shadow:inset 0 4px 0 rgba(220,235,250,0.6);';
+      bgLayer.appendChild(ground);
       // 降り終わった感: 数粒だけ漂う
       for (let i = 0; i < 12; i++) {
         const flake = document.createElement('div');
@@ -3400,8 +3406,7 @@ registerGame('speed', {
         flake.style.animationDuration = dur + 's';
         flake.style.animationDelay = '-' + delay + 's';
         flake.style.opacity = (0.4 + Math.random() * 0.3).toFixed(2);
-        flake.style.zIndex = '3';
-        container.appendChild(flake);
+        bgLayer.appendChild(flake);
       }
     }
 
@@ -3501,11 +3506,6 @@ registerGame('speed', {
     const mainDisplay = document.createElement('div');
     mainDisplay.style.cssText = 'width:450px;height:450px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;' + (displayMode !== 'normal' ? 'position:absolute;' : '');
     container.appendChild(mainDisplay);
-    // 雪玉モードでは雪の街SVG/降雪より手前に出す (z-index競合解消)
-    if (self.yukidamaMode) {
-      if (displayMode === 'normal') mainDisplay.style.position = 'relative';
-      mainDisplay.style.zIndex = '5';
-    }
     let moveAnimFrame = null;
 
     // 説明テキスト
