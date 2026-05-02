@@ -115,6 +115,28 @@ body {
   background: #fff;
 }
 
+#header-audio-btn {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  padding: 8px 20px;
+  border-radius: 12px;
+  border: 2px solid #43a047;
+  background: #e8f5e9;
+  color: #2e7d32;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+#header-audio-btn:hover { filter: brightness(1.06); }
+#header-audio-btn.audio-off {
+  background: #f5f5f5;
+  border-color: #999;
+  color: #999;
+}
+
 /* ========================================
    画面共通
    ======================================== */
@@ -721,6 +743,7 @@ body {
   </div>
   <div id="header-title"></div>
   <div style="display:flex;gap:12px;">
+    <button id="header-audio-btn" onclick="toggleAudio()" title="音声 オン/オフ"><span id="header-audio-icon">🔊</span><span id="header-audio-label">音</span></button>
     <button id="header-name-btn" onclick="openRegister()" class="unregistered"><span>👤</span><span id="header-name-label">お名前</span></button>
     <button id="header-select" onclick="goToSelect()" style="font-family:inherit;font-size:28px;font-weight:700;padding:8px 24px;border-radius:12px;border:2px solid #1e88e5;background:#e3f2fd;color:#1e88e5;cursor:pointer;transition:all 0.2s;">ゲーム選択</button>
     <button id="header-back" onclick="goToTitle()">戻る</button>
@@ -841,6 +864,7 @@ const State = {
   highScores: {},
   playerProfile: null, // { reading: 'たかし', gender: 'M' } or null
   yukidama: { currentSize: 0, pillarHeight: 0 }, // 雪玉ころがしの永続状態
+  audioEnabled: true, // ヘッダーの音声オン/オフトグル (永続)
 };
 
 const YUKIDAMA_MAX = 1000; // currentSize がこの値で雪玉1個完成 → 雪柱に積む
@@ -869,6 +893,9 @@ function loadState() {
         State.yukidama.currentSize = data.yukidama.currentSize | 0;
         State.yukidama.pillarHeight = data.yukidama.pillarHeight | 0;
       }
+      if (typeof data.audioEnabled === 'boolean') {
+        State.audioEnabled = data.audioEnabled;
+      }
     }
   } catch (e) {
     // silently fail
@@ -884,6 +911,7 @@ function saveState() {
       highScores: State.highScores,
       playerProfile: State.playerProfile,
       yukidama: State.yukidama,
+      audioEnabled: State.audioEnabled,
     }));
   } catch (e) {
     // silently fail
@@ -914,6 +942,36 @@ function setPlayerProfile(profile) {
   State.playerProfile = profile;
   saveState();
   updateHeaderName();
+}
+
+// 音声オン/オフトグル
+function toggleAudio() {
+  State.audioEnabled = !State.audioEnabled;
+  saveState();
+  if (!State.audioEnabled) {
+    // 即座に再生中の音を止める
+    stopAllAudio();
+    try { speechSynthesis.cancel(); } catch(e) {}
+  }
+  updateAudioButton();
+}
+
+function updateAudioButton() {
+  const btn = document.getElementById('header-audio-btn');
+  const icon = document.getElementById('header-audio-icon');
+  const label = document.getElementById('header-audio-label');
+  if (!btn || !icon || !label) return;
+  if (State.audioEnabled) {
+    icon.textContent = '🔊';
+    label.textContent = '音';
+    btn.classList.remove('audio-off');
+    btn.title = '音声: オン (クリックで消音)';
+  } else {
+    icon.textContent = '🔇';
+    label.textContent = '消音';
+    btn.classList.add('audio-off');
+    btn.title = '音声: オフ (クリックで再生)';
+  }
 }
 
 // ヘッダーの名前表示を現在のプロフィールから更新
@@ -1130,6 +1188,7 @@ function refreshAudioCtx() {
 
 function playAudio(src) {
   return new Promise((resolve) => {
+    if (!State.audioEnabled) { resolve(); return; }
     try {
       const audio = new Audio(src);
       let sourceNode = null, gainNode = null;
@@ -1200,6 +1259,7 @@ function playSE(name) {
 // TTS読み上げ
 function speakTTS(text) {
   return new Promise(resolve => {
+    if (!State.audioEnabled) { resolve(); return; }
     if (!window.speechSynthesis) { resolve(); return; }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -1277,6 +1337,7 @@ function speakName(reading, gender) {
   }
   if (layer === 3) {
     return new Promise(resolve => {
+      if (!State.audioEnabled) { resolve(); return; }
       try { speechSynthesis.cancel(); } catch(e){}
       const u = new SpeechSynthesisUtterance(reading + 'さん');
       if (pickedJaVoice) u.voice = pickedJaVoice;
@@ -6249,6 +6310,7 @@ function init() {
     speechSynthesis.addEventListener('voiceschanged', pickJaVoice);
   }
   updateHeaderName();
+  updateAudioButton();
   // 登録画面の Enter キーで保存
   const regInput = document.getElementById('reg-reading');
   if (regInput) regInput.addEventListener('keydown', (e) => {
