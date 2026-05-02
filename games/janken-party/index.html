@@ -3311,28 +3311,96 @@ registerGame('speed', {
 
     // タイトル（非表示）
 
-    // 雪玉ころがし: 雪国背景 + 降雪
+    // 雪玉ころがし: 雪が降り終わった町の背景
     if (self.yukidamaMode) {
-      // 空グラデーションを container 自身の背景に (paint最下層、主表示を隠さない)
-      container.style.background = 'linear-gradient(180deg, #cfe5f7 0%, #e6f1fa 45%, #f8fbfd 75%, #ffffff 100%)';
-      // 雪原 (画面下端の白い盛り上がり)
+      // 空グラデーション (薄紫〜青〜白、降り終わりの落ち着いた空)
+      container.style.background = 'linear-gradient(180deg, #c8b8d4 0%, #b8c8de 25%, #cdd9e8 55%, #e5edf3 85%, #f5fafd 100%)';
+      // 街並み + 山のシルエット SVG (画面下半分、雪原の上に立つ)
+      const scene = document.createElement('div');
+      scene.style.cssText = 'position:absolute;left:0;right:0;bottom:90px;height:340px;z-index:1;pointer-events:none;';
+      scene.innerHTML =
+        '<svg viewBox="0 0 1920 340" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%;display:block;">' +
+          // 遠くの山並み (青みがかった灰色)
+          '<polygon fill="#9caebf" points="0,200 250,90 450,170 700,50 900,150 1150,70 1400,160 1650,80 1920,140 1920,340 0,340"/>' +
+          // 山頂の雪
+          '<polygon fill="#fff" points="220,110 250,90 280,110 250,128"/>' +
+          '<polygon fill="#fff" points="670,70 700,50 730,70 700,86"/>' +
+          '<polygon fill="#fff" points="1120,90 1150,70 1180,90 1150,106"/>' +
+          '<polygon fill="#fff" points="1620,98 1650,80 1680,98 1650,114"/>' +
+          // 中景の山並み (もう少し近く、明るめ)
+          '<polygon fill="#b6c5d4" points="0,260 180,180 360,230 560,170 760,220 980,160 1180,210 1400,170 1600,220 1800,180 1920,210 1920,340 0,340"/>' +
+          // === 街並み (前景、暗いシルエット + 白い雪屋根) ===
+          // 家1 (左)
+          '<rect x="100" y="240" width="100" height="100" fill="#3d4a5e"/>' +
+          '<polygon points="100,240 150,190 200,240" fill="#3d4a5e"/>' +
+          '<polygon points="93,240 150,193 207,240 150,206" fill="#fff"/>' +
+          // 家2
+          '<rect x="260" y="218" width="140" height="122" fill="#4a3d4e"/>' +
+          '<polygon points="260,218 330,160 400,218" fill="#4a3d4e"/>' +
+          '<polygon points="253,218 330,165 407,218 330,180" fill="#fff"/>' +
+          // ビル (高め)
+          '<rect x="470" y="170" width="80" height="170" fill="#3a3e4e"/>' +
+          '<rect x="466" y="165" width="88" height="10" fill="#fff"/>' +
+          // 窓
+          '<rect x="485" y="195" width="14" height="20" fill="#ffe89a" opacity="0.7"/>' +
+          '<rect x="520" y="195" width="14" height="20" fill="#ffe89a" opacity="0.7"/>' +
+          '<rect x="485" y="240" width="14" height="20" fill="#ffe89a" opacity="0.5"/>' +
+          // 家3
+          '<rect x="620" y="240" width="120" height="100" fill="#4e3d3a"/>' +
+          '<polygon points="620,240 680,190 740,240" fill="#4e3d3a"/>' +
+          '<polygon points="613,240 680,195 747,240 680,208" fill="#fff"/>' +
+          // 木 (左の方)
+          '<polygon points="800,340 810,220 820,240 825,210 830,240 840,220 850,340" fill="#2a3e2a"/>' +
+          '<polygon points="805,240 810,220 815,235 820,215 825,235 830,210 835,235 840,220 845,235" fill="#fff" opacity="0.75"/>' +
+          // 中央の街灯
+          '<rect x="900" y="245" width="6" height="95" fill="#3a3e4a"/>' +
+          '<rect x="891" y="240" width="24" height="10" fill="#3a3e4a"/>' +
+          '<circle cx="903" cy="232" r="9" fill="#fff5b8"/>' +
+          // 家4
+          '<rect x="970" y="225" width="130" height="115" fill="#3d4e4a"/>' +
+          '<polygon points="970,225 1035,170 1100,225" fill="#3d4e4a"/>' +
+          '<polygon points="963,225 1035,175 1107,225 1035,190" fill="#fff"/>' +
+          // ビル2
+          '<rect x="1150" y="155" width="70" height="185" fill="#3e3a4a"/>' +
+          '<rect x="1146" y="150" width="78" height="10" fill="#fff"/>' +
+          '<rect x="1163" y="180" width="14" height="20" fill="#ffe89a" opacity="0.7"/>' +
+          '<rect x="1193" y="220" width="14" height="20" fill="#ffe89a" opacity="0.6"/>' +
+          // 家5
+          '<rect x="1290" y="225" width="120" height="115" fill="#4e453d"/>' +
+          '<polygon points="1290,225 1350,170 1410,225" fill="#4e453d"/>' +
+          '<polygon points="1283,225 1350,175 1417,225 1350,190" fill="#fff"/>' +
+          // 教会風 (尖った屋根)
+          '<rect x="1450" y="200" width="80" height="140" fill="#3a463e"/>' +
+          '<polygon points="1450,200 1490,130 1530,200" fill="#3a463e"/>' +
+          '<polygon points="1444,200 1490,135 1536,200 1490,150" fill="#fff"/>' +
+          '<rect x="1485" y="160" width="10" height="40" fill="#3a463e"/>' +
+          // 家6 (右端)
+          '<rect x="1580" y="240" width="100" height="100" fill="#3d3e4e"/>' +
+          '<polygon points="1580,240 1630,195 1680,240" fill="#3d3e4e"/>' +
+          '<polygon points="1573,240 1630,200 1687,240 1630,212" fill="#fff"/>' +
+          // 木 (右)
+          '<polygon points="1740,340 1750,220 1760,240 1765,210 1770,240 1780,220 1790,340" fill="#2a3e2a"/>' +
+          '<polygon points="1745,240 1750,220 1755,235 1760,215 1765,235 1770,210 1775,235 1780,220 1785,235" fill="#fff" opacity="0.75"/>' +
+        '</svg>';
+      container.appendChild(scene);
+      // 雪原 (画面下端の白い盛り上がり、街の足元)
       const ground = document.createElement('div');
-      ground.style.cssText = 'position:absolute;left:-20px;right:-20px;bottom:-10px;height:120px;background:#fff;border-radius:50% 50% 0 0 / 80% 80% 0 0;z-index:1;pointer-events:none;';
+      ground.style.cssText = 'position:absolute;left:-20px;right:-20px;bottom:-10px;height:130px;background:#fff;border-radius:50% 50% 0 0 / 80% 80% 0 0;z-index:2;pointer-events:none;box-shadow:inset 0 4px 0 rgba(220,235,250,0.6);';
       container.appendChild(ground);
-      // 降雪 50粒 (前景レイヤー、主表示の手前に降らせて雰囲気を出す)
-      for (let i = 0; i < 50; i++) {
+      // 降り終わった感: 数粒だけ漂う
+      for (let i = 0; i < 12; i++) {
         const flake = document.createElement('div');
         flake.className = 'snowflake';
-        const size = 4 + Math.random() * 10;
-        const dur = 7 + Math.random() * 8;
+        const size = 3 + Math.random() * 6;
+        const dur = 12 + Math.random() * 10;
         const delay = Math.random() * dur;
         flake.style.left = (Math.random() * 100) + '%';
         flake.style.width = size + 'px';
         flake.style.height = size + 'px';
         flake.style.animationDuration = dur + 's';
         flake.style.animationDelay = '-' + delay + 's';
-        flake.style.opacity = (0.5 + Math.random() * 0.4).toFixed(2);
-        flake.style.zIndex = '2';
+        flake.style.opacity = (0.4 + Math.random() * 0.3).toFixed(2);
+        flake.style.zIndex = '3';
         container.appendChild(flake);
       }
     }
@@ -3360,10 +3428,10 @@ registerGame('speed', {
     seikaiOverlay.textContent = '正解！';
     container.appendChild(seikaiOverlay);
 
-    // えつこ画像表示エリア（正解時に左側に表示）
+    // えつこ画像表示エリア（正解時に表示。雪玉モードは雪玉ウィジェットが左側にあるので右に避難）
     const ETSUKO_COUNT = 30;
     const etsukoWrap = document.createElement('div');
-    etsukoWrap.style.cssText = 'position:absolute;bottom:20px;left:40px;z-index:15;opacity:0;transition:opacity 0.3s;pointer-events:none;display:flex;flex-direction:column;align-items:center;';
+    etsukoWrap.style.cssText = 'position:absolute;bottom:20px;' + (self.yukidamaMode ? 'right:40px' : 'left:40px') + ';z-index:15;opacity:0;transition:opacity 0.3s;pointer-events:none;display:flex;flex-direction:column;align-items:center;';
     // ラベル「えつこ」
     const etsukoLabel = document.createElement('div');
     etsukoLabel.style.cssText = 'font-size:56px;font-weight:900;color:#e65100;margin-bottom:2px;';
@@ -3390,13 +3458,14 @@ registerGame('speed', {
       const YUKI_MAX_PX = 220;    // 雪玉MAXサイズ
       const PILLAR_BALL_PX = 110; // 雪柱の各ボール (積み上げ視認性のため少し小さめ)
       yukidamaWrap = document.createElement('div');
-      yukidamaWrap.style.cssText = 'position:absolute;bottom:30px;right:50px;z-index:15;display:flex;flex-direction:column;align-items:center;pointer-events:none;';
+      yukidamaWrap.style.cssText = 'position:absolute;bottom:30px;left:50px;z-index:15;display:flex;flex-direction:column;align-items:center;pointer-events:none;';
       yukidamaCounter = document.createElement('div');
-      yukidamaCounter.style.cssText = 'font-size:28px;font-weight:900;color:#1565c0;background:rgba(255,255,255,0.92);padding:8px 22px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:14px;white-space:nowrap;';
+      yukidamaCounter.style.cssText = 'font-size:28px;font-weight:900;color:#0d47a1;background:rgba(255,255,255,0.95);padding:8px 22px;border-radius:999px;box-shadow:0 4px 10px rgba(0,40,100,0.15);margin-bottom:14px;white-space:nowrap;border:2px solid #90caf9;';
       yukidamaPillar = document.createElement('div');
       yukidamaPillar.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
       yukidamaCurrentBall = document.createElement('div');
-      yukidamaCurrentBall.style.cssText = 'background:radial-gradient(circle at 35% 28%,#fff 0%,#e3f2fd 65%,#bbdefb 100%);border-radius:50%;border:5px solid #fff;box-shadow:0 8px 18px rgba(0,0,0,0.22);transition:width 0.35s ease,height 0.35s ease,transform 0.18s ease;flex-shrink:0;';
+      // 雪原(白)に対して見えるよう、薄青のボールに濃いめの輪郭+ブルー陰影
+      yukidamaCurrentBall.style.cssText = 'background:radial-gradient(circle at 35% 28%,#fff 0%,#cfe5fa 60%,#7fb3e0 100%);border-radius:50%;border:5px solid #4a8cc8;box-shadow:0 10px 22px rgba(0,40,90,0.35), inset 0 -8px 16px rgba(50,100,160,0.18);transition:width 0.35s ease,height 0.35s ease,transform 0.18s ease;flex-shrink:0;';
       yukidamaWrap.appendChild(yukidamaCounter);
       yukidamaWrap.appendChild(yukidamaPillar);
       yukidamaWrap.appendChild(yukidamaCurrentBall);
@@ -3412,7 +3481,7 @@ registerGame('speed', {
           yukidamaPillar.innerHTML = '';
           for (let i = 0; i < y.pillarHeight; i++) {
             const ball = document.createElement('div');
-            ball.style.cssText = 'background:radial-gradient(circle at 35% 28%,#fff 0%,#e3f2fd 65%,#90caf9 100%);border-radius:50%;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.18);width:' + PILLAR_BALL_PX + 'px;height:' + PILLAR_BALL_PX + 'px;margin-bottom:-14px;';
+            ball.style.cssText = 'background:radial-gradient(circle at 35% 28%,#fff 0%,#cfe5fa 60%,#7fb3e0 100%);border-radius:50%;border:4px solid #4a8cc8;box-shadow:0 6px 14px rgba(0,40,90,0.3),inset 0 -6px 12px rgba(50,100,160,0.18);width:' + PILLAR_BALL_PX + 'px;height:' + PILLAR_BALL_PX + 'px;margin-bottom:-14px;';
             yukidamaPillar.appendChild(ball);
           }
         }
