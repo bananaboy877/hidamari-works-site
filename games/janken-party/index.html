@@ -3574,20 +3574,21 @@ registerGame('speed', {
     let triangleHintDiv = null;
     if (isWin) {
       triangleHintDiv = document.createElement('div');
-      triangleHintDiv.style.cssText = 'position:absolute;right:80px;top:50%;transform:translateY(-50%);width:360px;height:380px;display:none;background:rgba(255,255,255,0.85);border-radius:24px;padding:16px 20px 20px;box-shadow:0 4px 16px rgba(0,0,0,0.15);box-sizing:border-box;';
-      // 手画像の中心: グー(180,90), チョキ(300,290), パー(60,290) ※320x340領域
+      triangleHintDiv.style.cssText = 'position:absolute;right:60px;top:50%;transform:translateY(-50%);width:500px;height:540px;display:none;background:rgba(255,255,255,0.88);border-radius:28px;padding:20px 24px 24px;box-shadow:0 6px 20px rgba(0,0,0,0.18);box-sizing:border-box;';
+      // 手画像の中心 (内側 440x460 領域): グー(220,90), チョキ(360,370), パー(80,370)
       const HAND_CENTERS = [
-        { type: 'rock',     cx: 180, cy: 90  },
-        { type: 'scissors', cx: 300, cy: 290 },
-        { type: 'paper',    cx: 60,  cy: 290 },
+        { type: 'rock',     cx: 220, cy: 90  },
+        { type: 'scissors', cx: 360, cy: 370 },
+        { type: 'paper',    cx: 80,  cy: 370 },
       ];
-      const HAND_PX = 90;
-      let inner = '<div style="text-align:center;font-size:22px;font-weight:900;color:#5d4037;margin-bottom:6px;">ヒント</div>';
-      inner += '<div style="position:relative;width:320px;height:340px;margin:0 auto;">';
+      const HAND_PX = 130;
+      let inner = '<div style="text-align:center;font-size:30px;font-weight:900;color:#5d4037;margin-bottom:8px;letter-spacing:2px;">ヒント</div>';
+      inner += '<div style="position:relative;width:440px;height:460px;margin:0 auto;">';
       // 矢印 (data-target = 矢印が指す手のインデックス) — ハイライト時に handIdx と一致する矢印を強調
       // グー(0)→チョキ(1)、チョキ(1)→パー(2)、パー(2)→グー(0)
+      // 円の半径=65、中心間ベクトルから 65px ずつ縮めて円の縁から縁に矢印を描く
       inner += `
-        <svg width="320" height="340" style="position:absolute;left:0;top:0;z-index:1;pointer-events:none;overflow:visible;">
+        <svg width="440" height="460" style="position:absolute;left:0;top:0;z-index:1;pointer-events:none;overflow:visible;">
           <defs>
             <marker id="arrowhead-default" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
               <polygon points="0 0, 9 4.5, 0 9" fill="#888"/>
@@ -3596,9 +3597,9 @@ registerGame('speed', {
               <polygon points="0 0, 11 5.5, 0 11" fill="#ff5722"/>
             </marker>
           </defs>
-          <line class="hint-arrow" data-target="1" x1="225" y1="125" x2="270" y2="245" stroke="#888" stroke-width="4" marker-end="url(#arrowhead-default)"/>
-          <line class="hint-arrow" data-target="2" x1="245" y1="290" x2="115" y2="290" stroke="#888" stroke-width="4" marker-end="url(#arrowhead-default)"/>
-          <line class="hint-arrow" data-target="0" x1="95"  y1="245" x2="140" y2="125" stroke="#888" stroke-width="4" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="1" x1="249" y1="148" x2="331" y2="312" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="2" x1="295" y1="370" x2="145" y2="370" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="0" x1="109" y1="312" x2="191" y2="148" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
         </svg>`;
       // 手画像 (z-index:2 で矢印より前) — data-hand-idx で勝ち手グロー対象を識別
       const HAND_IDX_BY_TYPE = { rock: 0, scissors: 1, paper: 2 };
@@ -3621,7 +3622,7 @@ registerGame('speed', {
       const arrows = triangleHintDiv.querySelectorAll('.hint-arrow');
       arrows.forEach(a => {
         a.setAttribute('stroke', '#888');
-        a.setAttribute('stroke-width', '4');
+        a.setAttribute('stroke-width', '5');
         a.setAttribute('marker-end', 'url(#arrowhead-default)');
       });
       const hands = triangleHintDiv.querySelectorAll('.hint-hand');
@@ -3641,7 +3642,7 @@ registerGame('speed', {
         const arrow = triangleHintDiv.querySelector('.hint-arrow[data-target="' + handIdx + '"]');
         if (arrow) {
           arrow.setAttribute('stroke', '#ff5722');
-          arrow.setAttribute('stroke-width', '7');
+          arrow.setAttribute('stroke-width', '9');
           arrow.setAttribute('marker-end', 'url(#arrowhead-highlight)');
         }
         // 勝ち手画像をグロー（色は HANDS[winIdx].color と一致）
