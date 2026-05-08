@@ -3322,6 +3322,9 @@ registerGame('speed', {
       'audio/speed_paper.wav',
     ];
     self._speedPromptTimer = null;
+    // ヒントじゃんけん用 三すくみヒント表示タイマー
+    self._hintShowTimer = null;
+    self._hintHighlightTimer = null;
 
     // --- スコア計算関数 ---
     function calcQuestionScore(reactionMs) {
@@ -3567,6 +3570,91 @@ registerGame('speed', {
     container.appendChild(mainDisplay);
     let moveAnimFrame = null;
 
+    // ヒントじゃんけん用 三すくみヒント図（5秒で表示、10秒で勝ち手矢印ハイライト）
+    let triangleHintDiv = null;
+    if (isWin) {
+      triangleHintDiv = document.createElement('div');
+      triangleHintDiv.style.cssText = 'position:absolute;right:80px;top:50%;transform:translateY(-50%);width:360px;height:380px;display:none;background:rgba(255,255,255,0.85);border-radius:24px;padding:16px 20px 20px;box-shadow:0 4px 16px rgba(0,0,0,0.15);box-sizing:border-box;';
+      // 手画像の中心: グー(180,90), チョキ(300,290), パー(60,290) ※320x340領域
+      const HAND_CENTERS = [
+        { type: 'rock',     cx: 180, cy: 90  },
+        { type: 'scissors', cx: 300, cy: 290 },
+        { type: 'paper',    cx: 60,  cy: 290 },
+      ];
+      const HAND_PX = 90;
+      let inner = '<div style="text-align:center;font-size:22px;font-weight:900;color:#5d4037;margin-bottom:6px;">ヒント</div>';
+      inner += '<div style="position:relative;width:320px;height:340px;margin:0 auto;">';
+      // 矢印 (data-target = 矢印が指す手のインデックス) — ハイライト時に handIdx と一致する矢印を強調
+      // グー(0)→チョキ(1)、チョキ(1)→パー(2)、パー(2)→グー(0)
+      inner += `
+        <svg width="320" height="340" style="position:absolute;left:0;top:0;z-index:1;pointer-events:none;overflow:visible;">
+          <defs>
+            <marker id="arrowhead-default" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+              <polygon points="0 0, 9 4.5, 0 9" fill="#888"/>
+            </marker>
+            <marker id="arrowhead-highlight" markerWidth="11" markerHeight="11" refX="7" refY="5.5" orient="auto">
+              <polygon points="0 0, 11 5.5, 0 11" fill="#ff5722"/>
+            </marker>
+          </defs>
+          <line class="hint-arrow" data-target="1" x1="225" y1="125" x2="270" y2="245" stroke="#888" stroke-width="4" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="2" x1="245" y1="290" x2="115" y2="290" stroke="#888" stroke-width="4" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="0" x1="95"  y1="245" x2="140" y2="125" stroke="#888" stroke-width="4" marker-end="url(#arrowhead-default)"/>
+        </svg>`;
+      // 手画像 (z-index:2 で矢印より前) — data-hand-idx で勝ち手グロー対象を識別
+      const HAND_IDX_BY_TYPE = { rock: 0, scissors: 1, paper: 2 };
+      HAND_CENTERS.forEach(p => {
+        const idx = HAND_IDX_BY_TYPE[p.type];
+        inner += '<div class="hint-hand" data-hand-idx="' + idx + '" style="position:absolute;left:' + (p.cx - HAND_PX / 2) + 'px;top:' + (p.cy - HAND_PX / 2) + 'px;width:' + HAND_PX + 'px;height:' + HAND_PX + 'px;z-index:2;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.12);transition:box-shadow 0.3s,transform 0.3s;">' + handImg(p.type, HAND_PX - 8) + '</div>';
+      });
+      inner += '</div>';
+      triangleHintDiv.innerHTML = inner;
+      container.appendChild(triangleHintDiv);
+    }
+
+    // 各手のグロー色（HANDS の color と同期）
+    const HINT_GLOW_RGB = ['229,57,53', '251,192,45', '30,136,229']; // グー赤 / チョキ黄 / パー青
+    function resetHintTriangle() {
+      if (!triangleHintDiv) return;
+      if (self._hintShowTimer) { clearTimeout(self._hintShowTimer); self._hintShowTimer = null; }
+      if (self._hintHighlightTimer) { clearTimeout(self._hintHighlightTimer); self._hintHighlightTimer = null; }
+      triangleHintDiv.style.display = 'none';
+      const arrows = triangleHintDiv.querySelectorAll('.hint-arrow');
+      arrows.forEach(a => {
+        a.setAttribute('stroke', '#888');
+        a.setAttribute('stroke-width', '4');
+        a.setAttribute('marker-end', 'url(#arrowhead-default)');
+      });
+      const hands = triangleHintDiv.querySelectorAll('.hint-hand');
+      hands.forEach(h => {
+        h.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+        h.style.transform = '';
+      });
+    }
+    function scheduleHintTriangle(handIdx) {
+      if (!triangleHintDiv) return;
+      self._hintShowTimer = setTimeout(() => {
+        if (self._destroyed || gameEnded || phase !== 'shown') return;
+        triangleHintDiv.style.display = 'block';
+      }, 5000);
+      self._hintHighlightTimer = setTimeout(() => {
+        if (self._destroyed || gameEnded || phase !== 'shown') return;
+        const arrow = triangleHintDiv.querySelector('.hint-arrow[data-target="' + handIdx + '"]');
+        if (arrow) {
+          arrow.setAttribute('stroke', '#ff5722');
+          arrow.setAttribute('stroke-width', '7');
+          arrow.setAttribute('marker-end', 'url(#arrowhead-highlight)');
+        }
+        // 勝ち手画像をグロー（色は HANDS[winIdx].color と一致）
+        const winIdx = WIN_HAND[handIdx];
+        const winHand = triangleHintDiv.querySelector('.hint-hand[data-hand-idx="' + winIdx + '"]');
+        if (winHand) {
+          const rgb = HINT_GLOW_RGB[winIdx];
+          winHand.style.boxShadow = '0 0 24px 8px rgba(' + rgb + ',0.85), 0 0 48px 18px rgba(' + rgb + ',0.45), 0 2px 6px rgba(0,0,0,0.12)';
+          winHand.style.transform = 'scale(1.08)';
+        }
+      }, 10000);
+    }
+
     // 説明テキスト
     const helpDiv = document.createElement('div');
     helpDiv.style.cssText = 'margin-top:30px;font-size:36px;font-weight:900;color:#3a2a1a;text-align:center;min-height:50px;';
@@ -3746,6 +3834,12 @@ registerGame('speed', {
         playAudio(SPEED_HAND_VOICES[handIdx]);
       }, 5000);
 
+      // 三すくみヒント: 5秒で表示、10秒で勝ち手矢印ハイライト（winMode 時のみ）
+      if (isWin) {
+        resetHintTriangle();
+        scheduleHintTriangle(handIdx);
+      }
+
       // 60秒以内に押さなかったら自動タイムアウト（前の問題のタイマーをキャンセル）
       if (self._timeoutTimer) clearTimeout(self._timeoutTimer);
       self._timeoutTimer = setTimeout(() => {
@@ -3769,6 +3863,7 @@ registerGame('speed', {
       if (self._timeoutTimer) { clearTimeout(self._timeoutTimer); self._timeoutTimer = null; }
       if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
       if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
+      if (isWin) resetHintTriangle();
 
       // ペナルティ加算
       reactionMs += foulPenalty;
@@ -3957,6 +4052,8 @@ registerGame('speed', {
       onGameKey = null;
       if (self._timeoutTimer) { clearTimeout(self._timeoutTimer); self._timeoutTimer = null; }
       if (self._speedPromptTimer) { clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; }
+      if (self._hintShowTimer) { clearTimeout(self._hintShowTimer); self._hintShowTimer = null; }
+      if (self._hintHighlightTimer) { clearTimeout(self._hintHighlightTimer); self._hintHighlightTimer = null; }
       if (self._moveAnim) { cancelAnimationFrame(self._moveAnim); self._moveAnim = null; }
       playSE('se_finish.mp3');
 
@@ -4029,6 +4126,8 @@ registerGame('speed', {
     this._timers = [];
     if (this._speedPromptTimer) { clearInterval(this._speedPromptTimer); this._speedPromptTimer = null; }
     if (this._timeoutTimer) { clearTimeout(this._timeoutTimer); this._timeoutTimer = null; }
+    if (this._hintShowTimer) { clearTimeout(this._hintShowTimer); this._hintShowTimer = null; }
+    if (this._hintHighlightTimer) { clearTimeout(this._hintHighlightTimer); this._hintHighlightTimer = null; }
     if (this._moveAnim) { cancelAnimationFrame(this._moveAnim); this._moveAnim = null; }
     onGameKey = null;
   }
