@@ -654,14 +654,19 @@ html { scroll-behavior: smooth; }
     },
     onDown(e) {
       const s = this.state;
-      s.drag = { down:true, startX:e.clientX, startOffset:s.offset, didDrag:false, pointerId:e.pointerId };
-      try { this.viewport.setPointerCapture(e.pointerId); } catch(_) {}
+      s.drag = { down:true, startX:e.clientX, startOffset:s.offset, didDrag:false, captured:false, pointerId:e.pointerId };
     },
     onMove(e) {
       const s = this.state;
       if (!s.drag.down) return;
       const dx = e.clientX - s.drag.startX;
-      if (Math.abs(dx) > 4) s.drag.didDrag = true;
+      if (!s.drag.didDrag && Math.abs(dx) > 4) {
+        s.drag.didDrag = true;
+        if (!s.drag.captured) {
+          try { this.viewport.setPointerCapture(s.drag.pointerId); } catch(_) {}
+          s.drag.captured = true;
+        }
+      }
       let next = s.drag.startOffset + dx;
       const hw = this.track.scrollWidth / 2;
       if (hw > 0) {
@@ -674,7 +679,10 @@ html { scroll-behavior: smooth; }
     onUp(e) {
       const s = this.state;
       s.drag.down = false;
-      try { this.viewport.releasePointerCapture(s.drag.pointerId); } catch(_) {}
+      if (s.drag.captured) {
+        try { this.viewport.releasePointerCapture(s.drag.pointerId); } catch(_) {}
+        s.drag.captured = false;
+      }
     },
     didDrag()    { return this.state.drag.didDrag; },
     consumeDrag(){ this.state.drag.didDrag = false; },
