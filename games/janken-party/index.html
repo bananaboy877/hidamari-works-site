@@ -3613,6 +3613,22 @@ registerGame('speed', {
       container.appendChild(triangleHintDiv);
     }
 
+    // 左側 ルール表示 (5秒で表示) — メイン手画像の左隣
+    let rulesHintDiv = null;
+    if (isWin) {
+      rulesHintDiv = document.createElement('div');
+      rulesHintDiv.style.cssText = 'position:absolute;left:60px;top:50%;transform:translateY(-50%);width:480px;display:none;background:rgba(255,255,255,0.88);border-radius:28px;padding:24px 32px 28px;box-shadow:0 6px 20px rgba(0,0,0,0.18);box-sizing:border-box;';
+      rulesHintDiv.innerHTML = `
+        <div style="text-align:center;font-size:30px;font-weight:900;color:#000;margin-bottom:14px;letter-spacing:2px;">ルール</div>
+        <ul style="list-style:disc;padding-left:36px;margin:0;font-size:32px;font-weight:700;line-height:1.8;color:#000;">
+          <li>グーに勝つのはパー</li>
+          <li>チョキに勝つのはグー</li>
+          <li>パーに勝つのはチョキ</li>
+        </ul>
+      `;
+      container.appendChild(rulesHintDiv);
+    }
+
     // 各手のグロー色（HANDS の color と同期）
     const HINT_GLOW_RGB = ['229,57,53', '251,192,45', '30,136,229']; // グー赤 / チョキ黄 / パー青
     function resetHintTriangle() {
@@ -3620,6 +3636,7 @@ registerGame('speed', {
       if (self._hintShowTimer) { clearTimeout(self._hintShowTimer); self._hintShowTimer = null; }
       if (self._hintHighlightTimer) { clearTimeout(self._hintHighlightTimer); self._hintHighlightTimer = null; }
       triangleHintDiv.style.display = 'none';
+      if (rulesHintDiv) rulesHintDiv.style.display = 'none';
       const arrows = triangleHintDiv.querySelectorAll('.hint-arrow');
       arrows.forEach(a => {
         a.setAttribute('stroke', '#888');
@@ -3637,6 +3654,7 @@ registerGame('speed', {
       self._hintShowTimer = setTimeout(() => {
         if (self._destroyed || gameEnded || phase !== 'shown') return;
         triangleHintDiv.style.display = 'block';
+        if (rulesHintDiv) rulesHintDiv.style.display = 'block';
       }, 5000);
       self._hintHighlightTimer = setTimeout(() => {
         if (self._destroyed || gameEnded || phase !== 'shown') return;
