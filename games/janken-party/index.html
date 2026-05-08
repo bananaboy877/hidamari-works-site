@@ -1517,6 +1517,7 @@ function goToSelect() {
     panda: '#4caf50', elephant: '#607d8b', cheetah: '#ff9800',
     mole: '#795548', gorilla: '#4a4a4a', monkey: '#c07040',
     lion: '#f9a825', owl: '#5c6bc0', rabbit: '#e91e63',
+    tanuki: '#8d6e63',
   };
 
   allGameIds.forEach(function(id) {
@@ -1809,6 +1810,7 @@ function getAnimalSVG(animalId, size) {
     lion: drawLion,
     owl: drawOwl,
     rabbit: drawRabbit,
+    tanuki: drawTanuki,
   };
 
   svgFunctions.hammer = drawHammer;
@@ -2541,6 +2543,55 @@ function drawRabbit(size) {
   </svg>`;
 }
 
+function drawTanuki(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="tanuki-fur" cx="50%" cy="40%" r="62%">
+          <stop offset="0%" stop-color="#b08868"/>
+          <stop offset="55%" stop-color="#8d6e63"/>
+          <stop offset="100%" stop-color="#5d4037"/>
+        </radialGradient>
+        <radialGradient id="tanuki-belly" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stop-color="#fff5e0"/>
+          <stop offset="60%" stop-color="#f5e6c8"/>
+          <stop offset="100%" stop-color="#e8d4a8"/>
+        </radialGradient>
+        <radialGradient id="tanuki-cheek" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ff9988" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#ff9988" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="tanuki-eye" cx="40%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#3a2620"/>
+          <stop offset="100%" stop-color="#1a0e08"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="100" cy="170" rx="68" ry="14" fill="#1a1a1a" opacity="0.15"/>
+      <polygon points="50,40 38,82 76,72" fill="url(#tanuki-fur)" stroke="#5d4037" stroke-width="1"/>
+      <polygon points="150,40 162,82 124,72" fill="url(#tanuki-fur)" stroke="#5d4037" stroke-width="1"/>
+      <polygon points="52,48 46,72 68,68" fill="#3a2820"/>
+      <polygon points="148,48 154,72 132,68" fill="#3a2820"/>
+      <ellipse cx="100" cy="110" rx="72" ry="68" fill="url(#tanuki-fur)" stroke="#5d4037" stroke-width="0.8"/>
+      <path d="M48 108 Q100 60 152 108 Q140 150 100 156 Q60 150 48 108 Z" fill="url(#tanuki-belly)"/>
+      <ellipse cx="68" cy="95" rx="22" ry="18" fill="#2a1810"/>
+      <ellipse cx="132" cy="95" rx="22" ry="18" fill="#2a1810"/>
+      <ellipse cx="68" cy="96" rx="13" ry="13" fill="#fff" stroke="#cdb89c" stroke-width="0.5"/>
+      <ellipse cx="132" cy="96" rx="13" ry="13" fill="#fff" stroke="#cdb89c" stroke-width="0.5"/>
+      <circle cx="70" cy="96" r="9" fill="url(#tanuki-eye)"/>
+      <circle cx="130" cy="96" r="9" fill="url(#tanuki-eye)"/>
+      <circle cx="73" cy="93" r="3" fill="#fff" opacity="0.95"/>
+      <circle cx="133" cy="93" r="3" fill="#fff" opacity="0.95"/>
+      <circle cx="68" cy="100" r="1.5" fill="#fff" opacity="0.6"/>
+      <circle cx="128" cy="100" r="1.5" fill="#fff" opacity="0.6"/>
+      <circle cx="55" cy="125" r="13" fill="url(#tanuki-cheek)"/>
+      <circle cx="145" cy="125" r="13" fill="url(#tanuki-cheek)"/>
+      <ellipse cx="100" cy="124" rx="14" ry="11" fill="url(#tanuki-belly)"/>
+      <ellipse cx="100" cy="120" rx="6" ry="4.5" fill="#1a1008"/>
+      <path d="M100 124 Q100 134 92 138" fill="none" stroke="#5d4037" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M100 124 Q100 134 108 138" fill="none" stroke="#5d4037" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M88 142 Q100 148 112 142" fill="none" stroke="#3a2410" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+
 function drawHammer(size) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -3248,12 +3299,20 @@ registerGame('speed', {
     if (self.faceMode) {
       HANDS.push({ key: 'f', label: '👄', name: 'あーん', color: '#e91e63', bg: 'rgba(233,30,99,0.12)', img: 'images/mouth_open.png' });
     }
+    // ヒントじゃんけん用: 表示された手に勝つ手のインデックス（グー(0)→パー(2)、チョキ(1)→グー(0)、パー(2)→チョキ(1)）
+    const WIN_HAND = [2, 0, 1];
+    if (self.faceMode && self.winMode) self.winMode = false;
+    const isWin = !!self.winMode;
     const TOTAL_QUESTIONS = self.totalQuestions || 100;
     const WAIT_MIN = 1500;
     const WAIT_MAX = 3000;
     const PENALTY_MS = 1000;
     const isPose = !!self.poseMode;
-    const SPEED_HAND_VOICES = isPose ? [
+    const SPEED_HAND_VOICES = isWin ? [
+      'audio/hint_rock.wav',
+      'audio/hint_scissors.wav',
+      'audio/hint_paper.wav',
+    ] : isPose ? [
       'audio/pose_rock.wav',
       'audio/pose_scissors.wav',
       'audio/pose_paper.wav',
@@ -3624,6 +3683,8 @@ registerGame('speed', {
         helpDiv.textContent = hand.key === 'f'
           ? '口を大きく開けて、カメラに見せてね！'
           : '手を' + hand.name + 'にして、カメラに見せてね！';
+      } else if (isWin) {
+        helpDiv.textContent = hand.name + 'に勝つボタンを押してね！';
       } else {
         helpDiv.textContent = hand.name + 'のボタンを押してね！';
       }
@@ -3865,20 +3926,23 @@ registerGame('speed', {
         // フライングは無視
       } else if (phase === 'shown') {
         const handIdx = questions[questionIdx];
-        if (keyIdx === handIdx) {
+        const expectedKeyIdx = isWin ? WIN_HAND[handIdx] : handIdx;
+        if (keyIdx === expectedKeyIdx) {
           // 正解
           const reactionMs = performance.now() - showTime;
           handleAnswer(reactionMs);
         } else {
           // 間違ったボタン → ペナルティ加算、正しいボタンを押すまで待つ
           if (!isPose && !self.faceMode) { foulPenalty += 500; playSE('se_wrong.mp3'); }
-          const correctHand = HANDS[handIdx];
+          const promptHand = HANDS[handIdx];
           if (isPose || self.faceMode) {
-            helpDiv.textContent = correctHand.key === 'f'
+            helpDiv.textContent = promptHand.key === 'f'
               ? '口を大きく開けて、カメラに見せてね！'
-              : '手を' + correctHand.name + 'にして、カメラに見せてね！';
+              : '手を' + promptHand.name + 'にして、カメラに見せてね！';
+          } else if (isWin) {
+            helpDiv.textContent = promptHand.name + 'に勝つボタンを押してね！';
           } else {
-            helpDiv.textContent = correctHand.name + 'のボタンを押してね！';
+            helpDiv.textContent = promptHand.name + 'のボタンを押してね！';
           }
           helpDiv.style.color = '#e53935';
           playAudio(SPEED_HAND_VOICES[handIdx]);
@@ -3991,6 +4055,21 @@ registerGame('speed5000', {
   introVoice: 'audio/intro_speed.wav',
   medalThresholds: { gold: 300000, silver: 200000, bronze: 0 },
   totalQuestions: 5000,
+  _timers: [],
+  _destroyed: false,
+  init: GameRegistry['speed'].init,
+  cleanup: GameRegistry['speed'].cleanup,
+});
+
+// ヒントじゃんけん: 出た手に勝つボタンを押すモード（speed init を winMode で再利用）
+registerGame('hint', {
+  name: 'ヒントじゃんけん',
+  animal: 'tanuki',
+  description: '画面に出た手に勝つボタンを押そう！考えて勝つじゃんけん',
+  introVoice: 'audio/intro_hint.wav',
+  medalThresholds: { gold: 300000, silver: 200000, bronze: 0 },
+  totalQuestions: 5000,
+  winMode: true,
   _timers: [],
   _destroyed: false,
   init: GameRegistry['speed'].init,
