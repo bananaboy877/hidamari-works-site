@@ -3586,20 +3586,20 @@ registerGame('speed', {
       inner += '<div style="position:relative;width:440px;height:460px;margin:0 auto;">';
       // 矢印 (data-target = 矢印が指す手のインデックス) — ハイライト時に handIdx と一致する矢印を強調
       // グー(0)→チョキ(1)、チョキ(1)→パー(2)、パー(2)→グー(0)
-      // 円の半径=65、中心間ベクトルから 65px ずつ縮めて円の縁から縁に矢印を描く
+      // 円の半径=65、矢印先端=線終点(refX=markerWidth)。線終点は半径+8px(余白)で円の縁から離す。
       inner += `
         <svg width="440" height="460" style="position:absolute;left:0;top:0;z-index:1;pointer-events:none;overflow:visible;">
           <defs>
-            <marker id="arrowhead-default" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+            <marker id="arrowhead-default" markerWidth="9" markerHeight="9" refX="9" refY="4.5" orient="auto">
               <polygon points="0 0, 9 4.5, 0 9" fill="#888"/>
             </marker>
-            <marker id="arrowhead-highlight" markerWidth="11" markerHeight="11" refX="7" refY="5.5" orient="auto">
+            <marker id="arrowhead-highlight" markerWidth="11" markerHeight="11" refX="11" refY="5.5" orient="auto">
               <polygon points="0 0, 11 5.5, 0 11" fill="#ff5722"/>
             </marker>
           </defs>
-          <line class="hint-arrow" data-target="1" x1="249" y1="148" x2="331" y2="312" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
-          <line class="hint-arrow" data-target="2" x1="295" y1="370" x2="145" y2="370" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
-          <line class="hint-arrow" data-target="0" x1="109" y1="312" x2="191" y2="148" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="1" x1="249" y1="148" x2="327" y2="305" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="2" x1="295" y1="370" x2="153" y2="370" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
+          <line class="hint-arrow" data-target="0" x1="109" y1="312" x2="187" y2="155" stroke="#888" stroke-width="5" marker-end="url(#arrowhead-default)"/>
         </svg>`;
       // 手画像 (z-index:2 で矢印より前) — data-hand-idx で勝ち手グロー対象を識別
       const HAND_IDX_BY_TYPE = { rock: 0, scissors: 1, paper: 2 };
