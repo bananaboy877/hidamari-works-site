@@ -3321,6 +3321,20 @@ registerGame('speed', {
       'audio/speed_scissors.wav',
       'audio/speed_paper.wav',
     ];
+    // ヒントじゃんけん用 5秒経過後の長いヒント付きボイス
+    const SPEED_HAND_VOICES_LONG = isWin ? [
+      'audio/hint_full_rock.wav',
+      'audio/hint_full_scissors.wav',
+      'audio/hint_full_paper.wav',
+    ] : null;
+    // ヒントじゃんけん用 helpDiv 下に出すヒント文（5秒で表示）
+    const WIN_HINT_TEXTS = ['グーに勝つのはパーだよ', 'チョキに勝つのはグーだよ', 'パーに勝つのはチョキだよ'];
+    function getCurrentSpeedVoice(handIdx) {
+      if (isWin && SPEED_HAND_VOICES_LONG && (performance.now() - showTime) >= 5000) {
+        return SPEED_HAND_VOICES_LONG[handIdx];
+      }
+      return SPEED_HAND_VOICES[handIdx];
+    }
     self._speedPromptTimer = null;
     // ヒントじゃんけん用 三すくみヒント表示タイマー
     self._hintShowTimer = null;
@@ -3637,6 +3651,7 @@ registerGame('speed', {
       if (self._hintHighlightTimer) { clearTimeout(self._hintHighlightTimer); self._hintHighlightTimer = null; }
       triangleHintDiv.style.display = 'none';
       if (rulesHintDiv) rulesHintDiv.style.display = 'none';
+      if (helpSubDiv) { helpSubDiv.style.display = 'none'; helpSubDiv.textContent = ''; }
       const arrows = triangleHintDiv.querySelectorAll('.hint-arrow');
       arrows.forEach(a => {
         a.setAttribute('stroke', '#888');
@@ -3655,6 +3670,10 @@ registerGame('speed', {
         if (self._destroyed || gameEnded || phase !== 'shown') return;
         triangleHintDiv.style.display = 'block';
         if (rulesHintDiv) rulesHintDiv.style.display = 'block';
+        if (helpSubDiv) {
+          helpSubDiv.textContent = WIN_HINT_TEXTS[handIdx];
+          helpSubDiv.style.display = 'block';
+        }
       }, 5000);
       self._hintHighlightTimer = setTimeout(() => {
         if (self._destroyed || gameEnded || phase !== 'shown') return;
@@ -3679,6 +3698,14 @@ registerGame('speed', {
     const helpDiv = document.createElement('div');
     helpDiv.style.cssText = 'margin-top:30px;font-size:36px;font-weight:900;color:#3a2a1a;text-align:center;min-height:50px;';
     container.appendChild(helpDiv);
+
+    // ヒントじゃんけん用 helpDiv 直下のヒント文（5秒で表示）
+    let helpSubDiv = null;
+    if (isWin) {
+      helpSubDiv = document.createElement('div');
+      helpSubDiv.style.cssText = 'margin-top:8px;font-size:32px;font-weight:700;color:#3a2a1a;text-align:center;min-height:40px;display:none;';
+      container.appendChild(helpSubDiv);
+    }
 
     // 反応時間表示
     const reactionDiv = document.createElement('div');
@@ -3844,14 +3871,14 @@ registerGame('speed', {
       stopAllAudio();
       playSE('se_appear.mp3');
       // 手に対応するTTSを読み上げ
-      playAudio(SPEED_HAND_VOICES[handIdx]);
+      playAudio(getCurrentSpeedVoice(handIdx));
       // 5秒おきにリピート読み上げ
       if (self._speedPromptTimer) clearInterval(self._speedPromptTimer);
       self._speedPromptTimer = setInterval(() => {
         if (self._destroyed || gameEnded || phase !== 'shown') {
           clearInterval(self._speedPromptTimer); self._speedPromptTimer = null; return;
         }
-        playAudio(SPEED_HAND_VOICES[handIdx]);
+        playAudio(getCurrentSpeedVoice(handIdx));
       }, 5000);
 
       // 三すくみヒント: 5秒で表示、10秒で勝ち手矢印ハイライト（winMode 時のみ）
@@ -4060,7 +4087,7 @@ registerGame('speed', {
             helpDiv.textContent = promptHand.name + 'のボタンを押してね！';
           }
           helpDiv.style.color = '#e53935';
-          playAudio(SPEED_HAND_VOICES[handIdx]);
+          playAudio(getCurrentSpeedVoice(handIdx));
         }
       }
       // 'answered' / 'foul' フェーズでは無視
