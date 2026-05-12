@@ -4643,6 +4643,10 @@ registerGame('travel', {
       clearPromptRepeat();
       busyAudio = true;
       stopAllAudio();
+      // 20歩ごとに AudioContext をリフレッシュ (ノード上限回避、長時間プレイ時の音切れ防止)
+      if (State.travel.totalSteps > 0 && State.travel.totalSteps % 20 === 0) {
+        refreshAudioCtx();
+      }
       // SE は stopAllAudio の後で鳴らす (前に置くと即停止されて聞こえなくなる)
       if (playSEFeedback) {
         playSE('se_button.mp3');   // 入力音
