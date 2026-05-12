@@ -4341,8 +4341,9 @@ registerGame('haiku', {
 
     // 縦書きエリア: display:inline-block + writing-mode:vertical-rl
     // → 子のblock要素が「右→左」の列として自然に並ぶ (flexは使わない、衝突するため)
+    // text-align:start で各列の文字を上端(inline-start)に寄せる
     const verticalArea = document.createElement('div');
-    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:420px;display:inline-block;';
+    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:420px;display:inline-block;text-align:start;';
     haikuCard.appendChild(verticalArea);
 
     // DOM順: 上の句(右) → 中の句(中央) → 下の句(左)。display:block (div既定) で縦書き方向に並ぶ
@@ -4350,7 +4351,7 @@ registerGame('haiku', {
     const lineMiddle = document.createElement('div');
     const lineLast = document.createElement('div');
     [lineFirst, lineMiddle, lineLast].forEach(el => {
-      el.style.cssText = 'font-size:52px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;padding:0 18px;';
+      el.style.cssText = 'font-size:52px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;padding:0 18px;text-align:start;';
       verticalArea.appendChild(el);
     });
 
