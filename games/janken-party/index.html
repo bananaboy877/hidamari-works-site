@@ -4313,7 +4313,168 @@ registerGame('travel', {
     // === UI構築 ===
     gameArea.innerHTML = '';
     const container = document.createElement('div');
-    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#fef3e0 0%,#fff8e7 50%,#e8f5e9 100%);';
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#fef3e0 0%,#fff8e7 50%,#e8f5e9 100%);isolation:isolate;';
+
+    // === 道シーン (一人称視点、地域テーマ5グループ、滑らかスクロール) ===
+    const THEMES = {
+      snow: { // 北海道・東北 (idx 0-6)
+        sky: 'linear-gradient(180deg, #cfdbe8 0%, #e3edf5 60%, #f5f9fc 100%)',
+        mountain: '#9caebf', cap: '#fff', road: '#d4ccc8',
+        pool: ['snowTree', 'snowPine', 'snowPine', 'snowHouse'],
+      },
+      city: { // 関東 (idx 7-13)
+        sky: 'linear-gradient(180deg, #bfd6ed 0%, #d8e5f2 70%, #e8f0f7 100%)',
+        mountain: '#7d8b9d', cap: '#cfdbe8', road: '#6a6a6e',
+        pool: ['building', 'building', 'streetlight', 'tree'],
+      },
+      mountain: { // 中部・北陸 (idx 14-22)
+        sky: 'linear-gradient(180deg, #b0c5d8 0%, #c5d8de 60%, #dde7e9 100%)',
+        mountain: '#5d6b3e', cap: '#a8b8a0', road: '#806a52',
+        pool: ['pine', 'maple', 'rock', 'pine'],
+      },
+      rural: { // 近畿・中国 (idx 23-35)
+        sky: 'linear-gradient(180deg, #c8dde2 0%, #d8e8e0 60%, #f0f5e8 100%)',
+        mountain: '#9bb89a', cap: '#c8d8c0', road: '#a08b6e',
+        pool: ['tree', 'house', 'rice', 'tree'],
+      },
+      tropical: { // 四国・九州・沖縄 (idx 36-46)
+        sky: 'linear-gradient(180deg, #ffd8a0 0%, #ffeed8 50%, #d8f0e8 100%)',
+        mountain: '#a8d4c8', cap: '#fff8d8', road: '#e8d4a0',
+        pool: ['palm', 'palm', 'hibiscus', 'palmTall'],
+      },
+    };
+    function themeForPrefIdx(idx) {
+      if (idx <= 6) return 'snow';
+      if (idx <= 13) return 'city';
+      if (idx <= 22) return 'mountain';
+      if (idx <= 35) return 'rural';
+      return 'tropical';
+    }
+    const SCENE_ELEMENTS = {
+      snowTree:   '<svg width="100" height="150" viewBox="-50 -150 100 150"><polygon points="-35,0 0,-130 35,0" fill="#2a4a2a"/><polygon points="-30,-30 0,-130 30,-30" fill="#fff" opacity="0.92"/></svg>',
+      snowPine:   '<svg width="80" height="180" viewBox="-40 -180 80 180"><rect x="-5" y="-50" width="10" height="50" fill="#4a3a2a"/><polygon points="-25,-50 0,-160 25,-50" fill="#3a5a3a"/><polygon points="-20,-90 0,-150 20,-90" fill="#fff" opacity="0.88"/></svg>',
+      snowHouse:  '<svg width="140" height="120" viewBox="-70 -120 140 120"><rect x="-55" y="-70" width="110" height="70" fill="#5a4a3e"/><polygon points="-60,-70 0,-115 60,-70" fill="#3a2e2a"/><polygon points="-66,-70 0,-118 66,-70 0,-95" fill="#fff"/><rect x="-15" y="-50" width="20" height="50" fill="#2a1a0a"/><rect x="20" y="-60" width="22" height="22" fill="#ffd068"/></svg>',
+      building:   '<svg width="120" height="220" viewBox="-60 -220 120 220"><rect x="-50" y="-200" width="100" height="200" fill="#5a5e72"/><rect x="-40" y="-190" width="12" height="18" fill="#ffe89a"/><rect x="-18" y="-190" width="12" height="18" fill="#ffd068" opacity="0.7"/><rect x="8" y="-190" width="12" height="18" fill="#fff5d0"/><rect x="30" y="-190" width="12" height="18" fill="#ffe89a"/><rect x="-40" y="-155" width="12" height="18" fill="#fff" opacity="0.3"/><rect x="8" y="-155" width="12" height="18" fill="#ffe89a"/><rect x="30" y="-155" width="12" height="18" fill="#ffd068" opacity="0.6"/><rect x="-40" y="-120" width="12" height="18" fill="#ffe89a"/><rect x="-18" y="-120" width="12" height="18" fill="#fff" opacity="0.5"/><rect x="-40" y="-85" width="12" height="18" fill="#ffd068"/><rect x="30" y="-85" width="12" height="18" fill="#ffe89a"/></svg>',
+      streetlight:'<svg width="60" height="200" viewBox="-30 -200 60 200"><rect x="-3" y="-180" width="6" height="180" fill="#3a3e4a"/><circle cx="0" cy="-180" r="10" fill="#fff5b8"/><rect x="-12" y="-178" width="24" height="6" fill="#3a3e4a"/></svg>',
+      pine:       '<svg width="100" height="180" viewBox="-50 -180 100 180"><rect x="-7" y="-60" width="14" height="60" fill="#3a2a1a"/><polygon points="-30,-60 0,-170 30,-60" fill="#2a4e2a"/><polygon points="-22,-100 0,-170 22,-100" fill="#3a6a3a"/></svg>',
+      maple:      '<svg width="110" height="170" viewBox="-55 -170 110 170"><rect x="-7" y="-60" width="14" height="60" fill="#3a2a1a"/><ellipse cx="0" cy="-115" rx="50" ry="55" fill="#d8704a"/><ellipse cx="-25" cy="-95" rx="30" ry="35" fill="#e08a4a"/><ellipse cx="25" cy="-95" rx="30" ry="35" fill="#c8603a"/></svg>',
+      rock:       '<svg width="100" height="70" viewBox="-50 -70 100 70"><polygon points="-40,0 -28,-50 20,-58 42,-25 35,0" fill="#7a7a7a"/><polygon points="-32,0 -20,-30 -8,-35 -14,0" fill="#8e8e8e"/></svg>',
+      tree:       '<svg width="100" height="160" viewBox="-50 -160 100 160"><rect x="-7" y="-50" width="14" height="50" fill="#5a3a2a"/><ellipse cx="0" cy="-110" rx="45" ry="50" fill="#3a6a3a"/><ellipse cx="-25" cy="-100" rx="25" ry="30" fill="#4a7a4a"/><ellipse cx="25" cy="-100" rx="25" ry="30" fill="#2a5a2a"/></svg>',
+      house:      '<svg width="130" height="120" viewBox="-65 -120 130 120"><rect x="-55" y="-80" width="110" height="80" fill="#d8b888"/><polygon points="-60,-80 0,-115 60,-80" fill="#a85a3a"/><rect x="-20" y="-55" width="22" height="55" fill="#5a3a2a"/><rect x="18" y="-65" width="22" height="22" fill="#8ad1f5"/></svg>',
+      rice:       '<svg width="200" height="80" viewBox="-100 -80 200 80"><rect x="-95" y="-30" width="190" height="30" fill="#a8c870"/><line x1="-90" y1="-22" x2="90" y2="-22" stroke="#8ab068" stroke-width="2"/><line x1="-90" y1="-14" x2="90" y2="-14" stroke="#8ab068" stroke-width="2"/><line x1="-90" y1="-6" x2="90" y2="-6" stroke="#8ab068" stroke-width="2"/></svg>',
+      palm:       '<svg width="130" height="200" viewBox="-65 -200 130 200"><path d="M-2,0 Q-6,-110 6,-180" stroke="#5a3a2a" stroke-width="10" fill="none"/><path d="M6,-180 Q-32,-170 -55,-150" stroke="#2a8a4a" stroke-width="9" fill="none"/><path d="M6,-180 Q42,-170 60,-145" stroke="#2a8a4a" stroke-width="9" fill="none"/><path d="M6,-180 Q-22,-200 -45,-202" stroke="#2a8a4a" stroke-width="9" fill="none"/><path d="M6,-180 Q32,-200 55,-202" stroke="#2a8a4a" stroke-width="9" fill="none"/></svg>',
+      palmTall:   '<svg width="140" height="240" viewBox="-70 -240 140 240"><path d="M-2,0 Q-8,-140 8,-220" stroke="#5a3a2a" stroke-width="11" fill="none"/><path d="M8,-220 Q-38,-208 -62,-180" stroke="#2a8a4a" stroke-width="10" fill="none"/><path d="M8,-220 Q48,-208 65,-178" stroke="#2a8a4a" stroke-width="10" fill="none"/><path d="M8,-220 Q-25,-240 -50,-240" stroke="#2a8a4a" stroke-width="10" fill="none"/><path d="M8,-220 Q38,-240 60,-240" stroke="#2a8a4a" stroke-width="10" fill="none"/></svg>',
+      hibiscus:   '<svg width="90" height="120" viewBox="-45 -120 90 120"><rect x="-2" y="-40" width="4" height="40" fill="#3a6a3a"/><ellipse cx="0" cy="-60" rx="20" ry="6" fill="#3a8a3a" transform="rotate(40 0 -60)"/><circle cx="-18" cy="-78" r="17" fill="#e64a8a"/><circle cx="18" cy="-78" r="17" fill="#e64a8a"/><circle cx="0" cy="-95" r="17" fill="#e64a8a"/><circle cx="0" cy="-78" r="7" fill="#ffd54a"/></svg>',
+    };
+
+    // 背景レイヤー (空グラデ、遠景山、道、両側スクロール要素)
+    const sceneBg = document.createElement('div');
+    sceneBg.style.cssText = 'position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;';
+    container.appendChild(sceneBg);
+
+    const sceneSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    sceneSvg.setAttribute('viewBox', '0 0 1920 1000');
+    sceneSvg.setAttribute('preserveAspectRatio', 'xMidYMax slice');
+    sceneSvg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+    // 遠景の山並み
+    const mountainEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    mountainEl.setAttribute('points', '0,470 200,360 400,420 600,320 800,400 1000,330 1200,410 1400,340 1600,400 1920,370 1920,500 0,500');
+    mountainEl.setAttribute('opacity', '0.9');
+    sceneSvg.appendChild(mountainEl);
+    // 山頂の雪/明部
+    const mountainCapEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    mountainCapEl.innerHTML = '<polygon points="170,380 200,360 230,380 200,395"/><polygon points="570,340 600,320 630,340 600,355"/><polygon points="970,350 1000,330 1030,350 1000,365"/><polygon points="1370,360 1400,340 1430,360 1400,375"/>';
+    sceneSvg.appendChild(mountainCapEl);
+    // 道 (遠近台形、奥が狭く手前が広い)
+    const roadEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    roadEl.setAttribute('points', '880,470 1040,470 1560,1000 360,1000');
+    sceneSvg.appendChild(roadEl);
+    // 道の中央線 (破線で奥行き感)
+    const roadLineEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    roadLineEl.innerHTML = '<polygon points="956,490 964,490 968,560 952,560" fill="#fff" opacity="0.85"/>'
+                         + '<polygon points="948,600 972,600 980,720 940,720" fill="#fff" opacity="0.85"/>'
+                         + '<polygon points="930,780 990,780 1010,950 910,950" fill="#fff" opacity="0.85"/>';
+    sceneSvg.appendChild(roadLineEl);
+    sceneBg.appendChild(sceneSvg);
+
+    // 道側のスクロール要素プール (左右各7個、合計14)
+    const NUM_ROADSIDE = 14;
+    const roadside = [];
+    for (let i = 0; i < NUM_ROADSIDE; i++) {
+      const side = (i % 2 === 0) ? -1 : 1;
+      const depth = ((i / 2) | 0) / 7;  // 0, 1/7, 2/7, ...
+      const div = document.createElement('div');
+      div.style.cssText = 'position:absolute;left:50%;top:46%;transform-origin:center bottom;transition:transform 0.5s cubic-bezier(0.25,0.65,0.3,1),left 0.5s cubic-bezier(0.25,0.65,0.3,1),top 0.5s cubic-bezier(0.25,0.65,0.3,1),opacity 0.3s;will-change:transform;';
+      sceneBg.appendChild(div);
+      roadside.push({ side, depth, type: null, div });
+    }
+
+    function pickElement(theme) {
+      const pool = THEMES[theme].pool;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function layoutOne(el) {
+      // depth 0 = 地平線、1 = 画面手前
+      const VANISH_X_PCT = 50, VANISH_Y_PCT = 47;
+      // 画面端到達時の x オフセット (手前で道幅 +α まで広がる)
+      const NEAR_X_OFFSET = 58; // %
+      const NEAR_Y = 102; // %
+      const x = VANISH_X_PCT + el.side * NEAR_X_OFFSET * el.depth;
+      const y = VANISH_Y_PCT + (NEAR_Y - VANISH_Y_PCT) * el.depth;
+      // 遠近スケール: 地平線で 0.04、手前で 1.4
+      const scale = 0.04 + el.depth * 1.4;
+      el.div.style.left = x + '%';
+      el.div.style.top = y + '%';
+      el.div.style.transform = 'translate(-50%, -100%) scale(' + scale + ')';
+      el.div.style.opacity = (el.depth > 0.06 && el.depth < 1.0) ? '1' : '0';
+      el.div.style.zIndex = String(Math.floor(el.depth * 100));
+    }
+
+    let currentSceneTheme = null;
+    function applyTheme(theme, regenerateAll) {
+      currentSceneTheme = theme;
+      const t = THEMES[theme];
+      // 空 → container 背景。CSS transition でゆるやかに切り替え
+      container.style.transition = 'background 0.8s ease';
+      container.style.background = t.sky;
+      mountainEl.setAttribute('fill', t.mountain);
+      mountainCapEl.setAttribute('fill', t.cap);
+      roadEl.setAttribute('fill', t.road);
+      if (regenerateAll) {
+        roadside.forEach(el => {
+          el.type = pickElement(theme);
+          el.div.innerHTML = SCENE_ELEMENTS[el.type] || '';
+          layoutOne(el);
+        });
+      }
+    }
+
+    function stepScene() {
+      const theme = themeForPrefIdx(State.travel.currentPrefIdx);
+      if (theme !== currentSceneTheme) applyTheme(theme, false);
+      roadside.forEach(el => {
+        el.depth += 1 / 14;
+        if (el.depth > 1.08) {
+          // 画面外に消えた → 地平線に再配置 + 現在テーマで再抽選
+          el.depth = -0.04;
+          el.type = pickElement(themeForPrefIdx(State.travel.currentPrefIdx));
+          el.div.innerHTML = SCENE_ELEMENTS[el.type] || '';
+          // スナップさせるため一瞬 transition オフ
+          el.div.style.transition = 'none';
+          layoutOne(el);
+          // reflow + transition 再有効化
+          el.div.offsetHeight;
+          el.div.style.transition = 'transform 0.5s cubic-bezier(0.25,0.65,0.3,1),left 0.5s cubic-bezier(0.25,0.65,0.3,1),top 0.5s cubic-bezier(0.25,0.65,0.3,1),opacity 0.3s';
+        } else {
+          layoutOne(el);
+        }
+      });
+    }
+
+    // 初期テーマ適用
+    applyTheme(themeForPrefIdx(State.travel.currentPrefIdx), true);
+    // === /道シーンここまで ===
 
     // 動物 (右上)
     const animalDiv = document.createElement('div');
@@ -4476,6 +4637,7 @@ registerGame('travel', {
       expectedKey = expectedKey === 'a' ? 'd' : 'a';
       saveState();
       updateDisplay();
+      stepScene();
       playSE('se_step.mp3');
       if (crossed) {
         showEnterOverlay(PREFS[State.travel.currentPrefIdx]);
