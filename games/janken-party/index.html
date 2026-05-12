@@ -864,6 +864,7 @@ const State = {
   highScores: {},
   playerProfile: null, // { reading: 'たかし', gender: 'M' } or null
   yukidama: { currentSize: 0, pillarHeight: 0 }, // 雪玉ころがしの永続状態
+  travel: { currentPrefIdx: 0, stepsInPref: 0, totalSteps: 0 }, // 日本一周の旅 永続状態
   audioEnabled: true, // ヘッダーの音声オン/オフトグル (永続)
 };
 
@@ -893,6 +894,11 @@ function loadState() {
         State.yukidama.currentSize = data.yukidama.currentSize | 0;
         State.yukidama.pillarHeight = data.yukidama.pillarHeight | 0;
       }
+      if (data.travel && typeof data.travel === 'object') {
+        State.travel.currentPrefIdx = data.travel.currentPrefIdx | 0;
+        State.travel.stepsInPref = data.travel.stepsInPref | 0;
+        State.travel.totalSteps = data.travel.totalSteps | 0;
+      }
       if (typeof data.audioEnabled === 'boolean') {
         State.audioEnabled = data.audioEnabled;
       }
@@ -911,6 +917,7 @@ function saveState() {
       highScores: State.highScores,
       playerProfile: State.playerProfile,
       yukidama: State.yukidama,
+      travel: State.travel,
       audioEnabled: State.audioEnabled,
     }));
   } catch (e) {
@@ -4256,6 +4263,224 @@ registerGame('speed_hori', {
   _moveAnim: null,
   init: GameRegistry['speed'].init,
   cleanup: GameRegistry['speed'].cleanup,
+});
+
+// 日本一周の旅: グーとパーを交互に押して都道府県を進む (永続。30歩で次県、47県でループ)
+registerGame('travel', {
+  name: '日本一周の旅',
+  animal: 'rabbit',
+  description: 'グーとパーを交互に押して、日本中を歩いて旅しよう！',
+  introVoice: 'audio/intro_travel.wav',
+  medalThresholds: { gold: 30, silver: 10, bronze: 1 },
+  _timers: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._destroyed = false;
+
+    const PREFS = [
+      '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県',
+      '茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県',
+      '新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県',
+      '静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県',
+      '奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県',
+      '徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県',
+      '熊本県','大分県','宮崎県','鹿児島県','沖縄県'
+    ];
+    const STEPS_PER_PREF = 30;
+    const PRAISE_DELAY_MS = 5000;
+    const PRAISES = [
+      { voice: 'audio/praise_sugoi.wav' },
+      { voice: 'audio/praise_iine.wav' },
+      { voice: 'audio/praise_nice.wav' },
+      { voice: 'audio/praise_bacchiri.wav' },
+      { voice: 'audio/praise_yattane.wav' },
+      { voice: 'audio/praise_kakkoii.wav' },
+      { voice: 'audio/praise_sasuga.wav' },
+      { voice: 'audio/praise_subarashii.wav' },
+      { voice: 'audio/praise_atamagaii.wav' },
+      { voice: 'audio/praise_kashikoi.wav' },
+      { voice: 'audio/praise_tensai.wav' },
+      { voice: 'audio/praise_saikou.wav' },
+      { voice: 'audio/praise_sugosugi.wav' },
+    ];
+
+    let lastPressTime = 0;
+    let expectedKey = State.travel.totalSteps % 2 === 0 ? 'a' : 'd'; // a=グー, d=パー
+    let busyAudio = false;
+
+    // === UI構築 ===
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:40px;background:linear-gradient(180deg,#fef3e0 0%,#fff8e7 50%,#e8f5e9 100%);';
+
+    // 動物 (右上)
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('rabbit', 90);
+    container.appendChild(animalDiv);
+
+    // 通算歩数 (左上)
+    const totalDiv = document.createElement('div');
+    totalDiv.style.cssText = 'position:absolute;top:30px;left:40px;font-size:32px;font-weight:900;color:#6b4f1d;z-index:10;background:rgba(255,255,255,0.85);padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,0.08);';
+    container.appendChild(totalDiv);
+
+    // 県名 (中央大)
+    const prefDiv = document.createElement('div');
+    prefDiv.style.cssText = 'font-size:140px;font-weight:900;color:#2e7d32;margin-top:60px;text-shadow:4px 4px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff;letter-spacing:8px;';
+    container.appendChild(prefDiv);
+
+    // 県内進捗バー
+    const progressWrap = document.createElement('div');
+    progressWrap.style.cssText = 'width:600px;height:36px;background:rgba(255,255,255,0.8);border-radius:18px;margin-top:30px;border:3px solid #66bb6a;overflow:hidden;position:relative;';
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = 'height:100%;background:linear-gradient(90deg,#81c784 0%,#66bb6a 100%);transition:width 0.25s ease;border-radius:14px 0 0 14px;';
+    progressWrap.appendChild(progressBar);
+    const progressLabel = document.createElement('div');
+    progressLabel.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#1b5e20;';
+    progressWrap.appendChild(progressLabel);
+    container.appendChild(progressWrap);
+
+    // ボタン指示 (中央下)
+    const hintDiv = document.createElement('div');
+    hintDiv.style.cssText = 'margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:8px;';
+    const hintLabel = document.createElement('div');
+    hintLabel.style.cssText = 'font-size:36px;font-weight:700;color:#3a2a1a;';
+    hintLabel.textContent = '次はこのボタン';
+    const hintBtn = document.createElement('div');
+    hintBtn.style.cssText = 'width:200px;height:200px;border-radius:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 0 rgba(0,0,0,0.2);transition:background 0.2s,box-shadow 0.2s,transform 0.1s;';
+    const hintImg = document.createElement('div');
+    hintImg.style.cssText = 'margin-bottom:6px;';
+    const hintName = document.createElement('div');
+    hintName.style.cssText = 'font-size:36px;font-weight:900;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,0.2);';
+    hintBtn.appendChild(hintImg);
+    hintBtn.appendChild(hintName);
+    hintDiv.appendChild(hintLabel);
+    hintDiv.appendChild(hintBtn);
+    container.appendChild(hintDiv);
+
+    // 「○○に入りました！」入境オーバーレイ
+    const enterOverlay = document.createElement('div');
+    enterOverlay.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.5);font-size:96px;font-weight:900;color:#ff6f00;opacity:0;transition:all 0.35s ease;z-index:30;text-shadow:4px 4px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff;pointer-events:none;white-space:nowrap;';
+    container.appendChild(enterOverlay);
+
+    gameArea.appendChild(container);
+
+    // === 表示更新 ===
+    function updateDisplay() {
+      const t = State.travel;
+      prefDiv.textContent = PREFS[t.currentPrefIdx % PREFS.length];
+      totalDiv.textContent = '🚶 通算 ' + t.totalSteps + ' 歩';
+      const pct = (t.stepsInPref / STEPS_PER_PREF) * 100;
+      progressBar.style.width = pct + '%';
+      progressLabel.textContent = t.stepsInPref + ' / ' + STEPS_PER_PREF + ' 歩';
+      // ボタン指示更新
+      if (expectedKey === 'a') {
+        hintBtn.style.background = '#ef5350';
+        hintImg.innerHTML = handImg('rock', 100);
+        hintName.textContent = 'グー';
+      } else {
+        hintBtn.style.background = '#42a5f5';
+        hintImg.innerHTML = handImg('paper', 100);
+        hintName.textContent = 'パー';
+      }
+    }
+
+    function showEnterOverlay(prefName) {
+      enterOverlay.textContent = prefName + ' に入りました！';
+      enterOverlay.style.opacity = '1';
+      enterOverlay.style.transform = 'translate(-50%,-50%) scale(1)';
+      const t = setTimeout(() => {
+        if (self._destroyed) return;
+        enterOverlay.style.opacity = '0';
+        enterOverlay.style.transform = 'translate(-50%,-50%) scale(0.5)';
+      }, 2200);
+      self._timers.push(t);
+    }
+
+    // === 音声フロー (優先順: 入境 > 褒め > ボタン指示) ===
+    async function playFlow(crossed, shouldPraise) {
+      if (self._destroyed) return;
+      busyAudio = true;
+      stopAllAudio();
+      try {
+        if (crossed) {
+          // 直前に入った県は currentPrefIdx そのまま (歩進んだ後の値)
+          const idx = State.travel.currentPrefIdx;
+          await playAudio('audio/pref_' + String(idx + 1).padStart(2, '0') + '.wav');
+        } else if (shouldPraise) {
+          const profile = getPlayerProfile();
+          const p = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+          if (profile) {
+            await speakName(profile.reading, profile.gender);
+            if (self._destroyed) { busyAudio = false; return; }
+            await playAudio(p.voice);
+          } else {
+            await playAudio(p.voice);
+          }
+        }
+        if (self._destroyed) { busyAudio = false; return; }
+        // 次のボタン指示
+        const promptSrc = expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
+        await playAudio(promptSrc);
+      } finally {
+        busyAudio = false;
+      }
+    }
+
+    // === 入力ハンドラ ===
+    onGameKey = function(key) {
+      if (self._destroyed) return;
+      if (key !== expectedKey) {
+        // 間違いボタン: 軽い音だけ、歩数は増えない
+        playSE('se_wrong.mp3');
+        return;
+      }
+      // 正解 (= 期待ボタンを押した)
+      const now = Date.now();
+      const sinceLast = lastPressTime ? now - lastPressTime : 0;
+      lastPressTime = now;
+
+      State.travel.totalSteps += 1;
+      State.travel.stepsInPref += 1;
+      let crossed = false;
+      if (State.travel.stepsInPref >= STEPS_PER_PREF) {
+        State.travel.currentPrefIdx = (State.travel.currentPrefIdx + 1) % PREFS.length;
+        State.travel.stepsInPref = 0;
+        crossed = true;
+      }
+      // 期待ボタン交代
+      expectedKey = expectedKey === 'a' ? 'd' : 'a';
+      saveState();
+      updateDisplay();
+      playSE('se_step.mp3');
+      if (crossed) {
+        showEnterOverlay(PREFS[State.travel.currentPrefIdx]);
+      }
+
+      // 褒め判定: 入境が無く、(10歩ごと または 5秒以上空けた)
+      const shouldPraise = !crossed && State.travel.totalSteps > 0 &&
+        (State.travel.totalSteps % 10 === 0 || sinceLast >= PRAISE_DELAY_MS);
+
+      playFlow(crossed, shouldPraise);
+    };
+
+    // 初期表示 + 初回ボタン指示
+    updateDisplay();
+    const t0 = setTimeout(() => {
+      if (self._destroyed) return;
+      const promptSrc = expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
+      playAudio(promptSrc);
+    }, 600);
+    self._timers.push(t0);
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    onGameKey = null;
+  },
 });
 
 // 雪玉ころがし: はやおしバトル+雪玉成長 (永続。1問正解で1コ、1000で雪玉MAX→雪柱に積む)
