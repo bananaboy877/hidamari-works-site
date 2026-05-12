@@ -4372,7 +4372,7 @@ registerGame('haiku', {
     // 完成時の案内 (下)
     const restartHint = document.createElement('div');
     restartHint.style.cssText = 'margin-top:24px;font-size:30px;font-weight:900;color:#5a4a2a;text-shadow:2px 2px 0 #fff;display:none;';
-    restartHint.textContent = 'もう一句作るには、グーを押してね';
+    restartHint.textContent = 'どのボタンでも、もう一句作れるよ';
     container.appendChild(restartHint);
 
     gameArea.appendChild(container);
@@ -4512,12 +4512,10 @@ registerGame('haiku', {
       clearPromptRepeat();
 
       if (phase === 'done') {
-        // グーでもう一句、それ以外は無視
-        if (key === 'a') {
-          stopAllAudio();
-          playSE('se_button.mp3');
-          startTheme();
-        }
+        // どのボタンでも、もう一句作れる
+        stopAllAudio();
+        playSE('se_button.mp3');
+        startTheme();
         return;
       }
 
