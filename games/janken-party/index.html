@@ -864,7 +864,7 @@ const State = {
   highScores: {},
   playerProfile: null, // { reading: 'たかし', gender: 'M' } or null
   yukidama: { currentSize: 0, pillarHeight: 0 }, // 雪玉ころがしの永続状態
-  travel: { currentPrefIdx: 0, stepsInPref: 0, totalSteps: 0 }, // 日本一周の旅 永続状態
+  travel: { currentPrefIdx: 0, stepsInPref: 0, totalSteps: 0, completedLoops: 0 }, // 日本一周の旅 永続状態
   audioEnabled: true, // ヘッダーの音声オン/オフトグル (永続)
 };
 
@@ -898,6 +898,7 @@ function loadState() {
         State.travel.currentPrefIdx = data.travel.currentPrefIdx | 0;
         State.travel.stepsInPref = data.travel.stepsInPref | 0;
         State.travel.totalSteps = data.travel.totalSteps | 0;
+        State.travel.completedLoops = data.travel.completedLoops | 0;
       }
       if (typeof data.audioEnabled === 'boolean') {
         State.audioEnabled = data.audioEnabled;
@@ -4622,6 +4623,27 @@ registerGame('travel', {
       self._timers.push(t);
     }
 
+    // 47都道府県を全て回りきった時の祝福オーバーレイ
+    function showJapanCompleteOverlay() {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,245,220,0.95) 0%,rgba(255,210,170,0.9) 100%);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.6s ease;pointer-events:none;';
+      overlay.innerHTML =
+        '<div style="font-size:90px;margin-bottom:8px;">🎊  🎉  🎊</div>'
+        + '<div style="font-size:120px;font-weight:900;color:#d84315;text-shadow:6px 6px 0 #fff,-4px -4px 0 #fff,4px -4px 0 #fff,-4px 4px 0 #fff,0 6px 16px rgba(0,0,0,0.25);letter-spacing:14px;line-height:1.1;">日本一周</div>'
+        + '<div style="font-size:104px;font-weight:900;color:#e65100;text-shadow:6px 6px 0 #fff,-4px -4px 0 #fff,4px -4px 0 #fff,-4px 4px 0 #fff,0 6px 16px rgba(0,0,0,0.25);letter-spacing:10px;margin-top:12px;">おめでとう！！</div>'
+        + '<div style="font-size:70px;margin-top:24px;">🚶 🎌 🚶</div>'
+        + '<div style="font-size:34px;font-weight:700;color:#bf360c;margin-top:16px;text-shadow:2px 2px 0 #fff;">' + (State.travel.completedLoops) + ' 周め達成</div>';
+      container.appendChild(overlay);
+      requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+      const tFade = setTimeout(() => {
+        if (self._destroyed) { try { overlay.remove(); } catch(e){} return; }
+        overlay.style.opacity = '0';
+        const tRm = setTimeout(() => { try { overlay.remove(); } catch(e){} }, 700);
+        self._timers.push(tRm);
+      }, 5200);
+      self._timers.push(tFade);
+    }
+
     function currentPromptSrc() {
       return expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
     }
@@ -4637,8 +4659,8 @@ registerGame('travel', {
       }, 5000);
     }
 
-    // === 音声フロー (優先順: 入境 > 褒め > ボタン指示 → 5秒ごとに指示リピート) ===
-    async function playFlow(crossed, shouldPraise, playSEFeedback) {
+    // === 音声フロー (優先順: 完走祝 > 入境 > 褒め > ボタン指示 → 5秒ごとに指示リピート) ===
+    async function playFlow(crossed, shouldPraise, playSEFeedback, justCompletedJapan) {
       if (self._destroyed) return;
       clearPromptRepeat();
       busyAudio = true;
@@ -4653,7 +4675,17 @@ registerGame('travel', {
         playSE('se_correct.mp3');  // 正解音
       }
       try {
-        if (crossed) {
+        if (justCompletedJapan) {
+          // 沖縄踏破 → 日本一周完了！祝福演出 + 祝福TTS、その後 北海道へ
+          playSE('se_victory.mp3');
+          await playAudio('audio/travel_complete.wav');
+          if (self._destroyed) { busyAudio = false; return; }
+          // 余韻
+          await new Promise(r => setTimeout(r, 500));
+          if (self._destroyed) { busyAudio = false; return; }
+          // 北海道入境
+          await playAudio('audio/pref_01.wav');
+        } else if (crossed) {
           const idx = State.travel.currentPrefIdx;
           await playAudio('audio/pref_' + String(idx + 1).padStart(2, '0') + '.wav');
         } else if (shouldPraise) {
@@ -4693,17 +4725,25 @@ registerGame('travel', {
       State.travel.totalSteps += 1;
       State.travel.stepsInPref += 1;
       let crossed = false;
+      let justCompletedJapan = false;
       if (State.travel.stepsInPref >= STEPS_PER_PREF) {
+        const wasLast = State.travel.currentPrefIdx === PREFS.length - 1; // 沖縄
         State.travel.currentPrefIdx = (State.travel.currentPrefIdx + 1) % PREFS.length;
         State.travel.stepsInPref = 0;
         crossed = true;
+        if (wasLast) {
+          justCompletedJapan = true;
+          State.travel.completedLoops = (State.travel.completedLoops || 0) + 1;
+        }
       }
       // 期待ボタン交代
       expectedKey = expectedKey === 'a' ? 'd' : 'a';
       saveState();
       updateDisplay();
       stepScene();
-      if (crossed) {
+      if (justCompletedJapan) {
+        showJapanCompleteOverlay();
+      } else if (crossed) {
         showEnterOverlay(PREFS[State.travel.currentPrefIdx]);
       }
 
@@ -4712,7 +4752,7 @@ registerGame('travel', {
         (State.travel.totalSteps % 10 === 0 || sinceLast >= PRAISE_DELAY_MS);
 
       // 正解SE は playFlow 内で stopAllAudio 後に鳴らす
-      playFlow(crossed, shouldPraise, true);
+      playFlow(crossed, shouldPraise, true, justCompletedJapan);
     };
 
     // 初期表示 + 初回ボタン指示 (押されない場合は5秒ごとに繰り返す。SEは鳴らさない)
