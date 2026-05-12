@@ -4316,16 +4316,16 @@ registerGame('travel', {
     container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#fef3e0 0%,#fff8e7 50%,#e8f5e9 100%);isolation:isolate;';
 
     // === 道シーン (一人称視点、県ごとにテーマ変化、滑らかスクロール) ===
-    // バイオーム: 空・遠景山・道の基本カラー (8種類)
+    // バイオーム: 空・遠景山・道の基本カラー (8種類、すべて鮮やかな空)
     const BIOMES = {
-      snow:     { sky: 'linear-gradient(180deg,#cfdbe8 0%,#e3edf5 60%,#f5f9fc 100%)', mtn: '#9caebf', cap: '#fff',     road: '#d4ccc8' },
-      coast:    { sky: 'linear-gradient(180deg,#a8d0e8 0%,#d0e6f2 50%,#e8f2f8 100%)', mtn: '#8ba8c8', cap: '#fff',     road: '#c8b698' },
-      city:     { sky: 'linear-gradient(180deg,#bfd6ed 0%,#d8e5f2 70%,#e8f0f7 100%)', mtn: '#7d8b9d', cap: '#cfdbe8', road: '#6a6a6e' },
-      highland: { sky: 'linear-gradient(180deg,#b0c5d8 0%,#c5d8de 60%,#dde7e9 100%)', mtn: '#5d6b3e', cap: '#a8b8a0', road: '#806a52' },
-      rural:    { sky: 'linear-gradient(180deg,#c8dde2 0%,#d8e8e0 60%,#f0f5e8 100%)', mtn: '#9bb89a', cap: '#c8d8c0', road: '#a08b6e' },
-      warm:     { sky: 'linear-gradient(180deg,#ffe0b0 0%,#fff0d8 50%,#f0f5e0 100%)', mtn: '#b8a888', cap: '#e8d8b8', road: '#d8b888' },
-      south:    { sky: 'linear-gradient(180deg,#ffe5b8 0%,#fff2d8 45%,#dff0d8 100%)', mtn: '#a8c0a0', cap: '#e8f0d8', road: '#e0c898' },
-      tropical: { sky: 'linear-gradient(180deg,#ffd8a0 0%,#ffeed8 50%,#d8f0e8 100%)', mtn: '#a8d4c8', cap: '#fff8d8', road: '#e8d4a0' },
+      snow:     { sky: 'linear-gradient(180deg,#4a9cd6 0%,#7ec0e8 40%,#cfe6f4 80%,#f4faff 100%)', mtn: '#7e9ec2', cap: '#fff',     road: '#dcd4cc' }, // 雪国の晴天
+      coast:    { sky: 'linear-gradient(180deg,#2e85d8 0%,#5fb0e8 35%,#a8d6ee 70%,#ffd89a 100%)', mtn: '#7a98c0', cap: '#fff',     road: '#c8b698' }, // 海辺の青空(夕方の余韻)
+      city:     { sky: 'linear-gradient(180deg,#b148a0 0%,#ff7a5a 45%,#ffaa6e 75%,#ffce95 100%)', mtn: '#5e4870', cap: '#a085b0', road: '#5a5066' }, // 街の夕焼け
+      highland: { sky: 'linear-gradient(180deg,#1e7be0 0%,#62a9e8 40%,#a8d0f2 75%,#e0f0fb 100%)', mtn: '#5a7048', cap: '#a8b8a0', road: '#806a52' }, // 高原のクリア青空
+      rural:    { sky: 'linear-gradient(180deg,#ffa07a 0%,#ffc89a 35%,#ffe2b5 60%,#fff5d8 100%)', mtn: '#9d8eb0', cap: '#d8c8e0', road: '#a08b6e' }, // 朝焼けの田園
+      warm:     { sky: 'linear-gradient(180deg,#ff9658 0%,#ffba75 35%,#ffd89a 65%,#fff3d8 100%)', mtn: '#b8a088', cap: '#e8d4b8', road: '#d8b888' }, // 昼下がりの暖かい空
+      south:    { sky: 'linear-gradient(180deg,#ff6a4e 0%,#ff9a6a 35%,#ffc285 65%,#ffe5b8 100%)', mtn: '#a8956e', cap: '#e0c8a0', road: '#e0c898' }, // 南国夕焼け
+      tropical: { sky: 'linear-gradient(180deg,#3aa0d8 0%,#6cbde0 30%,#ffd089 70%,#b8e8a8 100%)', mtn: '#7eb8a8', cap: '#e8f0d0', road: '#e8d4a0' }, // 楽園の空
     };
 
     // 各県のシーン (バイオーム + 道側に出る要素プール)。県の特徴を1〜2点反映
