@@ -4330,26 +4330,28 @@ registerGame('haiku', {
     phaseDiv.style.cssText = 'position:absolute;top:30px;left:40px;font-size:28px;font-weight:900;color:#5a4a2a;z-index:10;background:rgba(255,255,255,0.92);padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,0.08);';
     container.appendChild(phaseDiv);
 
-    // 俳句進捗表示 (中央上) — 縦書き (右→左)
+    // 俳句進捗カード — 縦書き (右起点、列は右→左、各列は上→下)
     const haikuCard = document.createElement('div');
-    haikuCard.style.cssText = 'margin-top:34px;background:rgba(255,255,255,0.92);border-radius:24px;padding:20px 50px 28px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px dashed #c8b888;min-width:680px;text-align:center;';
+    haikuCard.style.cssText = 'margin-top:22px;background:rgba(255,255,255,0.94);border-radius:24px;padding:20px 64px 28px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px dashed #c8b888;text-align:center;';
     container.appendChild(haikuCard);
+
     const haikuThemeBadge = document.createElement('div');
-    haikuThemeBadge.style.cssText = 'font-size:22px;font-weight:700;color:#888;margin-bottom:16px;';
+    haikuThemeBadge.style.cssText = 'font-size:22px;font-weight:700;color:#888;margin-bottom:14px;';
     haikuCard.appendChild(haikuThemeBadge);
 
-    // 縦書きエリア: writing-mode vertical-rl で右起点の縦書き、子要素は右から左へ配列
-    const verticalWrap = document.createElement('div');
-    verticalWrap.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;display:flex;justify-content:center;align-items:flex-start;gap:36px;height:420px;font-feature-settings:"vpal","vert";';
-    haikuCard.appendChild(verticalWrap);
+    // 縦書きエリア: display:inline-block + writing-mode:vertical-rl
+    // → 子のblock要素が「右→左」の列として自然に並ぶ (flexは使わない、衝突するため)
+    const verticalArea = document.createElement('div');
+    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:420px;display:inline-block;';
+    haikuCard.appendChild(verticalArea);
 
-    // DOM順: 上の句(右) → 中の句(中央) → 下の句(左)
+    // DOM順: 上の句(右) → 中の句(中央) → 下の句(左)。display:block (div既定) で縦書き方向に並ぶ
     const lineFirst = document.createElement('div');
     const lineMiddle = document.createElement('div');
     const lineLast = document.createElement('div');
-    [lineFirst, lineMiddle, lineLast].forEach((el) => {
-      el.style.cssText = 'font-size:52px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;';
-      verticalWrap.appendChild(el);
+    [lineFirst, lineMiddle, lineLast].forEach(el => {
+      el.style.cssText = 'font-size:52px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;padding:0 18px;';
+      verticalArea.appendChild(el);
     });
 
     // 候補列 (3つ、下部)
