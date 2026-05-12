@@ -4561,7 +4561,7 @@ registerGame('travel', {
 
     // ボタン指示 (じゃんけんバトルの主表示と同じスタイル: 400x400、白半透明、太い色付き枠線)
     const hintBtn = document.createElement('div');
-    hintBtn.style.cssText = 'width:400px;height:400px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;margin-top:22px;';
+    hintBtn.style.cssText = 'width:400px;height:400px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.88);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;margin-top:22px;box-shadow:0 6px 18px rgba(0,0,0,0.12);';
     const hintImg = document.createElement('div');
     hintImg.style.cssText = 'margin-bottom:14px;';
     const hintName = document.createElement('div');
@@ -4570,9 +4570,9 @@ registerGame('travel', {
     hintBtn.appendChild(hintName);
     container.appendChild(hintBtn);
 
-    // ボタン指示テキスト (じゃんけんバトル風: 「グーのボタンを押してね」)
+    // ボタン指示テキスト (じゃんけんバトル風: 「グーのボタンを押してね」、縁取り強化で読みやすく)
     const hintLabel = document.createElement('div');
-    hintLabel.style.cssText = 'font-size:36px;font-weight:900;margin-top:18px;text-shadow:2px 2px 0 #fff;';
+    hintLabel.style.cssText = 'font-size:46px;font-weight:900;margin-top:20px;text-shadow:3px 3px 0 #fff,-3px -3px 0 #fff,3px -3px 0 #fff,-3px 3px 0 #fff,0 3px 0 #fff,0 -3px 0 #fff,3px 0 0 #fff,-3px 0 0 #fff,4px 4px 6px rgba(0,0,0,0.15);';
     container.appendChild(hintLabel);
 
     // 「○○に入りました！」入境オーバーレイ
@@ -4593,7 +4593,7 @@ registerGame('travel', {
       // ボタン指示更新 (じゃんけんバトルと同じ色 = 枠線とラベルで識別)
       if (expectedKey === 'a') {
         hintBtn.style.borderColor = '#ef5350';
-        hintBtn.style.background = 'rgba(255,205,210,0.4)';
+        hintBtn.style.background = 'rgba(255,228,231,0.92)';
         hintImg.innerHTML = handImg('rock', 200);
         hintName.textContent = 'グー';
         hintName.style.color = '#c62828';
@@ -4601,7 +4601,7 @@ registerGame('travel', {
         hintLabel.style.color = '#c62828';
       } else {
         hintBtn.style.borderColor = '#1e88e5';
-        hintBtn.style.background = 'rgba(187,222,251,0.4)';
+        hintBtn.style.background = 'rgba(220,236,252,0.92)';
         hintImg.innerHTML = handImg('paper', 200);
         hintName.textContent = 'パー';
         hintName.style.color = '#1565c0';
