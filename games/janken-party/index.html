@@ -4266,6 +4266,306 @@ registerGame('speed_hori', {
   cleanup: GameRegistry['speed'].cleanup,
 });
 
+// 俳句あそび: テーマ→上の句→中の句→下の句 を選択式で組み立て、最後に全文読み上げ
+registerGame('haiku', {
+  name: '俳句あそび',
+  animal: 'owl',
+  description: 'グー・チョキ・パーで自分だけの俳句を作ろう！',
+  introVoice: 'audio/intro_haiku.wav',
+  medalThresholds: { gold: 5, silver: 3, bronze: 1 },
+  _timers: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._destroyed = false;
+    self._promptRepeatTimer = null;
+
+    // === テーマと候補プール (Python側 generate_haiku_voices.py と完全一致) ===
+    const HAIKU_DATA = {
+      wakaba: {
+        name: '若葉', color: '#2e7d32',
+        first: ['わかばかぜ','みどりこく','やまかおる','こもれびや','しんりょくに','やまみどり','かぜわたる','もりふかし','あおぞらに','しずけさや','やまぼうし','ほととぎす','かおりたつ','すずやかや','やまかぜや','やまかげに','すずかぜや','つばめとぶ','たけのこの','なつちかし','みどりかぜ','やまさわぐ','はやしぬけ','みずあそび','しゃくなげや','のばらさく','すずらんや','はなみずき','もりかげに','つきあかり'],
+        middle: ['かおりただよう','かぜさわやかに','つきがゆれゆく','しずかにきこえ','ひかりこぼれて','かぜにまかせて','みどりにかすめ','やまをわたって','あおいそらこえ','しずもりのなか','ひのめうけたり','すずしくふいて','しんりょくのなか','みずおとひびく','かぜとあそんで','ほのかにかおる','かろやかなとり','ひとときのなぎ','ことりさえずる','つきのひかりは','ちょうがふわふわ','やまだけきこえ','ふくかぜさわぐ','みなもにうつる','やわらかにふれ','いきをすうあさ','つるくさのびて','みちはしらぬへ','もくれんちりて','やまのにおいや'],
+        last: ['ゆめのまも','みのなかへ','ひるさがり','やまふかし','かぜまかせ','もりのおく','なつをまつ','はるおぼゆ','ひとりたび','はやあしに','みちゆきて','やまいだく','みみをすま','すずやかや','むしのこえ','ひるねかな','ねむさそう','ねむりこむ','やまさめや','つきさえも','かわらいし','ふえのおと','やまかすか','ふもとまで','しおさいよ','みえぬくに','ものおもう','けむりたつ','みあげれば','つばさはる'],
+      },
+      koinobori: {
+        name: '鯉のぼり', color: '#1565c0',
+        first: ['こいのぼり','あおぞらに','ごがつばれ','そらたかく','ちちのこえ','ははのこえ','ひのまるや','たかくとぶ','そらいろや','こどもたち','たくましく','すこやかに','やわらかに','かぜひかる','そらわたる','うろこかな','かぜそよぐ','のぼりかぜ','ながれゆく','かぜたつや','たかくまう','はためいて','みあげるや','そらかける','ひかりさす','げんきよく','かわすそら','ちちおもう','はるすぎて','かおあげて'],
+        middle: ['たかくおよいで','かぜにのれよと','ひかりかがやき','うろこきらめき','あおきそらいで','たくましきこい','すこやかにまだ','かぜひかりひる','ちちもうれしく','こどものひざし','かぜしずまりて','やわらかにかぜ','かぞくのねがい','のびやかにそら','みあげればこい','たかくまえへと','ひのまるながれ','そらにのぼりて','はためくしるべ','げんきにあそぶ','かわらをこえて','ちちはほほえみ','ははのおもいや','かぜがほをなで','つきがほほえみ','はればれおよげ','しゃちのよなそら','のぼりひかりて','やわらかなそら','たかくはためき'],
+        last: ['のぼりたち','ねがいのり','はためいて','かぜしるべ','みなみへや','はるすぎて','かわのべに','つきさえも','みちひらく','はるかきし','かぞくのり','すずやかや','やわらかや','かぜのうた','ものさみし','すこやかに','たくましく','みあげれば','ちちはまだ','ははのこえ','ことなだか','ながれゆく','かぜたつや','ひるさがり','みえはじめ','うちかわら','かれゆくや','ねむれずに','かぜとんで','ひとりたび'],
+      },
+      samidare: {
+        name: '五月雨', color: '#5e35b1',
+        first: ['さみだれや','ふるあめや','しずもりや','かさのおと','みずたまや','あめぞらや','つゆけしき','しろうつる','ぬれそぼる','みなもうき','かわほつる','しずもりに','やまけぶる','みのなかへ','やまかすか','ふくらむや','つゆうつる','みずおとや','しゃがふくる','つゆこぼる','みえぬくに','やまぼうし','つぼみおち','しのぎあめ','うすぐらや','ものさびし','ねむりさそ','はちすひら','かたつむり','つゆしぐる'],
+        middle: ['しずかにふりて','みずをぬらして','やわらかにふれ','やまをこえくる','みなもにおちる','かさのおとして','もりをぬらして','やまにこめゆく','みちぬれつづく','しずかにおちて','かわのおとせず','やまにふりつき','ふりつづくよる','しらたまふけて','つゆうつくしく','しずかにきこえ','やまのきをぬら','みちはぬかるみ','かさにつぶつぶ','しのびあしにて','みずたまりおち','つゆひびきあう','ねむりさそうや','やわらかなあめ','もりはみずもの','しずもりのうち','みずおとひびき','かわおとひびき','つきもみずあび','すずやかにとぶ'],
+        last: ['ぬれてゆく','みずたまり','やまのおと','しずもりや','かぜしるべ','なみのおと','みちうるみ','つゆかさね','しのびあし','みずぬるむ','ねむりさそ','つゆしぐれ','しおれゆく','かわひびき','みえぬくに','ふえのおと','みずあがる','はちすひら','かたつむり','かさひしぐ','ぬれそぼる','みずおとや','しずまりに','みなのこえ','やまかげに','ふけるよや','なつちかし','つゆきえる','みのなかへ','やませまる'],
+      },
+    };
+    const THEME_IDS = ['wakaba','koinobori','samidare'];
+    const KEYS = ['a','s','d']; // グー、チョキ、パー
+    const HAND_TYPES = ['rock','scissors','paper'];
+    const HAND_COLORS = ['#ef5350','#fbc02d','#1e88e5'];
+    const HAND_NAMES  = ['グー','チョキ','パー'];
+
+    // === State ===
+    let phase = 'theme'; // theme | first | middle | last | done
+    let selectedTheme = null;
+    let candidates = []; // [{text, audio, ...}, x3]
+    const picks = { first: null, middle: null, last: null };
+
+    // === UI 構築 ===
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#fef8e7 0%,#fff0d8 50%,#e8f0e0 100%);';
+
+    // 動物 (右上)
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('owl', 90);
+    container.appendChild(animalDiv);
+
+    // フェーズ表示 (左上)
+    const phaseDiv = document.createElement('div');
+    phaseDiv.style.cssText = 'position:absolute;top:30px;left:40px;font-size:28px;font-weight:900;color:#5a4a2a;z-index:10;background:rgba(255,255,255,0.92);padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,0.08);';
+    container.appendChild(phaseDiv);
+
+    // 俳句進捗表示 (中央上)
+    const haikuCard = document.createElement('div');
+    haikuCard.style.cssText = 'margin-top:50px;background:rgba(255,255,255,0.92);border-radius:24px;padding:24px 50px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px dashed #c8b888;min-width:680px;text-align:center;';
+    container.appendChild(haikuCard);
+    const haikuThemeBadge = document.createElement('div');
+    haikuThemeBadge.style.cssText = 'font-size:22px;font-weight:700;color:#888;margin-bottom:10px;';
+    haikuCard.appendChild(haikuThemeBadge);
+    const lineFirst = document.createElement('div');
+    const lineMiddle = document.createElement('div');
+    const lineLast = document.createElement('div');
+    [lineFirst, lineMiddle, lineLast].forEach((el, i) => {
+      const indent = (i === 0 || i === 2) ? '0' : '60px'; // 上の句・下の句は左揃え、中の句は少しインデント
+      el.style.cssText = 'font-size:56px;font-weight:900;color:#3a2a1a;line-height:1.3;letter-spacing:6px;text-align:center;';
+      haikuCard.appendChild(el);
+    });
+
+    // 候補列 (3つ、下部)
+    const choiceRow = document.createElement('div');
+    choiceRow.style.cssText = 'display:flex;gap:24px;margin-top:28px;justify-content:center;align-items:flex-start;';
+    container.appendChild(choiceRow);
+
+    const choiceBoxes = [0,1,2].map(i => {
+      const card = document.createElement('div');
+      card.style.cssText = 'width:300px;min-height:240px;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px 16px;background:rgba(255,255,255,0.92);border:6px solid ' + HAND_COLORS[i] + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);';
+      const hand = document.createElement('div');
+      hand.style.cssText = 'margin-bottom:8px;';
+      hand.innerHTML = handImg(HAND_TYPES[i], 80);
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:20px;font-weight:900;color:' + HAND_COLORS[i] + ';margin-bottom:10px;';
+      label.textContent = HAND_NAMES[i];
+      const text = document.createElement('div');
+      text.style.cssText = 'font-size:38px;font-weight:900;color:#3a2a1a;text-align:center;line-height:1.25;letter-spacing:2px;';
+      card.appendChild(hand);
+      card.appendChild(label);
+      card.appendChild(text);
+      choiceRow.appendChild(card);
+      return { card, text, label };
+    });
+
+    // 完成時の案内 (下)
+    const restartHint = document.createElement('div');
+    restartHint.style.cssText = 'margin-top:24px;font-size:30px;font-weight:900;color:#5a4a2a;text-shadow:2px 2px 0 #fff;display:none;';
+    restartHint.textContent = 'もう一句作るには、グーを押してね';
+    container.appendChild(restartHint);
+
+    gameArea.appendChild(container);
+
+    // === ヘルパー ===
+    function pickRandomIndices(n, k) {
+      const arr = []; for (let i = 0; i < n; i++) arr.push(i);
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr.slice(0, k);
+    }
+
+    function clearPromptRepeat() {
+      if (self._promptRepeatTimer) { clearInterval(self._promptRepeatTimer); self._promptRepeatTimer = null; }
+    }
+    function startPromptRepeat(promptKey) {
+      clearPromptRepeat();
+      self._promptRepeatTimer = setInterval(() => {
+        if (self._destroyed) { clearPromptRepeat(); return; }
+        playAudio('audio/haiku/prompt_' + promptKey + '.wav');
+      }, 7000);
+    }
+
+    function placeholder(n) {
+      let s = '';
+      for (let i = 0; i < n; i++) s += '◯';
+      return s;
+    }
+
+    function renderHaikuProgress() {
+      // テーマ表示
+      if (selectedTheme) {
+        const t = HAIKU_DATA[selectedTheme];
+        haikuThemeBadge.textContent = 'テーマ：' + t.name;
+        haikuThemeBadge.style.color = t.color;
+      } else {
+        haikuThemeBadge.textContent = '— テーマを選ぼう —';
+        haikuThemeBadge.style.color = '#888';
+      }
+      // 各行
+      lineFirst.textContent  = picks.first  ? picks.first.text  : placeholder(5);
+      lineMiddle.textContent = picks.middle ? picks.middle.text : placeholder(7);
+      lineLast.textContent   = picks.last   ? picks.last.text   : placeholder(5);
+      lineFirst.style.color  = picks.first  ? '#3a2a1a' : '#cfc4b0';
+      lineMiddle.style.color = picks.middle ? '#3a2a1a' : '#cfc4b0';
+      lineLast.style.color   = picks.last   ? '#3a2a1a' : '#cfc4b0';
+    }
+
+    function renderPhaseLabel() {
+      const m = { theme: 'テーマを選ぼう', first: '上の句 (5音) を選ぼう', middle: '中の句 (7音) を選ぼう', last: '下の句 (5音) を選ぼう', done: 'できあがり！' };
+      phaseDiv.textContent = m[phase] || '';
+    }
+
+    function renderChoices() {
+      choiceBoxes.forEach((box, i) => {
+        const c = candidates[i];
+        if (c) {
+          box.text.textContent = c.text;
+          box.card.style.display = 'flex';
+        } else {
+          box.card.style.display = 'none';
+        }
+      });
+    }
+
+    function renderUI() {
+      renderHaikuProgress();
+      renderPhaseLabel();
+      renderChoices();
+      restartHint.style.display = (phase === 'done') ? 'block' : 'none';
+      choiceRow.style.display   = (phase === 'done') ? 'none'  : 'flex';
+    }
+
+    // === 各フェーズ開始 ===
+    async function startTheme() {
+      phase = 'theme';
+      selectedTheme = null;
+      picks.first = null; picks.middle = null; picks.last = null;
+      candidates = THEME_IDS.map(id => ({
+        themeId: id,
+        text: HAIKU_DATA[id].name,
+        audio: 'audio/haiku/theme_' + id + '.wav',
+      }));
+      renderUI();
+      stopAllAudio();
+      clearPromptRepeat();
+      await playAudio('audio/haiku/prompt_theme.wav');
+      if (self._destroyed) return;
+      startPromptRepeat('theme');
+    }
+
+    async function startSlot(slot) {
+      phase = slot;
+      const pool = HAIKU_DATA[selectedTheme][slot];
+      const idxs = pickRandomIndices(pool.length, 3);
+      candidates = idxs.map(i => ({
+        text: pool[i],
+        audio: 'audio/haiku/' + selectedTheme + '_' + slot + '_' + String(i + 1).padStart(2, '0') + '.wav',
+      }));
+      renderUI();
+      stopAllAudio();
+      clearPromptRepeat();
+      await playAudio('audio/haiku/prompt_' + slot + '.wav');
+      if (self._destroyed) return;
+      startPromptRepeat(slot);
+    }
+
+    async function startResult() {
+      phase = 'done';
+      candidates = [];
+      renderUI();
+      stopAllAudio();
+      clearPromptRepeat();
+      // できあがり → 上 → 中 → 下 を順に読み上げ
+      await playAudio('audio/haiku/prompt_done.wav');
+      if (self._destroyed) return;
+      await new Promise(r => setTimeout(r, 200));
+      if (self._destroyed) return;
+      await playAudio(picks.first.audio);
+      if (self._destroyed) return;
+      await new Promise(r => setTimeout(r, 250));
+      if (self._destroyed) return;
+      await playAudio(picks.middle.audio);
+      if (self._destroyed) return;
+      await new Promise(r => setTimeout(r, 250));
+      if (self._destroyed) return;
+      await playAudio(picks.last.audio);
+    }
+
+    // === 入力 ===
+    onGameKey = function(key) {
+      if (self._destroyed) return;
+      const idx = KEYS.indexOf(key);
+      if (idx < 0) return;
+      clearPromptRepeat();
+
+      if (phase === 'done') {
+        // グーでもう一句、それ以外は無視
+        if (key === 'a') {
+          stopAllAudio();
+          playSE('se_button.mp3');
+          startTheme();
+        }
+        return;
+      }
+
+      const choice = candidates[idx];
+      if (!choice) return;
+      stopAllAudio();
+      playSE('se_button.mp3');
+      playSE('se_correct.mp3');
+
+      if (phase === 'theme') {
+        selectedTheme = choice.themeId;
+        renderHaikuProgress();
+        playAudio(choice.audio).then(() => {
+          if (self._destroyed) return;
+          startSlot('first');
+        });
+      } else {
+        picks[phase] = { text: choice.text, audio: choice.audio };
+        renderHaikuProgress();
+        const nextSlot = phase === 'first' ? 'middle' : phase === 'middle' ? 'last' : null;
+        playAudio(choice.audio).then(() => {
+          if (self._destroyed) return;
+          if (nextSlot) {
+            startSlot(nextSlot);
+          } else {
+            startResult();
+          }
+        });
+      }
+    };
+
+    // 初期表示 + 開始
+    renderUI();
+    const t0 = setTimeout(() => {
+      if (self._destroyed) return;
+      startTheme();
+    }, 400);
+    self._timers.push(t0);
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    if (this._promptRepeatTimer) { clearInterval(this._promptRepeatTimer); this._promptRepeatTimer = null; }
+    onGameKey = null;
+  },
+});
+
 // 日本一周の旅: グーとパーを交互に押して都道府県を進む (永続。30歩で次県、47県でループ)
 registerGame('travel', {
   name: '日本一周の旅',

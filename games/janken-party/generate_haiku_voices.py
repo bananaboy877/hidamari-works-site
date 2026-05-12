@@ -1,0 +1,195 @@
+"""VOICEVOX で俳句あそびゲーム用音声を一括生成
+
+3テーマ × 3スロット × 30候補 = 270 + テーマ名3 + プロンプト5 + イントロ1
+出力: audio/haiku/<theme>_<slot>_NN.wav, audio/haiku/theme_<theme>.wav,
+     audio/haiku/prompt_*.wav, audio/intro_haiku.wav
+"""
+import json
+import os
+import sys
+import urllib.parse
+import urllib.request
+
+VOICEVOX = "http://localhost:50021"
+SPEAKER = 3  # ずんだもん
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_DIR = os.path.join(SCRIPT_DIR, "audio", "haiku")
+AUDIO_DIR = os.path.join(SCRIPT_DIR, "audio")
+
+# === テーマごとの候補プール (5音/7音/5音 各30) ===
+HAIKU_DATA = {
+    "wakaba": {
+        "name": "若葉",
+        "first": [
+            "わかばかぜ", "みどりこく", "やまかおる", "こもれびや", "しんりょくに",
+            "やまみどり", "かぜわたる", "もりふかし", "あおぞらに", "しずけさや",
+            "やまぼうし", "ほととぎす", "かおりたつ", "すずやかや", "やまかぜや",
+            "やまかげに", "すずかぜや", "つばめとぶ", "たけのこの", "なつちかし",
+            "みどりかぜ", "やまさわぐ", "はやしぬけ", "みずあそび", "しゃくなげや",
+            "のばらさく", "すずらんや", "はなみずき", "もりかげに", "つきあかり",
+        ],
+        "middle": [
+            "かおりただよう", "かぜさわやかに", "つきがゆれゆく", "しずかにきこえ", "ひかりこぼれて",
+            "かぜにまかせて", "みどりにかすめ", "やまをわたって", "あおいそらこえ", "しずもりのなか",
+            "ひのめうけたり", "すずしくふいて", "しんりょくのなか", "みずおとひびく", "かぜとあそんで",
+            "ほのかにかおる", "かろやかなとり", "ひとときのなぎ", "ことりさえずる", "つきのひかりは",
+            "ちょうがふわふわ", "やまだけきこえ", "ふくかぜさわぐ", "みなもにうつる", "やわらかにふれ",
+            "いきをすうあさ", "つるくさのびて", "みちはしらぬへ", "もくれんちりて", "やまのにおいや",
+        ],
+        "last": [
+            "ゆめのまも", "みのなかへ", "ひるさがり", "やまふかし", "かぜまかせ",
+            "もりのおく", "なつをまつ", "はるおぼゆ", "ひとりたび", "はやあしに",
+            "みちゆきて", "やまいだく", "みみをすま", "すずやかや", "むしのこえ",
+            "ひるねかな", "ねむさそう", "ねむりこむ", "やまさめや", "つきさえも",
+            "かわらいし", "ふえのおと", "やまかすか", "ふもとまで", "しおさいよ",
+            "みえぬくに", "ものおもう", "けむりたつ", "みあげれば", "つばさはる",
+        ],
+    },
+    "koinobori": {
+        "name": "鯉のぼり",
+        "first": [
+            "こいのぼり", "あおぞらに", "ごがつばれ", "そらたかく", "ちちのこえ",
+            "ははのこえ", "ひのまるや", "たかくとぶ", "そらいろや", "こどもたち",
+            "たくましく", "すこやかに", "やわらかに", "かぜひかる", "そらわたる",
+            "うろこかな", "かぜそよぐ", "のぼりかぜ", "ながれゆく", "かぜたつや",
+            "たかくまう", "はためいて", "みあげるや", "そらかける", "ひかりさす",
+            "げんきよく", "かわすそら", "ちちおもう", "はるすぎて", "かおあげて",
+        ],
+        "middle": [
+            "たかくおよいで", "かぜにのれよと", "ひかりかがやき", "うろこきらめき", "あおきそらいで",
+            "たくましきこい", "すこやかにまだ", "かぜひかりひる", "ちちもうれしく", "こどものひざし",
+            "かぜしずまりて", "やわらかにかぜ", "かぞくのねがい", "のびやかにそら", "みあげればこい",
+            "たかくまえへと", "ひのまるながれ", "そらにのぼりて", "はためくしるべ", "げんきにあそぶ",
+            "かわらをこえて", "ちちはほほえみ", "ははのおもいや", "かぜがほをなで", "つきがほほえみ",
+            "はればれおよげ", "しゃちのよなそら", "のぼりひかりて", "やわらかなそら", "たかくはためき",
+        ],
+        "last": [
+            "のぼりたち", "ねがいのり", "はためいて", "かぜしるべ", "みなみへや",
+            "はるすぎて", "かわのべに", "つきさえも", "みちひらく", "はるかきし",
+            "かぞくのり", "すずやかや", "やわらかや", "かぜのうた", "ものさみし",
+            "すこやかに", "たくましく", "みあげれば", "ちちはまだ", "ははのこえ",
+            "ことなだか", "ながれゆく", "かぜたつや", "ひるさがり", "みえはじめ",
+            "うちかわら", "かれゆくや", "ねむれずに", "かぜとんで", "ひとりたび",
+        ],
+    },
+    "samidare": {
+        "name": "五月雨",
+        "first": [
+            "さみだれや", "ふるあめや", "しずもりや", "かさのおと", "みずたまや",
+            "あめぞらや", "つゆけしき", "しろうつる", "ぬれそぼる", "みなもうき",
+            "かわほつる", "しずもりに", "やまけぶる", "みのなかへ", "やまかすか",
+            "ふくらむや", "つゆうつる", "みずおとや", "しゃがふくる", "つゆこぼる",
+            "みえぬくに", "やまぼうし", "つぼみおち", "しのぎあめ", "うすぐらや",
+            "ものさびし", "ねむりさそ", "はちすひら", "かたつむり", "つゆしぐる",
+        ],
+        "middle": [
+            "しずかにふりて", "みずをぬらして", "やわらかにふれ", "やまをこえくる", "みなもにおちる",
+            "かさのおとして", "もりをぬらして", "やまにこめゆく", "みちぬれつづく", "しずかにおちて",
+            "かわのおとせず", "やまにふりつき", "ふりつづくよる", "しらたまふけて", "つゆうつくしく",
+            "しずかにきこえ", "やまのきをぬら", "みちはぬかるみ", "かさにつぶつぶ", "しのびあしにて",
+            "みずたまりおち", "つゆひびきあう", "ねむりさそうや", "やわらかなあめ", "もりはみずもの",
+            "しずもりのうち", "みずおとひびき", "かわおとひびき", "つきもみずあび", "すずやかにとぶ",
+        ],
+        "last": [
+            "ぬれてゆく", "みずたまり", "やまのおと", "しずもりや", "かぜしるべ",
+            "なみのおと", "みちうるみ", "つゆかさね", "しのびあし", "みずぬるむ",
+            "ねむりさそ", "つゆしぐれ", "しおれゆく", "かわひびき", "みえぬくに",
+            "ふえのおと", "みずあがる", "はちすひら", "かたつむり", "かさひしぐ",
+            "ぬれそぼる", "みずおとや", "しずまりに", "みなのこえ", "やまかげに",
+            "ふけるよや", "なつちかし", "つゆきえる", "みのなかへ", "やませまる",
+        ],
+    },
+}
+
+PROMPTS = {
+    "theme":  "テーマを選んでね",
+    "first":  "上の句を選んでね",
+    "middle": "中の句を選んでね",
+    "last":   "下の句を選んでね",
+    "done":   "できあがり！",
+}
+
+INTRO = "俳句あそび！グー、チョキ、パーを使って、自分だけの俳句を作ってみよう。まずはテーマを選んでね。"
+
+
+def gen(text, path, force=False):
+    if not force and os.path.exists(path):
+        return False
+    url = f"{VOICEVOX}/audio_query?text={urllib.parse.quote(text)}&speaker={SPEAKER}"
+    q = json.loads(urllib.request.urlopen(urllib.request.Request(url, method="POST")).read())
+    q["speedScale"] = 0.9
+    q["pitchScale"] = 0.0
+    q["volumeScale"] = 1.0
+    wav = urllib.request.urlopen(urllib.request.Request(
+        f"{VOICEVOX}/synthesis?speaker={SPEAKER}",
+        data=json.dumps(q).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )).read()
+    with open(path, "wb") as f:
+        f.write(wav)
+    print(f"  OK: {os.path.basename(path)} ({len(wav)//1024} KB) <- {text}")
+    return True
+
+
+def main():
+    os.makedirs(OUT_DIR, exist_ok=True)
+    count = 0
+    skip = 0
+    errors = []
+
+    for theme_id, t in HAIKU_DATA.items():
+        for slot in ("first", "middle", "last"):
+            for i, text in enumerate(t[slot], 1):
+                path = os.path.join(OUT_DIR, f"{theme_id}_{slot}_{i:02d}.wav")
+                try:
+                    if gen(text, path):
+                        count += 1
+                    else:
+                        skip += 1
+                except Exception as e:
+                    print(f"  ERROR: {path} -> {e}")
+                    errors.append(path)
+        # テーマ名
+        name_path = os.path.join(OUT_DIR, f"theme_{theme_id}.wav")
+        try:
+            if gen(t["name"], name_path):
+                count += 1
+            else:
+                skip += 1
+        except Exception as e:
+            print(f"  ERROR: {name_path} -> {e}")
+            errors.append(name_path)
+
+    # プロンプト
+    for key, text in PROMPTS.items():
+        path = os.path.join(OUT_DIR, f"prompt_{key}.wav")
+        try:
+            if gen(text, path):
+                count += 1
+            else:
+                skip += 1
+        except Exception as e:
+            print(f"  ERROR: {path} -> {e}")
+            errors.append(path)
+
+    # イントロ
+    intro_path = os.path.join(AUDIO_DIR, "intro_haiku.wav")
+    try:
+        if gen(INTRO, intro_path):
+            count += 1
+        else:
+            skip += 1
+    except Exception as e:
+        print(f"  ERROR: {intro_path} -> {e}")
+        errors.append(intro_path)
+
+    print(f"\n=== 完了: 生成 {count} / スキップ {skip} / 失敗 {len(errors)} ===")
+    if errors:
+        print("失敗ファイル:")
+        for e in errors:
+            print(f"  - {e}")
+
+
+if __name__ == "__main__":
+    main()
