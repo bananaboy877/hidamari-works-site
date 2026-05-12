@@ -4638,11 +4638,16 @@ registerGame('travel', {
     }
 
     // === 音声フロー (優先順: 入境 > 褒め > ボタン指示 → 5秒ごとに指示リピート) ===
-    async function playFlow(crossed, shouldPraise) {
+    async function playFlow(crossed, shouldPraise, playSEFeedback) {
       if (self._destroyed) return;
       clearPromptRepeat();
       busyAudio = true;
       stopAllAudio();
+      // SE は stopAllAudio の後で鳴らす (前に置くと即停止されて聞こえなくなる)
+      if (playSEFeedback) {
+        playSE('se_button.mp3');   // 入力音
+        playSE('se_correct.mp3');  // 正解音
+      }
       try {
         if (crossed) {
           const idx = State.travel.currentPrefIdx;
@@ -4694,7 +4699,6 @@ registerGame('travel', {
       saveState();
       updateDisplay();
       stepScene();
-      playSE('se_step.mp3');
       if (crossed) {
         showEnterOverlay(PREFS[State.travel.currentPrefIdx]);
       }
@@ -4703,14 +4707,15 @@ registerGame('travel', {
       const shouldPraise = !crossed && State.travel.totalSteps > 0 &&
         (State.travel.totalSteps % 10 === 0 || sinceLast >= PRAISE_DELAY_MS);
 
-      playFlow(crossed, shouldPraise);
+      // 正解SE は playFlow 内で stopAllAudio 後に鳴らす
+      playFlow(crossed, shouldPraise, true);
     };
 
-    // 初期表示 + 初回ボタン指示 (押されない場合は5秒ごとに繰り返す)
+    // 初期表示 + 初回ボタン指示 (押されない場合は5秒ごとに繰り返す。SEは鳴らさない)
     updateDisplay();
     const t0 = setTimeout(() => {
       if (self._destroyed) return;
-      playFlow(false, false);
+      playFlow(false, false, false);
     }, 600);
     self._timers.push(t0);
   },
