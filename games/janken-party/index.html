@@ -4362,7 +4362,8 @@ registerGame('haiku', {
 
     const choiceBoxes = [0,1,2].map(i => {
       const card = document.createElement('div');
-      card.style.cssText = 'width:300px;min-height:240px;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px 16px;background:rgba(255,255,255,0.92);border:6px solid ' + HAND_COLORS[i] + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);';
+      // 7音 (例: 「かろやかなとり」) が1行に収まるよう、テキスト幅は最低 7×40+letter ≈ 320px必要 → カード 400px
+      card.style.cssText = 'width:400px;min-height:240px;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px 16px;background:rgba(255,255,255,0.92);border:6px solid ' + HAND_COLORS[i] + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);';
       const hand = document.createElement('div');
       hand.style.cssText = 'margin-bottom:8px;';
       hand.innerHTML = handImg(HAND_TYPES[i], 80);
@@ -4370,7 +4371,8 @@ registerGame('haiku', {
       label.style.cssText = 'font-size:20px;font-weight:900;color:' + HAND_COLORS[i] + ';margin-bottom:10px;';
       label.textContent = HAND_NAMES[i];
       const text = document.createElement('div');
-      text.style.cssText = 'font-size:38px;font-weight:900;color:#3a2a1a;text-align:center;line-height:1.25;letter-spacing:2px;';
+      // white-space:nowrap で確実に1行表示
+      text.style.cssText = 'font-size:40px;font-weight:900;color:#3a2a1a;text-align:center;line-height:1.25;letter-spacing:2px;white-space:nowrap;';
       card.appendChild(hand);
       card.appendChild(label);
       card.appendChild(text);
