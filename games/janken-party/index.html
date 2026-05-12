@@ -4342,15 +4342,9 @@ registerGame('travel', {
     progressWrap.appendChild(progressLabel);
     container.appendChild(progressWrap);
 
-    // ボタン指示 ラベル
-    const hintLabel = document.createElement('div');
-    hintLabel.style.cssText = 'font-size:28px;font-weight:700;color:#3a2a1a;margin-top:22px;';
-    hintLabel.textContent = '次はこのボタン ↓';
-    container.appendChild(hintLabel);
-
     // ボタン指示 (じゃんけんバトルの主表示と同じスタイル: 400x400、白半透明、太い色付き枠線)
     const hintBtn = document.createElement('div');
-    hintBtn.style.cssText = 'width:400px;height:400px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;margin-top:10px;';
+    hintBtn.style.cssText = 'width:400px;height:400px;border-radius:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.5);border:8px solid #ddd;transition:background 0.15s,border-color 0.15s,transform 0.15s;margin-top:22px;';
     const hintImg = document.createElement('div');
     hintImg.style.cssText = 'margin-bottom:14px;';
     const hintName = document.createElement('div');
@@ -4358,6 +4352,11 @@ registerGame('travel', {
     hintBtn.appendChild(hintImg);
     hintBtn.appendChild(hintName);
     container.appendChild(hintBtn);
+
+    // ボタン指示テキスト (じゃんけんバトル風: 「グーのボタンを押してね」)
+    const hintLabel = document.createElement('div');
+    hintLabel.style.cssText = 'font-size:36px;font-weight:900;margin-top:18px;text-shadow:2px 2px 0 #fff;';
+    container.appendChild(hintLabel);
 
     // 「○○に入りました！」入境オーバーレイ
     const enterOverlay = document.createElement('div');
@@ -4381,12 +4380,16 @@ registerGame('travel', {
         hintImg.innerHTML = handImg('rock', 200);
         hintName.textContent = 'グー';
         hintName.style.color = '#c62828';
+        hintLabel.textContent = 'グーのボタンを押してね';
+        hintLabel.style.color = '#c62828';
       } else {
         hintBtn.style.borderColor = '#1e88e5';
         hintBtn.style.background = 'rgba(187,222,251,0.4)';
         hintImg.innerHTML = handImg('paper', 200);
         hintName.textContent = 'パー';
         hintName.style.color = '#1565c0';
+        hintLabel.textContent = 'パーのボタンを押してね';
+        hintLabel.style.color = '#1565c0';
       }
     }
 
@@ -4402,14 +4405,29 @@ registerGame('travel', {
       self._timers.push(t);
     }
 
-    // === 音声フロー (優先順: 入境 > 褒め > ボタン指示) ===
+    function currentPromptSrc() {
+      return expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
+    }
+    function clearPromptRepeat() {
+      if (self._promptRepeatTimer) { clearInterval(self._promptRepeatTimer); self._promptRepeatTimer = null; }
+    }
+    function startPromptRepeat() {
+      clearPromptRepeat();
+      // 5秒ごとに同じ指示を繰り返す (じゃんけんバトルと同じパターン)
+      self._promptRepeatTimer = setInterval(() => {
+        if (self._destroyed) { clearPromptRepeat(); return; }
+        playAudio(currentPromptSrc());
+      }, 5000);
+    }
+
+    // === 音声フロー (優先順: 入境 > 褒め > ボタン指示 → 5秒ごとに指示リピート) ===
     async function playFlow(crossed, shouldPraise) {
       if (self._destroyed) return;
+      clearPromptRepeat();
       busyAudio = true;
       stopAllAudio();
       try {
         if (crossed) {
-          // 直前に入った県は currentPrefIdx そのまま (歩進んだ後の値)
           const idx = State.travel.currentPrefIdx;
           await playAudio('audio/pref_' + String(idx + 1).padStart(2, '0') + '.wav');
         } else if (shouldPraise) {
@@ -4425,11 +4443,12 @@ registerGame('travel', {
         }
         if (self._destroyed) { busyAudio = false; return; }
         // 次のボタン指示
-        const promptSrc = expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
-        await playAudio(promptSrc);
+        await playAudio(currentPromptSrc());
       } finally {
         busyAudio = false;
       }
+      // 押されないまま5秒経過したら繰り返し催促
+      if (!self._destroyed) startPromptRepeat();
     }
 
     // === 入力ハンドラ ===
@@ -4469,12 +4488,11 @@ registerGame('travel', {
       playFlow(crossed, shouldPraise);
     };
 
-    // 初期表示 + 初回ボタン指示
+    // 初期表示 + 初回ボタン指示 (押されない場合は5秒ごとに繰り返す)
     updateDisplay();
     const t0 = setTimeout(() => {
       if (self._destroyed) return;
-      const promptSrc = expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
-      playAudio(promptSrc);
+      playFlow(false, false);
     }, 600);
     self._timers.push(t0);
   },
@@ -4482,6 +4500,7 @@ registerGame('travel', {
     this._destroyed = true;
     this._timers.forEach(t => clearTimeout(t));
     this._timers = [];
+    if (this._promptRepeatTimer) { clearInterval(this._promptRepeatTimer); this._promptRepeatTimer = null; }
     onGameKey = null;
   },
 });
