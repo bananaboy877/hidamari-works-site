@@ -4315,41 +4315,71 @@ registerGame('travel', {
     const container = document.createElement('div');
     container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#fef3e0 0%,#fff8e7 50%,#e8f5e9 100%);isolation:isolate;';
 
-    // === 道シーン (一人称視点、地域テーマ5グループ、滑らかスクロール) ===
-    const THEMES = {
-      snow: { // 北海道・東北 (idx 0-6)
-        sky: 'linear-gradient(180deg, #cfdbe8 0%, #e3edf5 60%, #f5f9fc 100%)',
-        mountain: '#9caebf', cap: '#fff', road: '#d4ccc8',
-        pool: ['snowTree', 'snowPine', 'snowPine', 'snowHouse'],
-      },
-      city: { // 関東 (idx 7-13)
-        sky: 'linear-gradient(180deg, #bfd6ed 0%, #d8e5f2 70%, #e8f0f7 100%)',
-        mountain: '#7d8b9d', cap: '#cfdbe8', road: '#6a6a6e',
-        pool: ['building', 'building', 'streetlight', 'tree'],
-      },
-      mountain: { // 中部・北陸 (idx 14-22)
-        sky: 'linear-gradient(180deg, #b0c5d8 0%, #c5d8de 60%, #dde7e9 100%)',
-        mountain: '#5d6b3e', cap: '#a8b8a0', road: '#806a52',
-        pool: ['pine', 'maple', 'rock', 'pine'],
-      },
-      rural: { // 近畿・中国 (idx 23-35)
-        sky: 'linear-gradient(180deg, #c8dde2 0%, #d8e8e0 60%, #f0f5e8 100%)',
-        mountain: '#9bb89a', cap: '#c8d8c0', road: '#a08b6e',
-        pool: ['tree', 'house', 'rice', 'tree'],
-      },
-      tropical: { // 四国・九州・沖縄 (idx 36-46)
-        sky: 'linear-gradient(180deg, #ffd8a0 0%, #ffeed8 50%, #d8f0e8 100%)',
-        mountain: '#a8d4c8', cap: '#fff8d8', road: '#e8d4a0',
-        pool: ['palm', 'palm', 'hibiscus', 'palmTall'],
-      },
+    // === 道シーン (一人称視点、県ごとにテーマ変化、滑らかスクロール) ===
+    // バイオーム: 空・遠景山・道の基本カラー (8種類)
+    const BIOMES = {
+      snow:     { sky: 'linear-gradient(180deg,#cfdbe8 0%,#e3edf5 60%,#f5f9fc 100%)', mtn: '#9caebf', cap: '#fff',     road: '#d4ccc8' },
+      coast:    { sky: 'linear-gradient(180deg,#a8d0e8 0%,#d0e6f2 50%,#e8f2f8 100%)', mtn: '#8ba8c8', cap: '#fff',     road: '#c8b698' },
+      city:     { sky: 'linear-gradient(180deg,#bfd6ed 0%,#d8e5f2 70%,#e8f0f7 100%)', mtn: '#7d8b9d', cap: '#cfdbe8', road: '#6a6a6e' },
+      highland: { sky: 'linear-gradient(180deg,#b0c5d8 0%,#c5d8de 60%,#dde7e9 100%)', mtn: '#5d6b3e', cap: '#a8b8a0', road: '#806a52' },
+      rural:    { sky: 'linear-gradient(180deg,#c8dde2 0%,#d8e8e0 60%,#f0f5e8 100%)', mtn: '#9bb89a', cap: '#c8d8c0', road: '#a08b6e' },
+      warm:     { sky: 'linear-gradient(180deg,#ffe0b0 0%,#fff0d8 50%,#f0f5e0 100%)', mtn: '#b8a888', cap: '#e8d8b8', road: '#d8b888' },
+      south:    { sky: 'linear-gradient(180deg,#ffe5b8 0%,#fff2d8 45%,#dff0d8 100%)', mtn: '#a8c0a0', cap: '#e8f0d8', road: '#e0c898' },
+      tropical: { sky: 'linear-gradient(180deg,#ffd8a0 0%,#ffeed8 50%,#d8f0e8 100%)', mtn: '#a8d4c8', cap: '#fff8d8', road: '#e8d4a0' },
     };
-    function themeForPrefIdx(idx) {
-      if (idx <= 6) return 'snow';
-      if (idx <= 13) return 'city';
-      if (idx <= 22) return 'mountain';
-      if (idx <= 35) return 'rural';
-      return 'tropical';
-    }
+
+    // 各県のシーン (バイオーム + 道側に出る要素プール)。県の特徴を1〜2点反映
+    // 順番: JIS 0=北海道 ... 46=沖縄
+    const PREF_SCENES = [
+      { biome: 'snow',     pool: ['snowPine','snowHouse','snowPine','ranchCow'] },     // 0  北海道
+      { biome: 'snow',     pool: ['appleTree','snowTree','snowPine','appleTree'] },    // 1  青森
+      { biome: 'snow',     pool: ['snowPine','rice','snowHouse','snowTree'] },         // 2  岩手
+      { biome: 'coast',    pool: ['lighthouse','pine','fishingBoat','pine'] },         // 3  宮城
+      { biome: 'snow',     pool: ['rice','snowTree','rice','snowPine'] },              // 4  秋田
+      { biome: 'rural',    pool: ['cherryTree','rice','tree','cherryTree'] },          // 5  山形
+      { biome: 'rural',    pool: ['tree','rice','house','appleTree'] },                // 6  福島
+      { biome: 'rural',    pool: ['rice','tree','house','tree'] },                     // 7  茨城
+      { biome: 'highland', pool: ['maple','rock','cherryTree','tree'] },               // 8  栃木
+      { biome: 'highland', pool: ['pine','rock','tree','pine'] },                      // 9  群馬
+      { biome: 'city',     pool: ['building','tree','streetlight','building'] },       // 10 埼玉
+      { biome: 'coast',    pool: ['lighthouse','tree','fishingBoat','pine'] },         // 11 千葉
+      { biome: 'city',     pool: ['building','streetlight','sakura','building'] },     // 12 東京
+      { biome: 'city',     pool: ['building','lighthouse','tree','building'] },        // 13 神奈川
+      { biome: 'rural',    pool: ['rice','snowTree','snowPine','rice'] },              // 14 新潟
+      { biome: 'coast',    pool: ['lighthouse','pine','fishingBoat','rock'] },         // 15 富山
+      { biome: 'coast',    pool: ['lighthouse','sakura','pagoda','pine'] },            // 16 石川
+      { biome: 'coast',    pool: ['lighthouse','pine','fishingBoat','tree'] },         // 17 福井
+      { biome: 'highland', pool: ['grapeVine','pine','tree','grapeVine'] },            // 18 山梨
+      { biome: 'highland', pool: ['appleTree','pine','maple','snowPine'] },            // 19 長野
+      { biome: 'highland', pool: ['house','pine','maple','rock'] },                    // 20 岐阜
+      { biome: 'warm',     pool: ['teaField','pine','tree','teaField'] },              // 21 静岡
+      { biome: 'city',     pool: ['building','tree','streetlight','tree'] },           // 22 愛知
+      { biome: 'coast',    pool: ['lighthouse','torii','fishingBoat','tree'] },        // 23 三重
+      { biome: 'rural',    pool: ['tree','rice','sakura','tree'] },                    // 24 滋賀
+      { biome: 'rural',    pool: ['sakura','pagoda','torii','sakura'] },               // 25 京都
+      { biome: 'city',     pool: ['building','streetlight','tree','building'] },       // 26 大阪
+      { biome: 'coast',    pool: ['lighthouse','sakura','building','tree'] },          // 27 兵庫
+      { biome: 'rural',    pool: ['pagoda','torii','sakura','tree'] },                 // 28 奈良
+      { biome: 'warm',     pool: ['orangeTree','tree','cherryTree','orangeTree'] },    // 29 和歌山
+      { biome: 'coast',    pool: ['lighthouse','pine','rock','pine'] },                // 30 鳥取
+      { biome: 'coast',    pool: ['torii','lighthouse','pine','pine'] },               // 31 島根
+      { biome: 'rural',    pool: ['cherryTree','tree','rice','cherryTree'] },          // 32 岡山
+      { biome: 'coast',    pool: ['torii','sakura','lighthouse','tree'] },             // 33 広島
+      { biome: 'coast',    pool: ['fishingBoat','lighthouse','tree','pine'] },         // 34 山口
+      { biome: 'highland', pool: ['maple','tree','pine','rock'] },                     // 35 徳島
+      { biome: 'rural',    pool: ['orangeTree','rice','tree','rice'] },                // 36 香川
+      { biome: 'warm',     pool: ['orangeTree','tree','pine','orangeTree'] },          // 37 愛媛
+      { biome: 'warm',     pool: ['palm','fishingBoat','pine','palm'] },               // 38 高知
+      { biome: 'city',     pool: ['building','tree','streetlight','sakura'] },         // 39 福岡
+      { biome: 'rural',    pool: ['tree','rice','house','tree'] },                     // 40 佐賀
+      { biome: 'coast',    pool: ['lighthouse','fishingBoat','tree','torii'] },        // 41 長崎
+      { biome: 'south',    pool: ['volcano','tree','house','palm'] },                  // 42 熊本
+      { biome: 'warm',     pool: ['tree','pine','volcano','tree'] },                   // 43 大分
+      { biome: 'tropical', pool: ['palm','hibiscus','tree','palm'] },                  // 44 宮崎
+      { biome: 'tropical', pool: ['volcano','palm','hibiscus','palm'] },               // 45 鹿児島
+      { biome: 'tropical', pool: ['palm','palmTall','hibiscus','palm'] },              // 46 沖縄
+    ];
+
     const SCENE_ELEMENTS = {
       snowTree:   '<svg width="100" height="150" viewBox="-50 -150 100 150"><polygon points="-35,0 0,-130 35,0" fill="#2a4a2a"/><polygon points="-30,-30 0,-130 30,-30" fill="#fff" opacity="0.92"/></svg>',
       snowPine:   '<svg width="80" height="180" viewBox="-40 -180 80 180"><rect x="-5" y="-50" width="10" height="50" fill="#4a3a2a"/><polygon points="-25,-50 0,-160 25,-50" fill="#3a5a3a"/><polygon points="-20,-90 0,-150 20,-90" fill="#fff" opacity="0.88"/></svg>',
@@ -4365,6 +4395,19 @@ registerGame('travel', {
       palm:       '<svg width="130" height="200" viewBox="-65 -200 130 200"><path d="M-2,0 Q-6,-110 6,-180" stroke="#5a3a2a" stroke-width="10" fill="none"/><path d="M6,-180 Q-32,-170 -55,-150" stroke="#2a8a4a" stroke-width="9" fill="none"/><path d="M6,-180 Q42,-170 60,-145" stroke="#2a8a4a" stroke-width="9" fill="none"/><path d="M6,-180 Q-22,-200 -45,-202" stroke="#2a8a4a" stroke-width="9" fill="none"/><path d="M6,-180 Q32,-200 55,-202" stroke="#2a8a4a" stroke-width="9" fill="none"/></svg>',
       palmTall:   '<svg width="140" height="240" viewBox="-70 -240 140 240"><path d="M-2,0 Q-8,-140 8,-220" stroke="#5a3a2a" stroke-width="11" fill="none"/><path d="M8,-220 Q-38,-208 -62,-180" stroke="#2a8a4a" stroke-width="10" fill="none"/><path d="M8,-220 Q48,-208 65,-178" stroke="#2a8a4a" stroke-width="10" fill="none"/><path d="M8,-220 Q-25,-240 -50,-240" stroke="#2a8a4a" stroke-width="10" fill="none"/><path d="M8,-220 Q38,-240 60,-240" stroke="#2a8a4a" stroke-width="10" fill="none"/></svg>',
       hibiscus:   '<svg width="90" height="120" viewBox="-45 -120 90 120"><rect x="-2" y="-40" width="4" height="40" fill="#3a6a3a"/><ellipse cx="0" cy="-60" rx="20" ry="6" fill="#3a8a3a" transform="rotate(40 0 -60)"/><circle cx="-18" cy="-78" r="17" fill="#e64a8a"/><circle cx="18" cy="-78" r="17" fill="#e64a8a"/><circle cx="0" cy="-95" r="17" fill="#e64a8a"/><circle cx="0" cy="-78" r="7" fill="#ffd54a"/></svg>',
+      // 県別 特徴要素
+      sakura:     '<svg width="120" height="160" viewBox="-60 -160 120 160"><rect x="-7" y="-50" width="14" height="50" fill="#5a3a2a"/><ellipse cx="0" cy="-110" rx="50" ry="50" fill="#ffcce0"/><ellipse cx="-28" cy="-95" rx="25" ry="28" fill="#ffd6e4"/><ellipse cx="28" cy="-95" rx="25" ry="28" fill="#ffb8d4"/><ellipse cx="0" cy="-130" rx="22" ry="22" fill="#ffd6e4"/></svg>',
+      torii:      '<svg width="130" height="180" viewBox="-65 -180 130 180"><rect x="-55" y="-160" width="110" height="14" fill="#c8281a"/><rect x="-58" y="-148" width="116" height="6" fill="#a01818"/><rect x="-45" y="-140" width="6" height="6" fill="#3a1a1a"/><rect x="39" y="-140" width="6" height="6" fill="#3a1a1a"/><rect x="-40" y="-140" width="10" height="140" fill="#c8281a"/><rect x="30" y="-140" width="10" height="140" fill="#c8281a"/><rect x="-35" y="-110" width="70" height="8" fill="#c8281a"/></svg>',
+      pagoda:     '<svg width="110" height="220" viewBox="-55 -220 110 220"><rect x="-5" y="-60" width="10" height="60" fill="#3a2a1a"/><polygon points="-30,-60 30,-60 36,-70 -36,-70" fill="#5a3a2a"/><rect x="-22" y="-100" width="44" height="30" fill="#d8b888"/><polygon points="-32,-100 32,-100 38,-115 -38,-115" fill="#5a3a2a"/><rect x="-18" y="-140" width="36" height="25" fill="#d8b888"/><polygon points="-28,-140 28,-140 34,-152 -34,-152" fill="#5a3a2a"/><rect x="-14" y="-175" width="28" height="22" fill="#d8b888"/><polygon points="-24,-175 24,-175 30,-187 -30,-187" fill="#5a3a2a"/><rect x="-10" y="-205" width="20" height="20" fill="#d8b888"/><polygon points="-18,-205 18,-205 22,-217 -22,-217" fill="#5a3a2a"/></svg>',
+      lighthouse: '<svg width="90" height="220" viewBox="-45 -220 90 220"><polygon points="-22,0 -12,-180 12,-180 22,0" fill="#fff"/><polygon points="-15,-60 15,-60 12,0 -12,0" fill="#c63030"/><polygon points="-15,-130 15,-130 14,-70 -14,-70" fill="#c63030"/><rect x="-18" y="-200" width="36" height="20" fill="#c63030"/><polygon points="-20,-200 20,-200 0,-218" fill="#1a3a5a"/><circle cx="0" cy="-190" r="6" fill="#ffe89a"/></svg>',
+      fishingBoat:'<svg width="160" height="100" viewBox="-80 -100 160 100"><polygon points="-70,-20 70,-20 50,0 -50,0" fill="#5a3a2a"/><rect x="-30" y="-60" width="36" height="40" fill="#e8e0c8"/><polygon points="-3,-90 -3,-60 25,-60" fill="#e8c060"/><rect x="-30" y="-50" width="36" height="6" fill="#3a2a1a"/></svg>',
+      volcano:    '<svg width="180" height="160" viewBox="-90 -160 180 160"><polygon points="-80,0 -10,-140 10,-140 80,0" fill="#5a4a4a"/><polygon points="-80,0 -45,-70 -25,-65 -10,-90 10,-90 25,-65 45,-70 80,0" fill="#3a2a2a" opacity="0.5"/><ellipse cx="0" cy="-145" rx="14" ry="6" fill="#e85a3a"/><circle cx="-8" cy="-155" r="10" fill="#888" opacity="0.7"/><circle cx="6" cy="-160" r="12" fill="#a8a8a8" opacity="0.7"/><circle cx="0" cy="-175" r="14" fill="#c8c8c8" opacity="0.6"/></svg>',
+      appleTree:  '<svg width="100" height="160" viewBox="-50 -160 100 160"><rect x="-7" y="-50" width="14" height="50" fill="#5a3a2a"/><ellipse cx="0" cy="-110" rx="45" ry="50" fill="#3a6a3a"/><ellipse cx="-25" cy="-100" rx="25" ry="30" fill="#4a7a4a"/><ellipse cx="25" cy="-100" rx="25" ry="30" fill="#2a5a2a"/><circle cx="-20" cy="-95" r="8" fill="#d83030"/><circle cx="15" cy="-85" r="8" fill="#d83030"/><circle cx="0" cy="-120" r="8" fill="#d83030"/><circle cx="22" cy="-115" r="8" fill="#d83030"/></svg>',
+      cherryTree: '<svg width="110" height="160" viewBox="-55 -160 110 160"><rect x="-7" y="-50" width="14" height="50" fill="#5a3a2a"/><ellipse cx="0" cy="-110" rx="48" ry="50" fill="#3a6a3a"/><ellipse cx="-25" cy="-100" rx="25" ry="30" fill="#4a7a4a"/><ellipse cx="25" cy="-100" rx="25" ry="30" fill="#2a5a2a"/><circle cx="-22" cy="-90" r="5" fill="#c8203a"/><circle cx="-15" cy="-90" r="5" fill="#c8203a"/><circle cx="18" cy="-80" r="5" fill="#c8203a"/><circle cx="25" cy="-80" r="5" fill="#c8203a"/><circle cx="-2" cy="-122" r="5" fill="#c8203a"/><circle cx="5" cy="-122" r="5" fill="#c8203a"/></svg>',
+      orangeTree: '<svg width="100" height="160" viewBox="-50 -160 100 160"><rect x="-7" y="-50" width="14" height="50" fill="#5a3a2a"/><ellipse cx="0" cy="-110" rx="45" ry="50" fill="#3a6a3a"/><ellipse cx="-25" cy="-100" rx="25" ry="30" fill="#4a7a4a"/><ellipse cx="25" cy="-100" rx="25" ry="30" fill="#2a5a2a"/><circle cx="-20" cy="-95" r="8" fill="#ff8830"/><circle cx="18" cy="-85" r="8" fill="#ff8830"/><circle cx="0" cy="-120" r="8" fill="#ff8830"/><circle cx="22" cy="-115" r="7" fill="#ff8830"/><circle cx="-10" cy="-130" r="7" fill="#ff8830"/></svg>',
+      teaField:   '<svg width="200" height="90" viewBox="-100 -90 200 90"><ellipse cx="-70" cy="-15" rx="22" ry="18" fill="#4a7a3a"/><ellipse cx="-25" cy="-18" rx="22" ry="20" fill="#3a6a2a"/><ellipse cx="22" cy="-15" rx="22" ry="18" fill="#4a7a3a"/><ellipse cx="68" cy="-20" rx="22" ry="20" fill="#3a6a2a"/><ellipse cx="-48" cy="-10" rx="20" ry="14" fill="#5a8a4a"/><ellipse cx="0" cy="-10" rx="20" ry="14" fill="#5a8a4a"/><ellipse cx="48" cy="-12" rx="20" ry="14" fill="#5a8a4a"/></svg>',
+      grapeVine:  '<svg width="100" height="120" viewBox="-50 -120 100 120"><rect x="-45" y="-90" width="90" height="6" fill="#5a3a2a"/><rect x="-42" y="-90" width="4" height="20" fill="#5a3a2a"/><rect x="38" y="-90" width="4" height="20" fill="#5a3a2a"/><circle cx="-30" cy="-78" r="5" fill="#6a3a8a"/><circle cx="-22" cy="-76" r="5" fill="#6a3a8a"/><circle cx="-26" cy="-70" r="5" fill="#6a3a8a"/><circle cx="-30" cy="-64" r="4" fill="#6a3a8a"/><circle cx="-22" cy="-66" r="4" fill="#6a3a8a"/><circle cx="-26" cy="-58" r="4" fill="#6a3a8a"/><circle cx="0" cy="-78" r="5" fill="#6a3a8a"/><circle cx="8" cy="-76" r="5" fill="#6a3a8a"/><circle cx="4" cy="-70" r="5" fill="#6a3a8a"/><circle cx="0" cy="-64" r="4" fill="#6a3a8a"/><circle cx="28" cy="-78" r="5" fill="#6a3a8a"/><circle cx="36" cy="-76" r="5" fill="#6a3a8a"/><circle cx="32" cy="-70" r="5" fill="#6a3a8a"/><polygon points="-38,-90 -28,-95 -32,-86" fill="#3a6a3a"/><polygon points="-8,-90 2,-95 -2,-86" fill="#3a6a3a"/><polygon points="22,-90 32,-95 28,-86" fill="#3a6a3a"/></svg>',
+      ranchCow:   '<svg width="140" height="100" viewBox="-70 -100 140 100"><rect x="-55" y="-60" width="90" height="50" fill="#fff"/><polygon points="-50,-60 -42,-72 -35,-60" fill="#fff"/><rect x="35" y="-70" width="22" height="20" fill="#fff"/><rect x="-55" y="-10" width="8" height="10" fill="#3a2a1a"/><rect x="-30" y="-10" width="8" height="10" fill="#3a2a1a"/><rect x="6" y="-10" width="8" height="10" fill="#3a2a1a"/><rect x="22" y="-10" width="8" height="10" fill="#3a2a1a"/><ellipse cx="-30" cy="-45" rx="15" ry="8" fill="#3a2a1a"/><ellipse cx="10" cy="-40" rx="12" ry="6" fill="#3a2a1a"/><ellipse cx="-10" cy="-55" rx="10" ry="6" fill="#3a2a1a"/><circle cx="42" cy="-58" r="3" fill="#3a2a1a"/></svg>',
     };
 
     // 背景レイヤー (空グラデ、遠景山、道、両側スクロール要素)
@@ -4376,24 +4419,31 @@ registerGame('travel', {
     sceneSvg.setAttribute('viewBox', '0 0 1920 1000');
     sceneSvg.setAttribute('preserveAspectRatio', 'xMidYMax slice');
     sceneSvg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
-    // 遠景の山並み
+    // 遠景の山並み (地平線 y=500、消失点と同じ)
     const mountainEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    mountainEl.setAttribute('points', '0,470 200,360 400,420 600,320 800,400 1000,330 1200,410 1400,340 1600,400 1920,370 1920,500 0,500');
-    mountainEl.setAttribute('opacity', '0.9');
+    mountainEl.setAttribute('points', '0,500 180,380 360,440 540,340 720,420 900,360 1080,430 1260,340 1440,420 1620,360 1800,420 1920,400 1920,500 0,500');
+    mountainEl.setAttribute('opacity', '0.92');
     sceneSvg.appendChild(mountainEl);
-    // 山頂の雪/明部
+    // 山頂の雪/明部 (山と同じピーク座標を使う)
     const mountainCapEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    mountainCapEl.innerHTML = '<polygon points="170,380 200,360 230,380 200,395"/><polygon points="570,340 600,320 630,340 600,355"/><polygon points="970,350 1000,330 1030,350 1000,365"/><polygon points="1370,360 1400,340 1430,360 1400,375"/>';
+    mountainCapEl.innerHTML =
+      '<polygon points="155,400 180,380 205,400 180,412"/>'
+      + '<polygon points="515,360 540,340 565,360 540,372"/>'
+      + '<polygon points="875,380 900,360 925,380 900,392"/>'
+      + '<polygon points="1235,360 1260,340 1285,360 1260,372"/>'
+      + '<polygon points="1595,380 1620,360 1645,380 1620,392"/>';
     sceneSvg.appendChild(mountainCapEl);
-    // 道 (遠近台形、奥が狭く手前が広い)
+    // 道 (消失点 (960,500) から手前に広がる三角形、地平線と一致)
     const roadEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    roadEl.setAttribute('points', '880,470 1040,470 1560,1000 360,1000');
+    roadEl.setAttribute('points', '960,500 1640,1000 280,1000');
     sceneSvg.appendChild(roadEl);
-    // 道の中央線 (破線で奥行き感)
+    // 道の中央線 (消失点から手前へ、遠近に応じて段々大きく)
     const roadLineEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    roadLineEl.innerHTML = '<polygon points="956,490 964,490 968,560 952,560" fill="#fff" opacity="0.85"/>'
-                         + '<polygon points="948,600 972,600 980,720 940,720" fill="#fff" opacity="0.85"/>'
-                         + '<polygon points="930,780 990,780 1010,950 910,950" fill="#fff" opacity="0.85"/>';
+    roadLineEl.innerHTML =
+      '<polygon points="957,540 963,540 966,590 954,590" fill="#fff" opacity="0.85"/>'
+      + '<polygon points="950,640 970,640 976,720 944,720" fill="#fff" opacity="0.85"/>'
+      + '<polygon points="938,780 982,780 996,890 924,890" fill="#fff" opacity="0.85"/>'
+      + '<polygon points="918,950 1002,950 1016,1000 904,1000" fill="#fff" opacity="0.85"/>';
     sceneSvg.appendChild(roadLineEl);
     sceneBg.appendChild(sceneSvg);
 
@@ -4409,41 +4459,47 @@ registerGame('travel', {
       roadside.push({ side, depth, type: null, div });
     }
 
-    function pickElement(theme) {
-      const pool = THEMES[theme].pool;
-      return pool[Math.floor(Math.random() * pool.length)];
+    function pickElementForPref(prefIdx) {
+      const scene = PREF_SCENES[prefIdx] || PREF_SCENES[0];
+      return scene.pool[Math.floor(Math.random() * scene.pool.length)];
     }
 
     function layoutOne(el) {
-      // depth 0 = 地平線、1 = 画面手前
-      const VANISH_X_PCT = 50, VANISH_Y_PCT = 47;
-      // 画面端到達時の x オフセット (手前で道幅 +α まで広がる)
-      const NEAR_X_OFFSET = 58; // %
-      const NEAR_Y = 102; // %
-      const x = VANISH_X_PCT + el.side * NEAR_X_OFFSET * el.depth;
-      const y = VANISH_Y_PCT + (NEAR_Y - VANISH_Y_PCT) * el.depth;
-      // 遠近スケール: 地平線で 0.04、手前で 1.4
-      const scale = 0.04 + el.depth * 1.4;
+      // 消失点 (50%, 50%) = SVGの (960, 500) と一致
+      // 道の左端は手前 (depth=1) で 14.6% (=280/1920)、右端は 85.4% (=1640/1920)
+      // 道の半幅 (中央=50%からの距離): 0 (地平線) → 35.4% (手前)
+      const VANISH_X = 50, VANISH_Y = 50;
+      const NEAR_Y = 104;  // 画面少し下まで突き抜けて消える
+      const ROAD_HALF_NEAR = 35.4;  // %
+      const MARGIN_NEAR = 14;       // % 道のさらに外側マージン (手前で大きく外へ)
+      // 遠近に応じて道の幅 (depth に比例) + マージン (depth^1.2 で奥は近く、手前は遠く)
+      const roadHalf = ROAD_HALF_NEAR * el.depth;
+      const margin = MARGIN_NEAR * Math.pow(el.depth, 1.2);
+      const x = VANISH_X + el.side * (roadHalf + margin);
+      const y = VANISH_Y + (NEAR_Y - VANISH_Y) * el.depth;
+      // スケール: 地平線で 0.03、手前で 1.5
+      const scale = 0.03 + el.depth * 1.5;
       el.div.style.left = x + '%';
       el.div.style.top = y + '%';
       el.div.style.transform = 'translate(-50%, -100%) scale(' + scale + ')';
-      el.div.style.opacity = (el.depth > 0.06 && el.depth < 1.0) ? '1' : '0';
+      el.div.style.opacity = (el.depth > 0.05 && el.depth < 1.04) ? '1' : '0';
       el.div.style.zIndex = String(Math.floor(el.depth * 100));
     }
 
-    let currentSceneTheme = null;
-    function applyTheme(theme, regenerateAll) {
-      currentSceneTheme = theme;
-      const t = THEMES[theme];
-      // 空 → container 背景。CSS transition でゆるやかに切り替え
-      container.style.transition = 'background 0.8s ease';
-      container.style.background = t.sky;
-      mountainEl.setAttribute('fill', t.mountain);
-      mountainCapEl.setAttribute('fill', t.cap);
-      roadEl.setAttribute('fill', t.road);
+    let currentPrefSceneIdx = -1;
+    function applyPrefScene(prefIdx, regenerateAll) {
+      currentPrefSceneIdx = prefIdx;
+      const scene = PREF_SCENES[prefIdx] || PREF_SCENES[0];
+      const b = BIOMES[scene.biome];
+      // 空 → container 背景。CSS transition で滑らかに切り替え
+      container.style.transition = 'background 0.9s ease';
+      container.style.background = b.sky;
+      mountainEl.setAttribute('fill', b.mtn);
+      mountainCapEl.setAttribute('fill', b.cap);
+      roadEl.setAttribute('fill', b.road);
       if (regenerateAll) {
         roadside.forEach(el => {
-          el.type = pickElement(theme);
+          el.type = pickElementForPref(prefIdx);
           el.div.innerHTML = SCENE_ELEMENTS[el.type] || '';
           layoutOne(el);
         });
@@ -4451,14 +4507,14 @@ registerGame('travel', {
     }
 
     function stepScene() {
-      const theme = themeForPrefIdx(State.travel.currentPrefIdx);
-      if (theme !== currentSceneTheme) applyTheme(theme, false);
+      const prefIdx = State.travel.currentPrefIdx;
+      if (prefIdx !== currentPrefSceneIdx) applyPrefScene(prefIdx, false);
       roadside.forEach(el => {
         el.depth += 1 / 14;
-        if (el.depth > 1.08) {
-          // 画面外に消えた → 地平線に再配置 + 現在テーマで再抽選
-          el.depth = -0.04;
-          el.type = pickElement(themeForPrefIdx(State.travel.currentPrefIdx));
+        if (el.depth > 1.06) {
+          // 画面外に消えた → 地平線に再配置 + 現在県で再抽選
+          el.depth = -0.05;
+          el.type = pickElementForPref(prefIdx);
           el.div.innerHTML = SCENE_ELEMENTS[el.type] || '';
           // スナップさせるため一瞬 transition オフ
           el.div.style.transition = 'none';
@@ -4472,8 +4528,8 @@ registerGame('travel', {
       });
     }
 
-    // 初期テーマ適用
-    applyTheme(themeForPrefIdx(State.travel.currentPrefIdx), true);
+    // 初期シーン適用
+    applyPrefScene(State.travel.currentPrefIdx, true);
     // === /道シーンここまで ===
 
     // 動物 (右上)
