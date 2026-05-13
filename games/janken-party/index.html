@@ -4307,8 +4307,15 @@ registerGame('haiku', {
         middle: ['しずかにふりて','みずをぬらして','やわらかにふれ','やまをこえくる','みなもにおちる','かさのおとして','もりをぬらして','やまにこめゆく','みちぬれつづく','しずかにおちて','かわのおとせず','やまにふりつき','ふりつづくよる','しらたまふけて','つゆうつくしく','しずかにきこえ','やまのきをぬら','みちはぬかるみ','かさにつぶつぶ','しのびあしにて','みずたまりおち','つゆひびきあう','ねむりさそうや','やわらかなあめ','もりはみずもの','しずもりのうち','みずおとひびき','かわおとひびき','つきもみずあび','すずやかにとぶ'],
         last: ['ぬれてゆく','みずたまり','やまのおと','しずもりや','かぜしるべ','なみのおと','みちうるみ','つゆかさね','しのびあし','みずぬるむ','ねむりさそ','つゆしぐれ','しおれゆく','かわひびき','みえぬくに','ふえのおと','みずあがる','はちすひら','かたつむり','かさひしぐ','ぬれそぼる','みずおとや','しずまりに','みなのこえ','やまかげに','ふけるよや','なつちかし','つゆきえる','みのなかへ','やませまる'],
       },
+      hatashigoto: {
+        name: '畑仕事', color: '#8a6e3a',
+        first: ['はたしごと','たねまきや','なえうえや','うねつくり','つちのうえ','つちかおる','つちひかる','はたかぜや','なつのはた','みのりまえ','みのりこえ','つゆしずく','つゆひかる','つゆつたう','かぜとおる','やまかげに','かかしたつ','すずめなく','ふきいでて','なえそだち','みみずほる','むしのおと','うねみえる','つちにふれ','はやばたけ','つちをほる','はなさそう','しのべばや','なつちかし','しおれゆく'],
+        middle: ['つちをほるあさ','たねをまくあさ','なえそだてつつ','はたなかをゆく','つちふっくらと','なつのひひかる','なつくさみどり','やわらかにふれ','すずめのこえや','かかしのよこに','しずかにそだて','うねをこえゆく','かぜがほをなで','ひのめあびつつ','みのりをまちて','みみずがおりて','つちのあたたみ','はたにみみすま','なつのひかぞえ','みみずおどりて','ねぎのめがでて','まめつるのびて','うりひとつなる','ちょうがまうそら','つちにねはりて','みのりよろこび','ひかりまわりて','なつくさかおる','はたにあせして','ねしかとのびて'],
+        last: ['なつのいろ','みのりかな','つちのいろ','すずやかに','かぜまかせ','ものおもう','ひるさがり','つきさえも','ものさびし','ねむさそう','ふえのおと','ふもとまで','みえぬくに','みなみへや','ふきあがる','みみすます','ねむりさそ','むしのこえ','かぜのおと','ねむりこむ','つきあかり','みのらせよ','うちつちや','うちわほり','つちのこえ','はたばたけ','ねぎはなや','なつのあめ','ねがふかし','みあげれば'],
+      },
     };
-    const THEME_IDS = ['wakaba','koinobori','samidare'];
+    const THEME_IDS = ['wakaba','koinobori','samidare','hatashigoto'];
+    const THEMES_PER_SCREEN = 3; // 提示数 (じゃんけんボタンの数)
     const KEYS = ['a','s','d']; // グー、チョキ、パー
     const HAND_TYPES = ['rock','scissors','paper'];
     const HAND_COLORS = ['#ef5350','#fbc02d','#1e88e5'];
@@ -4512,10 +4519,12 @@ registerGame('haiku', {
       phase = 'theme';
       selectedTheme = null;
       picks.first = null; picks.middle = null; picks.last = null;
-      candidates = THEME_IDS.map(id => ({
-        themeId: id,
-        text: HAIKU_DATA[id].name,
-        audio: 'audio/haiku/theme_' + id + '.wav',
+      // テーマ4つから3つランダム提示 (じゃんけん3ボタンに対応)
+      const themeIdxs = pickRandomIndices(THEME_IDS.length, Math.min(THEMES_PER_SCREEN, THEME_IDS.length));
+      candidates = themeIdxs.map(i => ({
+        themeId: THEME_IDS[i],
+        text: HAIKU_DATA[THEME_IDS[i]].name,
+        audio: 'audio/haiku/theme_' + THEME_IDS[i] + '.wav',
       }));
       renderUI();
       stopAllAudio();
@@ -4660,8 +4669,8 @@ registerGame('collection', {
     self._destroyed = false;
     self._autoAdvanceTimer = null;
 
-    const THEME_LABELS = { wakaba: '若葉', koinobori: '鯉のぼり', samidare: '五月雨' };
-    const THEME_COLORS = { wakaba: '#2e7d32', koinobori: '#1565c0', samidare: '#5e35b1' };
+    const THEME_LABELS = { wakaba: '若葉', koinobori: '鯉のぼり', samidare: '五月雨', hatashigoto: '畑仕事' };
+    const THEME_COLORS = { wakaba: '#2e7d32', koinobori: '#1565c0', samidare: '#5e35b1', hatashigoto: '#8a6e3a' };
 
     // === State ===
     const collection = State.haikuCollection.slice().sort((a, b) => a.ts - b.ts);
