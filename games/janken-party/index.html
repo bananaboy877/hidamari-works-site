@@ -4611,6 +4611,7 @@ registerGame('haiku', {
     this._timers.forEach(t => clearTimeout(t));
     this._timers = [];
     if (this._promptRepeatTimer) { clearInterval(this._promptRepeatTimer); this._promptRepeatTimer = null; }
+    if (this._restartHintTimer) { clearInterval(this._restartHintTimer); this._restartHintTimer = null; }
     onGameKey = null;
   },
 });
