@@ -4422,16 +4422,17 @@ registerGame('haiku', {
       }, 7000);
     }
     function clearRestartHintRepeat() {
+      // active=false にすると in-flight の Promise チェーンも guard で止まる
+      self._restartLoopActive = false;
       if (self._restartHintTimer) { clearTimeout(self._restartHintTimer); self._restartHintTimer = null; }
     }
     function playRestartHintLoop() {
-      if (self._destroyed || phase !== 'done') return;
+      if (self._destroyed || !self._restartLoopActive || phase !== 'done') return;
       if (!picks.first || !picks.middle || !picks.last) return;
-      // ループのたびに 完成俳句(上→中→下) → 案内 の順に再生
-      // 周回ごとに AudioContext リフレッシュ (毎周4wavでノード累積するため)
       self._restartLoopCount = (self._restartLoopCount || 0) + 1;
       if (self._restartLoopCount % 3 === 0) refreshAudioCtx();
-      const guard = () => !self._destroyed && phase === 'done';
+      // 全ての .then で「ループまだ有効か + done フェーズか + 破壊されてないか」をチェック
+      const guard = () => !self._destroyed && self._restartLoopActive && phase === 'done';
       playAudio(picks.first.audio)
         .then(() => guard() ? new Promise(r => setTimeout(r, 250)) : null)
         .then(() => guard() ? playAudio(picks.middle.audio) : null)
@@ -4441,13 +4442,12 @@ registerGame('haiku', {
         .then(() => guard() ? playAudio('audio/haiku/prompt_restart.wav') : null)
         .then(() => {
           if (!guard()) return;
-          // 案内まで再生終わったら 5秒待って次のループ
           self._restartHintTimer = setTimeout(playRestartHintLoop, 5000);
         });
     }
     function startRestartHintRepeat() {
-      // 完成俳句読み上げ + 褒めの後、5秒待ってから初回発火
       clearRestartHintRepeat();
+      self._restartLoopActive = true;
       self._restartLoopCount = 0;
       self._restartHintTimer = setTimeout(playRestartHintLoop, 5000);
     }
@@ -4543,6 +4543,7 @@ registerGame('haiku', {
       renderUI();
       stopAllAudio();
       clearPromptRepeat();
+      clearRestartHintRepeat(); // 結果画面ループの残りを確実に停止 (in-flight チェーンも active=false で停止)
       await playAudio('audio/haiku/prompt_theme.wav');
       if (self._destroyed) return;
       startPromptRepeat('theme');
