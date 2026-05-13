@@ -4414,6 +4414,17 @@ registerGame('haiku', {
         playAudio('audio/haiku/prompt_' + promptKey + '.wav');
       }, 7000);
     }
+    function clearRestartHintRepeat() {
+      if (self._restartHintTimer) { clearInterval(self._restartHintTimer); self._restartHintTimer = null; }
+    }
+    function startRestartHintRepeat() {
+      // 完成後 5秒待ってから初回発火、以降 5秒おきに「新しい俳句〜押してね」を案内
+      clearRestartHintRepeat();
+      self._restartHintTimer = setInterval(() => {
+        if (self._destroyed) { clearRestartHintRepeat(); return; }
+        playAudio('audio/haiku/prompt_restart.wav');
+      }, 5000);
+    }
 
     function placeholder(n) {
       let s = '';
@@ -4511,6 +4522,7 @@ registerGame('haiku', {
       renderUI();
       stopAllAudio();
       clearPromptRepeat();
+      clearRestartHintRepeat();
       // 完成俳句をコレクションに記録 (永続)
       State.haikuCollection.push({
         theme: selectedTheme,
@@ -4537,6 +4549,9 @@ registerGame('haiku', {
       await new Promise(r => setTimeout(r, 250));
       if (self._destroyed) return;
       await playAudio(picks.last.audio);
+      if (self._destroyed) return;
+      // 5秒後に「新しい俳句をつくりたいときはボタンを押してね」、以後5秒おきに繰り返し
+      startRestartHintRepeat();
     }
 
     // === 入力 ===
@@ -4548,6 +4563,7 @@ registerGame('haiku', {
 
       if (phase === 'done') {
         // どのボタンでも、もう一句作れる
+        clearRestartHintRepeat();
         stopAllAudio();
         playSE('se_button.mp3');
         startTheme();
