@@ -4415,15 +4415,40 @@ registerGame('haiku', {
       }, 7000);
     }
     function clearRestartHintRepeat() {
-      if (self._restartHintTimer) { clearInterval(self._restartHintTimer); self._restartHintTimer = null; }
+      if (self._restartHintTimer) { clearTimeout(self._restartHintTimer); self._restartHintTimer = null; }
+    }
+    function playRestartHintLoop() {
+      if (self._destroyed) return;
+      playAudio('audio/haiku/prompt_restart.wav').then(() => {
+        if (self._destroyed) return;
+        // 再生が完全に終わってから 5秒待って次の発火 (チェイン式)
+        self._restartHintTimer = setTimeout(playRestartHintLoop, 5000);
+      });
     }
     function startRestartHintRepeat() {
-      // 完成後 5秒待ってから初回発火、以降 5秒おきに「新しい俳句〜押してね」を案内
+      // 完成俳句読み上げ + 褒めの後、5秒待ってから初回発火
       clearRestartHintRepeat();
-      self._restartHintTimer = setInterval(() => {
-        if (self._destroyed) { clearRestartHintRepeat(); return; }
-        playAudio('audio/haiku/prompt_restart.wav');
-      }, 5000);
+      self._restartHintTimer = setTimeout(playRestartHintLoop, 5000);
+    }
+
+    // 完成褒め: 短い間 → (名前) → 褒めセリフ (13種からランダム)
+    const FINISH_PRAISES = [
+      'audio/praise_sugoi.wav', 'audio/praise_iine.wav', 'audio/praise_nice.wav',
+      'audio/praise_bacchiri.wav', 'audio/praise_yattane.wav', 'audio/praise_kakkoii.wav',
+      'audio/praise_sasuga.wav', 'audio/praise_subarashii.wav', 'audio/praise_atamagaii.wav',
+      'audio/praise_kashikoi.wav', 'audio/praise_tensai.wav', 'audio/praise_saikou.wav',
+      'audio/praise_sugosugi.wav',
+    ];
+    async function playFinishPraise() {
+      await new Promise(r => setTimeout(r, 350));
+      if (self._destroyed) return;
+      const praise = FINISH_PRAISES[Math.floor(Math.random() * FINISH_PRAISES.length)];
+      const profile = getPlayerProfile();
+      if (profile) {
+        await speakName(profile.reading, profile.gender);
+        if (self._destroyed) return;
+      }
+      await playAudio(praise);
     }
 
     function placeholder(n) {
@@ -4550,7 +4575,10 @@ registerGame('haiku', {
       if (self._destroyed) return;
       await playAudio(picks.last.audio);
       if (self._destroyed) return;
-      // 5秒後に「新しい俳句をつくりたいときはボタンを押してね」、以後5秒おきに繰り返し
+      // 完成俳句読み上げ後に名前+褒め (○○さん、すごい！)
+      await playFinishPraise();
+      if (self._destroyed) return;
+      // 5秒後に「新しい俳句をつくりたいときはボタンを押してね」、終了ごとに5秒待ってまた再生
       startRestartHintRepeat();
     }
 
