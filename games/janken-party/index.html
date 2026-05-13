@@ -4389,7 +4389,7 @@ registerGame('haiku', {
     // 完成時の案内 (下)
     const restartHint = document.createElement('div');
     restartHint.style.cssText = 'margin-top:24px;font-size:30px;font-weight:900;color:#5a4a2a;text-shadow:2px 2px 0 #fff;display:none;';
-    restartHint.textContent = 'どのボタンでも、もう一句作れるよ';
+    restartHint.textContent = '新しい俳句をつくりたいときはボタンを押してね';
     container.appendChild(restartHint);
 
     gameArea.appendChild(container);
@@ -4422,13 +4422,13 @@ registerGame('haiku', {
     }
 
     function renderHaikuProgress() {
-      // テーマ表示
+      // お題表示
       if (selectedTheme) {
         const t = HAIKU_DATA[selectedTheme];
-        haikuThemeBadge.textContent = 'テーマ：' + t.name;
+        haikuThemeBadge.textContent = 'お題：' + t.name;
         haikuThemeBadge.style.color = t.color;
       } else {
-        haikuThemeBadge.textContent = '— テーマを選ぼう —';
+        haikuThemeBadge.textContent = '— お題を選ぼう —';
         haikuThemeBadge.style.color = '#888';
       }
       // 各行
@@ -4441,7 +4441,13 @@ registerGame('haiku', {
     }
 
     function renderPhaseLabel() {
-      const m = { theme: 'テーマを選ぼう', first: '上の句 (5音) を選ぼう', middle: '中の句 (7音) を選ぼう', last: '下の句 (5音) を選ぼう', done: 'できあがり！' };
+      const m = {
+        theme:  '好きなお題のボタンを押してね',
+        first:  '好きな上の句のボタンを押してね',
+        middle: '好きな中の句のボタンを押してね',
+        last:   '好きな下の句のボタンを押してね',
+        done:   'できあがり！',
+      };
       phaseDiv.textContent = m[phase] || '';
     }
 
@@ -4750,7 +4756,7 @@ registerGame('collection', {
       themeBadge.style.display = 'block';
       tsLabel.style.display = 'block';
       emptyMsg.style.display = 'none';
-      themeBadge.textContent = 'テーマ：' + (THEME_LABELS[entry.theme] || entry.theme);
+      themeBadge.textContent = 'お題：' + (THEME_LABELS[entry.theme] || entry.theme);
       themeBadge.style.color = THEME_COLORS[entry.theme] || '#888';
       lineFirst.textContent  = entry.first;
       lineMiddle.textContent = entry.middle;
