@@ -865,6 +865,7 @@ const State = {
   playerProfile: null, // { reading: 'たかし', gender: 'M' } or null
   yukidama: { currentSize: 0, pillarHeight: 0 }, // 雪玉ころがしの永続状態
   travel: { currentPrefIdx: 0, stepsInPref: 0, totalSteps: 0, completedLoops: 0 }, // 日本一周の旅 永続状態
+  haikuCollection: [], // これまでに作った俳句のリスト (永続) [{theme,first,middle,last,firstAudio,middleAudio,lastAudio,ts}]
   audioEnabled: true, // ヘッダーの音声オン/オフトグル (永続)
 };
 
@@ -900,6 +901,9 @@ function loadState() {
         State.travel.totalSteps = data.travel.totalSteps | 0;
         State.travel.completedLoops = data.travel.completedLoops | 0;
       }
+      if (Array.isArray(data.haikuCollection)) {
+        State.haikuCollection = data.haikuCollection;
+      }
       if (typeof data.audioEnabled === 'boolean') {
         State.audioEnabled = data.audioEnabled;
       }
@@ -919,6 +923,7 @@ function saveState() {
       playerProfile: State.playerProfile,
       yukidama: State.yukidama,
       travel: State.travel,
+      haikuCollection: State.haikuCollection,
       audioEnabled: State.audioEnabled,
     }));
   } catch (e) {
@@ -1562,7 +1567,8 @@ function startSelectedGame(gameId) {
 // ゲーム選択ロジック（ランダム）
 // ========================================
 function selectNextGame() {
-  const allGameIds = Object.keys(GameRegistry);
+  // skipRandom が真のゲーム (例: コレクション) はランダム選出対象から除外
+  const allGameIds = Object.keys(GameRegistry).filter(id => !GameRegistry[id].skipRandom);
 
   // 全て遊んだかチェック
   const unplayed = allGameIds.filter(id => !State.playedGames.includes(id));
@@ -4499,6 +4505,18 @@ registerGame('haiku', {
       renderUI();
       stopAllAudio();
       clearPromptRepeat();
+      // 完成俳句をコレクションに記録 (永続)
+      State.haikuCollection.push({
+        theme: selectedTheme,
+        first: picks.first.text,
+        middle: picks.middle.text,
+        last: picks.last.text,
+        firstAudio: picks.first.audio,
+        middleAudio: picks.middle.audio,
+        lastAudio: picks.last.audio,
+        ts: Date.now(),
+      });
+      saveState();
       // できあがり → 上 → 中 → 下 を順に読み上げ
       await playAudio('audio/haiku/prompt_done.wav');
       if (self._destroyed) return;
@@ -4571,6 +4589,305 @@ registerGame('haiku', {
     this._timers.forEach(t => clearTimeout(t));
     this._timers = [];
     if (this._promptRepeatTimer) { clearInterval(this._promptRepeatTimer); this._promptRepeatTimer = null; }
+    onGameKey = null;
+  },
+});
+
+// 俳句コレクション: 過去に作った俳句をスライドショー表示 (グー=戻る/パー=進む、カレンダーで月日フィルタ)
+registerGame('collection', {
+  name: '俳句コレクション',
+  animal: 'owl',
+  description: 'これまでに作った俳句を順番に見てみよう！',
+  introVoice: 'audio/intro_collection.wav',
+  medalThresholds: { gold: 0, silver: 0, bronze: 0 },
+  skipRandom: true, // ランダム選出から除外 (手動の「ゲーム選択」からのみアクセス)
+  _timers: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._destroyed = false;
+    self._autoAdvanceTimer = null;
+
+    const THEME_LABELS = { wakaba: '若葉', koinobori: '鯉のぼり', samidare: '五月雨' };
+    const THEME_COLORS = { wakaba: '#2e7d32', koinobori: '#1565c0', samidare: '#5e35b1' };
+
+    // === State ===
+    const collection = State.haikuCollection.slice().sort((a, b) => a.ts - b.ts);
+    let filtered = collection;
+    let currentIdx = collection.length > 0 ? collection.length - 1 : 0; // 最新から見せる
+    let viewYear, viewMonth;
+    let selectedDate = null; // null=全部、{y,m,d}=その日のみ
+    {
+      const baseTs = collection.length > 0 ? collection[collection.length - 1].ts : Date.now();
+      const d = new Date(baseTs);
+      viewYear = d.getFullYear();
+      viewMonth = d.getMonth();
+    }
+
+    // === UI 構築 ===
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#fef8e7 0%,#fff0d8 50%,#e8f0e0 100%);';
+
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('owl', 80);
+    container.appendChild(animalDiv);
+
+    const phaseDiv = document.createElement('div');
+    phaseDiv.style.cssText = 'position:absolute;top:30px;left:40px;font-size:26px;font-weight:900;color:#5a4a2a;z-index:10;background:rgba(255,255,255,0.92);padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,0.08);';
+    container.appendChild(phaseDiv);
+
+    // メインエリア: 俳句カード + カレンダー
+    const mainRow = document.createElement('div');
+    mainRow.style.cssText = 'margin-top:42px;display:flex;gap:30px;align-items:flex-start;';
+    container.appendChild(mainRow);
+
+    // --- 俳句カード ---
+    const haikuCard = document.createElement('div');
+    haikuCard.style.cssText = 'background:rgba(255,255,255,0.94);border-radius:24px;padding:20px 60px 20px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px dashed #c8b888;text-align:center;min-width:440px;min-height:540px;display:flex;flex-direction:column;align-items:center;';
+    mainRow.appendChild(haikuCard);
+
+    const themeBadge = document.createElement('div');
+    themeBadge.style.cssText = 'font-size:22px;font-weight:700;color:#888;margin-bottom:14px;';
+    haikuCard.appendChild(themeBadge);
+
+    const verticalArea = document.createElement('div');
+    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:420px;display:inline-block;text-align:start;';
+    haikuCard.appendChild(verticalArea);
+
+    const lineFirst = document.createElement('div');
+    const lineMiddle = document.createElement('div');
+    const lineLast = document.createElement('div');
+    [lineFirst, lineMiddle, lineLast].forEach(el => {
+      el.style.cssText = 'font-size:52px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;padding:0 18px;text-align:start;';
+      verticalArea.appendChild(el);
+    });
+
+    const tsLabel = document.createElement('div');
+    tsLabel.style.cssText = 'margin-top:16px;font-size:18px;color:#888;';
+    haikuCard.appendChild(tsLabel);
+
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = 'display:none;font-size:34px;font-weight:700;color:#888;text-align:center;margin:auto;line-height:1.6;';
+    emptyMsg.innerHTML = 'まだ俳句が記録されて<br>いません<br><span style="font-size:22px;color:#aaa;">俳句あそびで作ってみてね</span>';
+    haikuCard.appendChild(emptyMsg);
+
+    // --- カレンダー ---
+    const calCard = document.createElement('div');
+    calCard.style.cssText = 'background:rgba(255,255,255,0.94);border-radius:20px;padding:16px 18px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px solid #d8c8a8;width:340px;';
+    mainRow.appendChild(calCard);
+
+    const calHeader = document.createElement('div');
+    calHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+    const calPrev = document.createElement('button');
+    calPrev.textContent = '◀';
+    calPrev.style.cssText = 'font-family:inherit;font-size:22px;font-weight:900;width:40px;height:36px;border:2px solid #c8b888;border-radius:10px;background:#fffaf0;color:#5a4a2a;cursor:pointer;';
+    const calTitle = document.createElement('div');
+    calTitle.style.cssText = 'font-size:22px;font-weight:900;color:#5a4a2a;';
+    const calNext = document.createElement('button');
+    calNext.textContent = '▶';
+    calNext.style.cssText = 'font-family:inherit;font-size:22px;font-weight:900;width:40px;height:36px;border:2px solid #c8b888;border-radius:10px;background:#fffaf0;color:#5a4a2a;cursor:pointer;';
+    calHeader.appendChild(calPrev);
+    calHeader.appendChild(calTitle);
+    calHeader.appendChild(calNext);
+    calCard.appendChild(calHeader);
+
+    const calGrid = document.createElement('div');
+    calGrid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px;';
+    calCard.appendChild(calGrid);
+
+    const allBtn = document.createElement('button');
+    allBtn.textContent = '🗂 すべて表示';
+    allBtn.style.cssText = 'margin-top:14px;width:100%;padding:10px;font-family:inherit;font-size:18px;font-weight:700;border:2px solid #888;border-radius:10px;background:#fffaf0;color:#5a4a2a;cursor:pointer;';
+    calCard.appendChild(allBtn);
+
+    // --- 下部操作ヒント ---
+    const footer = document.createElement('div');
+    footer.style.cssText = 'margin-top:24px;display:flex;align-items:center;gap:30px;font-size:22px;font-weight:700;color:#5a4a2a;text-shadow:1px 1px 0 #fff;';
+    const counter = document.createElement('div');
+    counter.style.cssText = 'font-size:24px;font-weight:900;background:rgba(255,255,255,0.92);padding:8px 18px;border-radius:999px;';
+    const hintPrev = document.createElement('div');
+    hintPrev.innerHTML = '<span style="color:#c62828">グー</span> ◀ 前の俳句';
+    const hintNext = document.createElement('div');
+    hintNext.innerHTML = '次の俳句 ▶ <span style="color:#1565c0">パー</span>';
+    const autoStatus = document.createElement('div');
+    autoStatus.style.cssText = 'color:#43a047;';
+    footer.appendChild(counter);
+    footer.appendChild(hintPrev);
+    footer.appendChild(hintNext);
+    footer.appendChild(autoStatus);
+    container.appendChild(footer);
+
+    gameArea.appendChild(container);
+
+    // === ヘルパー ===
+    function isSameDay(ts, date) {
+      const d = new Date(ts);
+      return d.getFullYear() === date.y && d.getMonth() === date.m && d.getDate() === date.d;
+    }
+    function recomputeFiltered(preferLatest) {
+      filtered = selectedDate ? collection.filter(h => isSameDay(h.ts, selectedDate)) : collection;
+      if (filtered.length === 0) currentIdx = 0;
+      else if (preferLatest) currentIdx = filtered.length - 1;
+      else currentIdx = Math.min(currentIdx, filtered.length - 1);
+    }
+
+    function renderHaiku() {
+      if (filtered.length === 0) {
+        verticalArea.style.display = 'none';
+        themeBadge.style.display = 'none';
+        tsLabel.style.display = 'none';
+        emptyMsg.style.display = 'block';
+        counter.textContent = '0 / 0';
+        phaseDiv.textContent = 'コレクション (空)';
+        autoStatus.textContent = '';
+        return;
+      }
+      const entry = filtered[currentIdx];
+      verticalArea.style.display = 'inline-block';
+      themeBadge.style.display = 'block';
+      tsLabel.style.display = 'block';
+      emptyMsg.style.display = 'none';
+      themeBadge.textContent = 'テーマ：' + (THEME_LABELS[entry.theme] || entry.theme);
+      themeBadge.style.color = THEME_COLORS[entry.theme] || '#888';
+      lineFirst.textContent  = entry.first;
+      lineMiddle.textContent = entry.middle;
+      lineLast.textContent   = entry.last;
+      const d = new Date(entry.ts);
+      const days = ['日','月','火','水','木','金','土'];
+      tsLabel.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 (' + days[d.getDay()] + ') ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      counter.textContent = (currentIdx + 1) + ' / ' + filtered.length;
+      phaseDiv.textContent = 'コレクション ' + (currentIdx + 1) + '/' + filtered.length + (selectedDate ? ' (絞り込み中)' : '');
+    }
+
+    function renderCalendar() {
+      calTitle.textContent = viewYear + '年 ' + (viewMonth + 1) + '月';
+      calGrid.innerHTML = '';
+      const dayNames = ['日','月','火','水','木','金','土'];
+      dayNames.forEach((n, i) => {
+        const h = document.createElement('div');
+        h.textContent = n;
+        h.style.cssText = 'text-align:center;font-size:13px;font-weight:900;color:' + (i===0?'#c62828':(i===6?'#1565c0':'#5a4a2a')) + ';padding:4px 0;';
+        calGrid.appendChild(h);
+      });
+      const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      for (let i = 0; i < firstDay; i++) {
+        const cell = document.createElement('div');
+        cell.style.cssText = 'min-height:38px;';
+        calGrid.appendChild(cell);
+      }
+      for (let dnum = 1; dnum <= daysInMonth; dnum++) {
+        const cell = document.createElement('div');
+        const cnt = collection.filter(h => isSameDay(h.ts, { y: viewYear, m: viewMonth, d: dnum })).length;
+        const isSelected = selectedDate && selectedDate.y === viewYear && selectedDate.m === viewMonth && selectedDate.d === dnum;
+        let bg = '#fff', border = '1px solid #eee', cursor = (cnt > 0 ? 'pointer' : 'default');
+        if (cnt > 0) { bg = '#fff3d8'; border = '2px solid #ec8a3a'; }
+        if (isSelected) { bg = '#ffb74d'; border = '2px solid #c62828'; }
+        cell.style.cssText = 'min-height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;background:' + bg + ';border:' + border + ';cursor:' + cursor + ';font-size:13px;font-weight:700;color:#3a2a1a;line-height:1;';
+        const dayNum = document.createElement('div');
+        dayNum.textContent = dnum;
+        cell.appendChild(dayNum);
+        if (cnt > 0) {
+          const cntEl = document.createElement('div');
+          cntEl.textContent = cnt + '句';
+          cntEl.style.cssText = 'font-size:10px;color:#bf360c;margin-top:2px;font-weight:900;';
+          cell.appendChild(cntEl);
+        }
+        if (cnt > 0) {
+          cell.addEventListener('click', () => {
+            if (isSelected) selectedDate = null;
+            else selectedDate = { y: viewYear, m: viewMonth, d: dnum };
+            recomputeFiltered(true);
+            renderCalendar();
+            renderHaiku();
+            startCurrentPlayback();
+          });
+        }
+        calGrid.appendChild(cell);
+      }
+    }
+
+    // === スライドショー ===
+    function clearAutoAdvance() {
+      if (self._autoAdvanceTimer) { clearTimeout(self._autoAdvanceTimer); self._autoAdvanceTimer = null; }
+    }
+    function scheduleAutoAdvance(delayMs) {
+      clearAutoAdvance();
+      self._autoAdvanceTimer = setTimeout(() => {
+        if (self._destroyed) return;
+        advance(1);
+      }, delayMs);
+    }
+    function advance(dir) {
+      if (filtered.length === 0) return;
+      currentIdx = (currentIdx + dir + filtered.length) % filtered.length;
+      renderHaiku();
+      startCurrentPlayback();
+    }
+    function startCurrentPlayback() {
+      clearAutoAdvance();
+      stopAllAudio();
+      if (filtered.length === 0) { autoStatus.textContent = ''; return; }
+      autoStatus.textContent = '🎵 自動再生中';
+      // 5俳句ごとに AudioContext リフレッシュ (ノード上限回避)
+      if (currentIdx > 0 && currentIdx % 5 === 0) refreshAudioCtx();
+      const entry = filtered[currentIdx];
+      playAudio(entry.firstAudio)
+        .then(() => new Promise(r => setTimeout(r, 250)))
+        .then(() => { if (!self._destroyed) return playAudio(entry.middleAudio); })
+        .then(() => new Promise(r => setTimeout(r, 250)))
+        .then(() => { if (!self._destroyed) return playAudio(entry.lastAudio); })
+        .then(() => { if (!self._destroyed) scheduleAutoAdvance(2500); });
+    }
+
+    // === 入力 ===
+    onGameKey = function(key) {
+      if (self._destroyed) return;
+      if (key === 'a') {
+        playSE('se_button.mp3');
+        advance(-1);
+      } else if (key === 'd') {
+        playSE('se_button.mp3');
+        advance(1);
+      }
+      // チョキ(s)は無効
+    };
+
+    // カレンダー操作
+    calPrev.addEventListener('click', () => {
+      viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      renderCalendar();
+    });
+    calNext.addEventListener('click', () => {
+      viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      renderCalendar();
+    });
+    allBtn.addEventListener('click', () => {
+      selectedDate = null;
+      recomputeFiltered(true);
+      renderCalendar();
+      renderHaiku();
+      startCurrentPlayback();
+    });
+
+    // 初期描画 + 自動再生開始
+    recomputeFiltered(true);
+    renderCalendar();
+    renderHaiku();
+    const t0 = setTimeout(() => {
+      if (self._destroyed) return;
+      startCurrentPlayback();
+    }, 700);
+    self._timers.push(t0);
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    if (this._autoAdvanceTimer) { clearTimeout(this._autoAdvanceTimer); this._autoAdvanceTimer = null; }
     onGameKey = null;
   },
 });
