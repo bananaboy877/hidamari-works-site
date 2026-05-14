@@ -4272,6 +4272,272 @@ registerGame('speed_hori', {
   cleanup: GameRegistry['speed'].cleanup,
 });
 
+// 百人一首かるた: 上の句を読み聞かせ → 正しい下の句のボタンを押す
+registerGame('hyakunin', {
+  name: '百人一首かるた',
+  animal: 'lion',
+  description: '上の句を聞いて、正しい下の句のボタンを押そう！',
+  introVoice: 'audio/intro_hyakunin.wav',
+  medalThresholds: { gold: 30, silver: 15, bronze: 3 },
+  skipRandom: true, // 長丁場なのでランダム選出から除外、手動でのみ選択可
+  _timers: [],
+  _destroyed: false,
+  init: function(gameArea, onComplete) {
+    const self = this;
+    self._timers = [];
+    self._destroyed = false;
+
+    const KEYS = ['a','s','d'];
+    const HAND_TYPES = ['rock','scissors','paper'];
+    const HAND_COLORS = ['#ef5350','#fbc02d','#1e88e5'];
+    const HAND_NAMES  = ['グー','チョキ','パー'];
+
+    // === State ===
+    let poems = [];          // [{number, author, lines[5]}]
+    let shuffled = [];       // poem indices in random order
+    let currentIdx = -1;     // index into shuffled
+    let phase = 'loading';   // loading / reading / choosing / revealing
+    let shownLines = 0;      // 0-5、画面に表示済みの行数
+    let candidates = [];     // [{ poemIdx, lines: [line4, line5] }] × 3
+    let correctChoiceIdx = -1;
+    let questionStartTs = 0;
+    let totalAnswered = 0;
+    let totalCorrect = 0;
+
+    // === UI 構築 ===
+    gameArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:24px;background:linear-gradient(180deg,#f5ecdc 0%,#fdf6e3 50%,#efe5d3 100%);';
+
+    const animalDiv = document.createElement('div');
+    animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
+    animalDiv.innerHTML = getAnimalSVG('lion', 80);
+    container.appendChild(animalDiv);
+
+    const phaseDiv = document.createElement('div');
+    phaseDiv.style.cssText = 'position:absolute;top:30px;left:40px;font-size:24px;font-weight:900;color:#5a4a2a;z-index:10;background:rgba(255,255,255,0.92);padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,0.08);';
+    phaseDiv.textContent = '読込中...';
+    container.appendChild(phaseDiv);
+
+    // 歌カード
+    const poemCard = document.createElement('div');
+    poemCard.style.cssText = 'margin-top:16px;background:rgba(255,250,240,0.94);border-radius:24px;padding:24px 50px 30px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px solid #c8a868;text-align:center;min-width:580px;min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;';
+    container.appendChild(poemCard);
+
+    const lineEls = [];
+    for (let i = 0; i < 5; i++) {
+      const el = document.createElement('div');
+      el.style.cssText = 'font-size:' + (i === 1 || i === 3 || i === 4 ? '40px' : '40px') + ';font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1.15;min-height:48px;';
+      poemCard.appendChild(el);
+      lineEls.push(el);
+      // 上の句と下の句の間に区切り
+      if (i === 2) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'width:200px;height:2px;background:#c8a868;margin:8px 0;opacity:0.6;';
+        poemCard.appendChild(sep);
+      }
+    }
+
+    // 選択肢カード
+    const choiceRow = document.createElement('div');
+    choiceRow.style.cssText = 'display:flex;gap:24px;margin-top:24px;justify-content:center;align-items:flex-start;';
+    container.appendChild(choiceRow);
+    const choiceBoxes = [0,1,2].map(i => {
+      const card = document.createElement('div');
+      card.style.cssText = 'width:380px;min-height:200px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px 18px 18px;background:rgba(255,255,255,0.95);border:5px solid ' + HAND_COLORS[i] + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);';
+      const hand = document.createElement('div');
+      hand.style.cssText = 'margin-bottom:4px;';
+      hand.innerHTML = handImg(HAND_TYPES[i], 56);
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:18px;font-weight:900;color:' + HAND_COLORS[i] + ';margin-bottom:8px;';
+      label.textContent = HAND_NAMES[i];
+      const text = document.createElement('div');
+      text.style.cssText = 'font-size:30px;font-weight:900;color:#3a2a1a;text-align:center;line-height:1.25;letter-spacing:2px;white-space:nowrap;';
+      card.appendChild(hand);
+      card.appendChild(label);
+      card.appendChild(text);
+      choiceRow.appendChild(card);
+      return { card, text };
+    });
+
+    const loadErr = document.createElement('div');
+    loadErr.style.cssText = 'margin-top:20px;font-size:24px;color:#888;display:none;';
+    container.appendChild(loadErr);
+
+    gameArea.appendChild(container);
+
+    // === ヘルパー ===
+    function placeholder(n) { let s = ''; for (let i = 0; i < n; i++) s += '〇'; return s; }
+    function poemNum() { return String(poems[shuffled[currentIdx]].number).padStart(3, '0'); }
+    function shuffleArr(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+    }
+
+    function renderUI() {
+      const poem = currentIdx >= 0 ? poems[shuffled[currentIdx]] : null;
+      // フェーズチップ
+      if (phase === 'loading') {
+        phaseDiv.textContent = '読込中...';
+      } else if (poem) {
+        phaseDiv.textContent = poemNum() + '番 / ' + (totalAnswered + 1) + '首め (正解 ' + totalCorrect + '/' + totalAnswered + ')';
+      }
+      // 歌行
+      const moras = [5,7,5,7,7];
+      for (let i = 0; i < 5; i++) {
+        if (!poem) { lineEls[i].textContent = ''; continue; }
+        if (i < shownLines) {
+          lineEls[i].textContent = poem.lines[i];
+          lineEls[i].style.color = (i < 3) ? '#3a2a1a' : '#c8302a';
+        } else {
+          lineEls[i].textContent = placeholder(moras[i]);
+          lineEls[i].style.color = '#dcd0b0';
+        }
+      }
+      // 選択肢
+      const showChoices = (phase === 'choosing');
+      choiceRow.style.visibility = showChoices ? 'visible' : 'hidden';
+      if (showChoices) {
+        choiceBoxes.forEach((box, i) => {
+          const c = candidates[i];
+          box.text.innerHTML = c.lines[0] + '<br>' + c.lines[1];
+        });
+      }
+    }
+
+    // === ラウンド進行 ===
+    async function nextRound() {
+      if (self._destroyed) return;
+      currentIdx++;
+      if (currentIdx >= shuffled.length) {
+        currentIdx = 0;
+        shuffleArr(shuffled);
+      }
+      phase = 'reading';
+      shownLines = 0;
+      // 候補3つ生成 (正解 + 他歌2つランダム)
+      const correctPoemIdx = shuffled[currentIdx];
+      const wrongIdxs = [];
+      while (wrongIdxs.length < 2) {
+        const idx = Math.floor(Math.random() * poems.length);
+        if (idx !== correctPoemIdx && !wrongIdxs.includes(idx)) wrongIdxs.push(idx);
+      }
+      const pool = [correctPoemIdx, wrongIdxs[0], wrongIdxs[1]];
+      shuffleArr(pool);
+      candidates = pool.map(pIdx => ({
+        poemIdx: pIdx,
+        lines: [poems[pIdx].lines[3], poems[pIdx].lines[4]],
+      }));
+      correctChoiceIdx = pool.indexOf(correctPoemIdx);
+
+      renderUI();
+      // 5首ごとに AudioContext リフレッシュ (累積回避)
+      if (totalAnswered > 0 && totalAnswered % 5 === 0) refreshAudioCtx();
+
+      // 上の句を1行ずつ読み上げ → 表示
+      stopAllAudio();
+      await playLineAndShow(0);
+      if (self._destroyed) return;
+      await playLineAndShow(1);
+      if (self._destroyed) return;
+      await playLineAndShow(2);
+      if (self._destroyed) return;
+
+      // 選択肢提示、タイマー開始
+      phase = 'choosing';
+      questionStartTs = performance.now();
+      renderUI();
+    }
+
+    async function playLineAndShow(lineIdx) {
+      const path = 'audio/hyakunin/' + poemNum() + '_' + (lineIdx + 1) + '.wav';
+      await playAudio(path);
+      if (self._destroyed) return;
+      shownLines = lineIdx + 1;
+      renderUI();
+    }
+
+    async function handleCorrect(reactionMs) {
+      phase = 'revealing';
+      totalAnswered++;
+      totalCorrect++;
+      stopAllAudio();
+      playSE('se_button.mp3');
+      playSE('se_correct.mp3');
+      // タイム読み上げ
+      const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
+      const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
+      await playAudio(timeFile);
+      if (self._destroyed) return;
+      // 下の句を1行ずつ読み上げ
+      await playLineAndShow(3);
+      if (self._destroyed) return;
+      await playLineAndShow(4);
+      if (self._destroyed) return;
+      // 名前+褒め
+      const profile = getPlayerProfile();
+      const PRAISES = [
+        'audio/praise_sugoi.wav','audio/praise_iine.wav','audio/praise_nice.wav',
+        'audio/praise_bacchiri.wav','audio/praise_yattane.wav','audio/praise_kakkoii.wav',
+        'audio/praise_sasuga.wav','audio/praise_subarashii.wav','audio/praise_atamagaii.wav',
+        'audio/praise_kashikoi.wav','audio/praise_tensai.wav','audio/praise_saikou.wav',
+        'audio/praise_sugosugi.wav',
+      ];
+      const praise = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+      if (profile) {
+        await speakName(profile.reading, profile.gender);
+        if (self._destroyed) return;
+      }
+      await playAudio(praise);
+      if (self._destroyed) return;
+      // 余韻 → 次の歌へ
+      await new Promise(r => setTimeout(r, 1200));
+      if (self._destroyed) return;
+      nextRound();
+    }
+
+    // === 入力 ===
+    onGameKey = function(key) {
+      if (self._destroyed) return;
+      if (phase !== 'choosing') return;
+      const idx = KEYS.indexOf(key);
+      if (idx < 0) return;
+      if (idx === correctChoiceIdx) {
+        handleCorrect(performance.now() - questionStartTs);
+      } else {
+        // 不正解: SE のみ、正解を押すまで待機
+        playSE('se_wrong.mp3');
+      }
+    };
+
+    // データ読み込み → 開始
+    fetch('data/hyakunin.json')
+      .then(r => { if (!r.ok) throw new Error('hyakunin.json not found'); return r.json(); })
+      .then(d => {
+        poems = d.poems || [];
+        if (!poems.length) throw new Error('empty poems');
+        shuffled = poems.map((_, i) => i);
+        shuffleArr(shuffled);
+        currentIdx = -1;
+        const t0 = setTimeout(() => { if (!self._destroyed) nextRound(); }, 400);
+        self._timers.push(t0);
+      })
+      .catch(e => {
+        phase = 'error';
+        loadErr.textContent = 'データの読み込みに失敗しました: ' + e.message;
+        loadErr.style.display = 'block';
+      });
+  },
+  cleanup: function() {
+    this._destroyed = true;
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
+    onGameKey = null;
+  },
+});
+
 // 俳句あそび: テーマ→上の句→中の句→下の句 を選択式で組み立て、最後に全文読み上げ
 registerGame('haiku', {
   name: '俳句あそび',
