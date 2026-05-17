@@ -4326,38 +4326,45 @@ registerGame('hyakunin', {
 
     // 縦書きエリア: vertical-rl で右起点、5列が右→左に並ぶ
     const verticalArea = document.createElement('div');
-    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:360px;display:inline-block;text-align:start;';
+    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:330px;display:inline-block;text-align:start;';
     poemCard.appendChild(verticalArea);
 
     // DOM順: 上1(右) → 上2 → 上3 → 下4 → 下5(左)、block要素として縦書き方向に並ぶ
     const lineEls = [];
     for (let i = 0; i < 5; i++) {
       const el = document.createElement('div');
-      el.style.cssText = 'font-size:40px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;padding:0 14px;text-align:start;';
+      el.style.cssText = 'font-size:36px;font-weight:900;color:#3a2a1a;letter-spacing:5px;line-height:1;padding:0 12px;text-align:start;';
       verticalArea.appendChild(el);
       lineEls.push(el);
     }
 
-    // 選択肢カード
+    // 選択肢カード (縦書き右起点)
     const choiceRow = document.createElement('div');
-    choiceRow.style.cssText = 'display:flex;gap:24px;margin-top:24px;justify-content:center;align-items:flex-start;';
+    choiceRow.style.cssText = 'display:flex;gap:24px;margin-top:20px;justify-content:center;align-items:flex-start;';
     container.appendChild(choiceRow);
     const choiceBoxes = [0,1,2].map(i => {
       const card = document.createElement('div');
-      card.style.cssText = 'width:380px;min-height:200px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px 18px 18px;background:rgba(255,255,255,0.95);border:5px solid ' + HAND_COLORS[i] + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);';
+      card.style.cssText = 'width:240px;min-height:340px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px 14px 16px;background:rgba(255,255,255,0.95);border:5px solid ' + HAND_COLORS[i] + ';box-shadow:0 4px 12px rgba(0,0,0,0.1);';
       const hand = document.createElement('div');
-      hand.style.cssText = 'margin-bottom:4px;';
-      hand.innerHTML = handImg(HAND_TYPES[i], 56);
+      hand.style.cssText = 'margin-bottom:2px;';
+      hand.innerHTML = handImg(HAND_TYPES[i], 48);
       const label = document.createElement('div');
-      label.style.cssText = 'font-size:18px;font-weight:900;color:' + HAND_COLORS[i] + ';margin-bottom:8px;';
+      label.style.cssText = 'font-size:18px;font-weight:900;color:' + HAND_COLORS[i] + ';margin-bottom:6px;';
       label.textContent = HAND_NAMES[i];
-      const text = document.createElement('div');
-      text.style.cssText = 'font-size:30px;font-weight:900;color:#3a2a1a;text-align:center;line-height:1.25;letter-spacing:2px;white-space:nowrap;';
+      // 縦書きエリア: 2列 (下の句 line4 = 右、line5 = 左)
+      const textArea = document.createElement('div');
+      textArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:240px;display:inline-block;text-align:start;';
+      const lineA = document.createElement('div');
+      const lineB = document.createElement('div');
+      [lineA, lineB].forEach(el => {
+        el.style.cssText = 'font-size:30px;font-weight:900;color:#3a2a1a;letter-spacing:4px;line-height:1;padding:0 9px;text-align:start;';
+        textArea.appendChild(el);
+      });
       card.appendChild(hand);
       card.appendChild(label);
-      card.appendChild(text);
+      card.appendChild(textArea);
       choiceRow.appendChild(card);
-      return { card, text };
+      return { card, lineA, lineB };
     });
 
     const loadErr = document.createElement('div');
@@ -4402,7 +4409,8 @@ registerGame('hyakunin', {
       if (showChoices) {
         choiceBoxes.forEach((box, i) => {
           const c = candidates[i];
-          box.text.innerHTML = c.lines[0] + '<br>' + c.lines[1];
+          box.lineA.textContent = c.lines[0];
+          box.lineB.textContent = c.lines[1];
         });
       }
     }
