@@ -4319,23 +4319,23 @@ registerGame('hyakunin', {
     phaseDiv.textContent = '読込中...';
     container.appendChild(phaseDiv);
 
-    // 歌カード
+    // 歌カード (縦書き右起点、上揃え)
     const poemCard = document.createElement('div');
-    poemCard.style.cssText = 'margin-top:16px;background:rgba(255,250,240,0.94);border-radius:24px;padding:24px 50px 30px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px solid #c8a868;text-align:center;min-width:580px;min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;';
+    poemCard.style.cssText = 'margin-top:16px;background:rgba(255,250,240,0.94);border-radius:24px;padding:22px 56px 28px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px solid #c8a868;text-align:center;';
     container.appendChild(poemCard);
 
+    // 縦書きエリア: vertical-rl で右起点、5列が右→左に並ぶ
+    const verticalArea = document.createElement('div');
+    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:360px;display:inline-block;text-align:start;';
+    poemCard.appendChild(verticalArea);
+
+    // DOM順: 上1(右) → 上2 → 上3 → 下4 → 下5(左)、block要素として縦書き方向に並ぶ
     const lineEls = [];
     for (let i = 0; i < 5; i++) {
       const el = document.createElement('div');
-      el.style.cssText = 'font-size:' + (i === 1 || i === 3 || i === 4 ? '40px' : '40px') + ';font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1.15;min-height:48px;';
-      poemCard.appendChild(el);
+      el.style.cssText = 'font-size:40px;font-weight:900;color:#3a2a1a;letter-spacing:6px;line-height:1;padding:0 14px;text-align:start;';
+      verticalArea.appendChild(el);
       lineEls.push(el);
-      // 上の句と下の句の間に区切り
-      if (i === 2) {
-        const sep = document.createElement('div');
-        sep.style.cssText = 'width:200px;height:2px;background:#c8a868;margin:8px 0;opacity:0.6;';
-        poemCard.appendChild(sep);
-      }
     }
 
     // 選択肢カード
@@ -4384,13 +4384,13 @@ registerGame('hyakunin', {
       } else if (poem) {
         phaseDiv.textContent = poemNum() + '番 / ' + (totalAnswered + 1) + '首め (正解 ' + totalCorrect + '/' + totalAnswered + ')';
       }
-      // 歌行
+      // 歌行 (縦書き、shownLines まで埋まる)
       const moras = [5,7,5,7,7];
       for (let i = 0; i < 5; i++) {
         if (!poem) { lineEls[i].textContent = ''; continue; }
         if (i < shownLines) {
           lineEls[i].textContent = poem.lines[i];
-          lineEls[i].style.color = (i < 3) ? '#3a2a1a' : '#c8302a';
+          lineEls[i].style.color = (i < 3) ? '#3a2a1a' : '#a14820'; // 下の句は暖色
         } else {
           lineEls[i].textContent = placeholder(moras[i]);
           lineEls[i].style.color = '#dcd0b0';
@@ -4436,16 +4436,17 @@ registerGame('hyakunin', {
       // 5首ごとに AudioContext リフレッシュ (累積回避)
       if (totalAnswered > 0 && totalAnswered % 5 === 0) refreshAudioCtx();
 
-      // 上の句を1行ずつ読み上げ → 表示
+      // 上の句→下の句 を連続で読み上げ + 行ごと表示 (ヒント方式)
       stopAllAudio();
-      await playLineAndShow(0);
-      if (self._destroyed) return;
-      await playLineAndShow(1);
-      if (self._destroyed) return;
-      await playLineAndShow(2);
-      if (self._destroyed) return;
+      for (let i = 0; i < 5; i++) {
+        await playLineAndShow(i);
+        if (self._destroyed) return;
+        // 上の句と下の句の境目で少しだけ余韻
+        if (i === 2) await new Promise(r => setTimeout(r, 300));
+        if (self._destroyed) return;
+      }
 
-      // 選択肢提示、タイマー開始
+      // 全部読み終わったら選択肢提示、タイマー開始
       phase = 'choosing';
       questionStartTs = performance.now();
       renderUI();
@@ -4466,15 +4467,10 @@ registerGame('hyakunin', {
       stopAllAudio();
       playSE('se_button.mp3');
       playSE('se_correct.mp3');
-      // タイム読み上げ
+      // タイム読み上げ (下の句は既に読み上げ済み・表示済みなのでスキップ)
       const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
       const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
       await playAudio(timeFile);
-      if (self._destroyed) return;
-      // 下の句を1行ずつ読み上げ
-      await playLineAndShow(3);
-      if (self._destroyed) return;
-      await playLineAndShow(4);
       if (self._destroyed) return;
       // 名前+褒め
       const profile = getPlayerProfile();
