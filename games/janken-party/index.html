@@ -4319,21 +4319,23 @@ registerGame('hyakunin', {
     phaseDiv.textContent = '読込中...';
     container.appendChild(phaseDiv);
 
-    // 歌カード (縦書き右起点、上揃え)
+    // 歌カード (縦書き右起点、上揃え)。5列分の幅を確保
     const poemCard = document.createElement('div');
-    poemCard.style.cssText = 'margin-top:16px;background:rgba(255,250,240,0.94);border-radius:24px;padding:22px 56px 28px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px solid #c8a868;text-align:center;';
+    poemCard.style.cssText = 'margin-top:16px;background:rgba(255,250,240,0.94);border-radius:24px;padding:22px 40px 28px;box-shadow:0 4px 14px rgba(0,0,0,0.1);border:3px solid #c8a868;text-align:center;min-width:460px;';
     container.appendChild(poemCard);
 
-    // 縦書きエリア: vertical-rl で右起点、5列が右→左に並ぶ
+    // 縦書きエリア: vertical-rl で右起点、5列が右→左に並ぶ。
+    // ※ inline-block + vertical-rl は内容に応じた自動伸縮が効きにくいので、
+    //   width を max-content で明示して5列分を確保
     const verticalArea = document.createElement('div');
-    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:330px;display:inline-block;text-align:start;';
+    verticalArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:330px;width:max-content;display:inline-block;text-align:start;';
     poemCard.appendChild(verticalArea);
 
     // DOM順: 上1(右) → 上2 → 上3 → 下4 → 下5(左)、block要素として縦書き方向に並ぶ
     const lineEls = [];
     for (let i = 0; i < 5; i++) {
       const el = document.createElement('div');
-      el.style.cssText = 'font-size:36px;font-weight:900;color:#3a2a1a;letter-spacing:5px;line-height:1;padding:0 12px;text-align:start;';
+      el.style.cssText = 'font-size:36px;font-weight:900;color:#3a2a1a;letter-spacing:5px;line-height:1;padding:0 10px;text-align:start;';
       verticalArea.appendChild(el);
       lineEls.push(el);
     }
@@ -4351,9 +4353,9 @@ registerGame('hyakunin', {
       const label = document.createElement('div');
       label.style.cssText = 'font-size:18px;font-weight:900;color:' + HAND_COLORS[i] + ';margin-bottom:6px;';
       label.textContent = HAND_NAMES[i];
-      // 縦書きエリア: 2列 (下の句 line4 = 右、line5 = 左)
+      // 縦書きエリア: 2列 (下の句 line4 = 右、line5 = 左)。width:max-content で2列分を確保
       const textArea = document.createElement('div');
-      textArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:240px;display:inline-block;text-align:start;';
+      textArea.style.cssText = 'writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;-webkit-text-orientation:upright;height:240px;width:max-content;display:inline-block;text-align:start;';
       const lineA = document.createElement('div');
       const lineB = document.createElement('div');
       [lineA, lineB].forEach(el => {
