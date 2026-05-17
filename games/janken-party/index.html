@@ -4396,8 +4396,8 @@ registerGame('hyakunin', {
           lineEls[i].style.color = '#dcd0b0';
         }
       }
-      // 選択肢
-      const showChoices = (phase === 'choosing');
+      // 選択肢: 候補があるラウンド中はいつでも表示
+      const showChoices = candidates.length > 0 && phase !== 'loading' && phase !== 'error';
       choiceRow.style.visibility = showChoices ? 'visible' : 'hidden';
       if (showChoices) {
         choiceBoxes.forEach((box, i) => {
@@ -4415,7 +4415,6 @@ registerGame('hyakunin', {
         currentIdx = 0;
         shuffleArr(shuffled);
       }
-      phase = 'reading';
       shownLines = 0;
       // 候補3つ生成 (正解 + 他歌2つランダム)
       const correctPoemIdx = shuffled[currentIdx];
@@ -4432,24 +4431,26 @@ registerGame('hyakunin', {
       }));
       correctChoiceIdx = pool.indexOf(correctPoemIdx);
 
+      // 即「アクティブ」: タイマー開始 + 選択肢即表示 + 入力受け付け
+      phase = 'active';
+      questionStartTs = performance.now();
+      self._roundGen = (self._roundGen || 0) + 1;
+      const myGen = self._roundGen;
       renderUI();
       // 5首ごとに AudioContext リフレッシュ (累積回避)
       if (totalAnswered > 0 && totalAnswered % 5 === 0) refreshAudioCtx();
 
-      // 上の句→下の句 を連続で読み上げ + 行ごと表示 (ヒント方式)
+      // 並行して 上→下 連続読み上げ (途中で正解されたら中断、不正解時は継続)
       stopAllAudio();
       for (let i = 0; i < 5; i++) {
+        if (self._destroyed || self._roundGen !== myGen) return;
         await playLineAndShow(i);
-        if (self._destroyed) return;
-        // 上の句と下の句の境目で少しだけ余韻
-        if (i === 2) await new Promise(r => setTimeout(r, 300));
-        if (self._destroyed) return;
+        if (self._destroyed || self._roundGen !== myGen) return;
+        if (i === 2) {
+          await new Promise(r => setTimeout(r, 300));
+          if (self._destroyed || self._roundGen !== myGen) return;
+        }
       }
-
-      // 全部読み終わったら選択肢提示、タイマー開始
-      phase = 'choosing';
-      questionStartTs = performance.now();
-      renderUI();
     }
 
     async function playLineAndShow(lineIdx) {
@@ -4462,9 +4463,13 @@ registerGame('hyakunin', {
 
     async function handleCorrect(reactionMs) {
       phase = 'revealing';
+      self._roundGen = (self._roundGen || 0) + 1; // in-flight な読み上げチェーンを停止
       totalAnswered++;
       totalCorrect++;
       stopAllAudio();
+      // まだ未読の行があれば全部表示してから feedback (歌全体を確認できる)
+      shownLines = 5;
+      renderUI();
       playSE('se_button.mp3');
       playSE('se_correct.mp3');
       // タイム読み上げ (下の句は既に読み上げ済み・表示済みなのでスキップ)
@@ -4497,13 +4502,13 @@ registerGame('hyakunin', {
     // === 入力 ===
     onGameKey = function(key) {
       if (self._destroyed) return;
-      if (phase !== 'choosing') return;
+      if (phase !== 'active') return; // loading / revealing / error 中は無視
       const idx = KEYS.indexOf(key);
       if (idx < 0) return;
       if (idx === correctChoiceIdx) {
         handleCorrect(performance.now() - questionStartTs);
       } else {
-        // 不正解: SE のみ、正解を押すまで待機
+        // 不正解: SE のみ、読み上げは中断せず継続 (続けて聞ける)
         playSE('se_wrong.mp3');
       }
     };
