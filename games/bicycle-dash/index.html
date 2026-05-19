@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ひたすら自転車</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="game" aria-label="ひたすら自転車ゲーム"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div class="meter">
+        <span class="label">周回</span>
+        <strong id="laps">0</strong>
+      </div>
+      <div class="meter prefecture">
+        <span class="label">いまの県</span>
+        <strong id="prefecture">北海道</strong>
+      </div>
+      <div class="meter wide">
+        <span class="label">距離</span>
+        <strong><span id="distance">0</span>m</strong>
+      </div>
+      <div class="meter">
+        <span class="label">ギア</span>
+        <strong id="gear">軽</strong>
+      </div>
+    </section>
+
+    <button class="rider-toggle" id="riderToggle" type="button" aria-label="キャラクターを変更">
+      キャラ変更: 男の子
+    </button>
+
+    <div class="prompt" id="prompt">
+      <p>マウスホイールで漕ぐ</p>
+      <kbd>F</kbd><span>ギア切替</span>
+    </div>
+
+    <div class="toast" id="toast" aria-hidden="true">LAP!</div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
