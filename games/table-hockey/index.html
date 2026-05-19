@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table Hockey - Hidamari Works</title>
+<style>
+:root {
+  --r-md: 8px;
+  --r-lg: 12px;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f2ec;
+  --bg-tertiary: #e7e5dd;
+  --bg-info: #e6f1fb;
+  --bg-warning: #faeeda;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --text-info: #185fa5;
+  --text-warning: #854f0b;
+  --border-tertiary: rgba(0,0,0,0.15);
+  --border-info: #378add;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1a18;
+    --bg-secondary: #2c2c2a;
+    --bg-tertiary: #3a3a37;
+    --bg-info: #042c53;
+    --bg-warning: #412402;
+    --text-primary: #f0eee6;
+    --text-secondary: #b4b2a9;
+    --text-tertiary: #888780;
+    --text-info: #85b7eb;
+    --text-warning: #fac775;
+    --border-tertiary: rgba(255,255,255,0.15);
+    --border-info: #378add;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  max-width: 680px;
+  width: 100%;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 18px 0;
+}
+
+.wrap {
+  outline: none;
+  cursor: pointer;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 2px dashed var(--border-tertiary);
+  transition: border-color .2s, border-style .2s;
+  background: #0a1525;
+}
+
+.wrap.focused {
+  border-color: var(--border-info);
+  border-style: solid;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--r-md);
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.gauge {
+  flex: 1;
+  height: 18px;
+  background: var(--bg-tertiary);
+  border-radius: 9px;
+  position: relative;
+}
+
+.gauge-tick {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--text-tertiary);
+}
+
+.gauge-marker {
+  position: absolute;
+  top: 1px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-info);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  transition: left .08s linear;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: var(--r-md);
+  background: var(--bg-info);
+  color: var(--text-info);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag.warn {
+  background: var(--bg-warning);
+  color: var(--text-warning);
+}
+
+.diff {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--r-md);
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.diff label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.swing {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+kbd {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border: 0.5px solid var(--border-tertiary);
+  border-radius: 4px;
+  background: var(--bg-primary);
+}
+
+footer {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Table Hockey</h1>
+<p class="subtitle">エンコーダを左右に回してパドルを操作。Fキーで中心位置を校正。</p>
+
+<div class="wrap" tabindex="0" id="wrap">
+  <canvas id="game" width="680" height="440"></canvas>
+</div>
+
+<div class="bar">
+  <span id="hint" class="tag warn">クリックしてフォーカス</span>
+  <span style="color:var(--text-tertiary);">90°</span>
+  <div class="gauge">
+    <div class="gauge-tick" style="left:50%;"></div>
+    <div class="gauge-marker" id="marker" style="left:50%;"></div>
+  </div>
+  <span style="color:var(--text-tertiary);">270°</span>
+  <span style="color:var(--text-secondary);min-width:96px;text-align:right;"><kbd>F</kbd> 校正 · <kbd>R</kbd> リセット</span>
+</div>
+
+<div class="diff">
+  <span>CPUの強さ:</span>
+  <label><input type="radio" name="diff" value="easy"> やさしい</label>
+  <label><input type="radio" name="diff" value="normal" checked> ふつう</label>
+  <label><input type="radio" name="diff" value="hard"> きびしい</label>
+  <span class="swing" id="swing">swing: 0.000</span>
+</div>
+
+<div class="diff">
+  <span>ホイール向き:</span>
+  <label><input type="radio" name="wdir" value="1" checked> 通常</label>
+  <label><input type="radio" name="wdir" value="-1"> 反転</label>
+</div>
+
+<footer>Hidamari Works · Table Hockey for Encoder Wheel Controller</footer>
+
+</div>
+
+<script>
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const wrap = document.getElementById('wrap');
+const marker = document.getElementById('marker');
+const hint = document.getElementById('hint');
+const swingLabel = document.getElementById('swing');
+
+const HALF = 12;
+const PAD_W = 0.18;
+const PUCK_R = 0.04;
+const INIT_SPEED = 0.0085;
+const Z_FRONT = 0.07;
+const Z_BACK = 0.93;
+
+const DIFF = {
+  easy:   { aiSpd: 0.0065, returnSpd: 0.0075, jitter: 0.06 },
+  normal: { aiSpd: 0.0098, returnSpd: 0.011,  jitter: 0.02 },
+  hard:   { aiSpd: 0.014,  returnSpd: 0.016,  jitter: 0    }
+};
+let curDiff = 'normal';
+let wheelDir = 1;
+
+let wheelOff = 0;
+let padX = 0;
+let aiX = 0;
+let puck = {x:0, z:0.5, vx:0, vz:0};
+let scoreP = 0, scoreA = 0;
+let flash = 0;
+let calibrated = false;
+let pauseT = 90;
+
+const HIST_LEN = 6;
+let padHist = new Array(HIST_LEN).fill(0);
+let padV = 0;
+let aiJitter = 0;
+
+const FG_Y = H * 0.86, BG_Y = H * 0.22;
+const FG_HW = W * 0.46, BG_HW = W * 0.16;
+
+function project(x, z) {
+  const hw = FG_HW + z * (BG_HW - FG_HW);
+  return { x: W/2 + x * hw, y: FG_Y + z * (BG_Y - FG_Y), s: hw / FG_HW };
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function reset() {
+  puck.x = 0; puck.z = 0.5;
+  const fwd = Math.random() < 0.5;
+  const lat = (Math.random() - 0.5) * Math.PI * 0.55;
+  const a = fwd ? lat : Math.PI + lat;
+  puck.vz = Math.cos(a) * INIT_SPEED;
+  puck.vx = Math.sin(a) * INIT_SPEED;
+  pauseT = 60;
+  aiJitter = (Math.random() - 0.5) * 2;
+}
+
+function drawScene() {
+  ctx.fillStyle = '#0a1525'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#101e30'; ctx.fillRect(0, 0, W, BG_Y);
+
+  const c = [project(-1,0), project(1,0), project(1,1), project(-1,1)];
+  ctx.fillStyle = '#dde8f0';
+  ctx.beginPath();
+  ctx.moveTo(c[0].x, c[0].y);
+  for (let i=1; i<4; i++) ctx.lineTo(c[i].x, c[i].y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#3a4d63'; ctx.lineWidth = 3; ctx.stroke();
+
+  const cl = project(-1, 0.5), cr = project(1, 0.5);
+  ctx.strokeStyle = '#c44'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cl.x, cl.y); ctx.lineTo(cr.x, cr.y); ctx.stroke();
+
+  const cc = project(0, 0.5);
+  ctx.strokeStyle = 'rgba(180,30,30,0.4)'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(cc.x, cc.y, 50 * cc.s, 18 * cc.s, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const flN = project(-0.5, 0.18), frN = project(0.5, 0.18);
+  const blN = project(-0.5, 0.82), brN = project(0.5, 0.82);
+  ctx.strokeStyle = 'rgba(50,100,180,0.4)'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(flN.x, flN.y); ctx.lineTo(frN.x, frN.y);
+  ctx.moveTo(blN.x, blN.y); ctx.lineTo(brN.x, brN.y);
+  ctx.stroke();
+
+  const gfl = project(-0.45, 0), gfr = project(0.45, 0);
+  const gbl = project(-0.45, 1), gbr = project(0.45, 1);
+  ctx.strokeStyle = '#1d4ea5'; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(gfl.x, gfl.y); ctx.lineTo(gfr.x, gfr.y);
+  ctx.moveTo(gbl.x, gbl.y); ctx.lineTo(gbr.x, gbr.y);
+  ctx.stroke();
+}
+
+function drawDisk(x, z, fill, stroke, rxBase, ryBase) {
+  const p = project(x, z);
+  const rx = rxBase * p.s, ry = ryBase * p.s;
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y + 7 * p.s, rx * 0.9, ry * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y - ry * 0.35, rx * 0.7, ry * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function step() {
+  const limit = 1 - PAD_W;
+  padX = clamp((wheelOff / HALF) * limit, -limit, limit);
+
+  padHist.push(padX);
+  padHist.shift();
+  padV = (padX - padHist[0]) / HIST_LEN;
+
+  if (pauseT > 0) {
+    pauseT--;
+  } else {
+    const d = DIFF[curDiff];
+    const target = puck.vz > 0 ? puck.x + aiJitter * d.jitter : aiX * 0.95;
+    const dx = target - aiX;
+    aiX += clamp(dx, -d.aiSpd, d.aiSpd);
+    aiX = clamp(aiX, -limit, limit);
+
+    puck.x += puck.vx;
+    puck.z += puck.vz;
+
+    if (puck.x <= -1 + PUCK_R) { puck.x = -1 + PUCK_R; puck.vx = -puck.vx; }
+    else if (puck.x >= 1 - PUCK_R) { puck.x = 1 - PUCK_R; puck.vx = -puck.vx; }
+
+    if (puck.vz < 0 && puck.z <= Z_FRONT) {
+      if (Math.abs(puck.x - padX) <= PAD_W + PUCK_R) {
+        puck.z = Z_FRONT;
+        const incoming = Math.abs(puck.vz);
+        const boost = Math.abs(padV) * 0.32;
+        puck.vz = Math.min(incoming + boost, 0.030);
+        const hit = (puck.x - padX) / PAD_W;
+        puck.vx = clamp(puck.vx + hit * 0.005 + padV * 0.5, -0.020, 0.020);
+      }
+    }
+    if (puck.vz > 0 && puck.z >= Z_BACK) {
+      if (Math.abs(puck.x - aiX) <= PAD_W + PUCK_R) {
+        puck.z = Z_BACK;
+        puck.vz = -d.returnSpd;
+        const hit = (puck.x - aiX) / PAD_W;
+        puck.vx = clamp(puck.vx * 0.4 + hit * 0.006, -0.014, 0.014);
+      }
+    }
+
+    if (puck.z < -0.05) { scoreA++; flash = 35; reset(); }
+    else if (puck.z > 1.05) { scoreP++; flash = 35; reset(); }
+  }
+
+  if (flash > 0) flash--;
+}
+
+function draw() {
+  drawScene();
+  drawDisk(aiX, Z_BACK, '#c44a3a', '#5a1810', 38, 14);
+  drawDisk(puck.x, puck.z, '#ffffff', '#888', 24, 9);
+  drawDisk(padX, Z_FRONT, '#3a7ed8', '#0e2f5a', 38, 14);
+
+  if (flash > 0) {
+    ctx.fillStyle = 'rgba(255,240,150,' + (flash / 80) + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.fillStyle = '#dde8f0';
+  ctx.font = '500 22px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('YOU  ' + scoreP, 20, 36);
+  ctx.textAlign = 'right';
+  ctx.fillText(scoreA + '  CPU', W - 20, 36);
+
+  if (pauseT > 30 && !flash) {
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '500 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(calibrated ? '次のフェイスオフ...' : 'Fキーで中心位置を校正してください', W/2, H/2);
+  }
+}
+
+function loop() {
+  step();
+  draw();
+  const pct = ((wheelOff / HALF) + 1) / 2 * 100;
+  marker.style.left = clamp(pct, 0, 100) + '%';
+  swingLabel.textContent = 'swing: ' + Math.abs(padV).toFixed(3);
+  requestAnimationFrame(loop);
+}
+
+reset();
+loop();
+
+wrap.addEventListener('focus', function() {
+  wrap.classList.add('focused');
+  hint.textContent = calibrated ? 'プレイ中' : 'Fキーで中心校正';
+  hint.classList.toggle('warn', !calibrated);
+});
+wrap.addEventListener('blur', function() {
+  wrap.classList.remove('focused');
+  hint.textContent = 'クリックしてフォーカス';
+  hint.classList.add('warn');
+});
+wrap.addEventListener('click', function() { wrap.focus(); });
+
+wrap.addEventListener('wheel', function(e) {
+  e.preventDefault();
+  let inc = Math.round(e.deltaY / 100);
+  if (inc === 0) inc = Math.sign(e.deltaY);
+  wheelOff = clamp(wheelOff + inc * wheelDir, -HALF, HALF);
+}, { passive: false });
+
+document.addEventListener('keydown', function(e) {
+  const k = e.key.toLowerCase();
+  if (k === 'f') {
+    e.preventDefault();
+    wheelOff = 0;
+    calibrated = true;
+    hint.textContent = 'プレイ中';
+    hint.classList.remove('warn');
+  } else if (k === 'r') {
+    e.preventDefault();
+    scoreP = 0; scoreA = 0;
+    reset();
+  }
+});
+
+document.querySelectorAll('input[name="diff"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    if (r.checked) curDiff = r.value;
+  });
+});
+
+document.querySelectorAll('input[name="wdir"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    if (r.checked) wheelDir = parseInt(r.value, 10);
+  });
+});
+</script>
+</body>
+</html>
