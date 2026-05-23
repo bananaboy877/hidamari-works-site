@@ -245,6 +245,15 @@ canvas {
   cursor: pointer;
 }
 
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.35);
+  vertical-align: middle;
+}
+
 .slider-row {
   display: block;
   padding: 10px 0;
@@ -327,6 +336,15 @@ canvas {
     </div>
 
     <div class="setting-row">
+      <span class="setting-label">パックの色</span>
+      <label><input type="radio" name="puckColor" value="white" checked><span class="swatch" style="background:#ffffff"></span>しろ</label>
+      <label><input type="radio" name="puckColor" value="black"><span class="swatch" style="background:#2a2a2a"></span>くろ</label>
+      <label><input type="radio" name="puckColor" value="yellow"><span class="swatch" style="background:#f4c430"></span>きいろ</label>
+      <label><input type="radio" name="puckColor" value="green"><span class="swatch" style="background:#4caf50"></span>みどり</label>
+      <label><input type="radio" name="puckColor" value="pink"><span class="swatch" style="background:#ec407a"></span>ピンク</label>
+    </div>
+
+    <div class="setting-row">
       <span class="setting-label">ホイール向き</span>
       <label><input type="radio" name="wdir" value="1" checked> 通常</label>
       <label><input type="radio" name="wdir" value="-1"> 反転</label>
@@ -403,6 +421,15 @@ let curDiff = 'normal';
 let wheelDir = 1;
 let playerPadScale = 1.0;
 let speedScale = 1.0;
+
+const PUCK_COLORS = {
+  white:  { fill: '#ffffff', stroke: '#888888' },
+  black:  { fill: '#2a2a2a', stroke: '#000000' },
+  yellow: { fill: '#f4c430', stroke: '#7a5e00' },
+  green:  { fill: '#4caf50', stroke: '#1b5e20' },
+  pink:   { fill: '#ec407a', stroke: '#880e4f' }
+};
+let puckColor = 'white';
 let rallyAccelEnabled = true;
 let rallyHits = 0;
 const RALLY_THRESHOLD = 5;
@@ -723,7 +750,8 @@ function draw() {
   drawScene();
   drawDisk(aiX, Z_BACK, '#c44a3a', '#5a1810', 38, 14);
   if (gameState === 'playing') {
-    drawDisk(puck.x, puck.z, '#ffffff', '#888', 24, 9);
+    const pc = PUCK_COLORS[puckColor];
+    drawDisk(puck.x, puck.z, pc.fill, pc.stroke, 24, 9);
   }
   drawDisk(padX, Z_FRONT, '#3a7ed8', '#0e2f5a', 38 * playerPadScale, 14 * playerPadScale);
 
@@ -868,6 +896,12 @@ document.querySelectorAll('input[name="diff"]').forEach(function(r) {
 document.querySelectorAll('input[name="wdir"]').forEach(function(r) {
   r.addEventListener('change', function() {
     if (r.checked) wheelDir = parseInt(r.value, 10);
+  });
+});
+
+document.querySelectorAll('input[name="puckColor"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    if (r.checked) puckColor = r.value;
   });
 });
 
