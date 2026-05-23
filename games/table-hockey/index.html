@@ -347,8 +347,9 @@ canvas {
 
     <div class="setting-row">
       <span class="setting-label">ホイール向き</span>
-      <label><input type="radio" name="wdir" value="1" checked> 通常</label>
-      <label><input type="radio" name="wdir" value="-1"> 反転</label>
+      <label><input type="radio" name="wdir" value="normal" checked> 通常</label>
+      <label><input type="radio" name="wdir" value="reverse"> 反転</label>
+      <label><input type="radio" name="wdir" value="angle"> レバー位置</label>
     </div>
 
     <div class="slider-row">
@@ -430,7 +431,10 @@ const DIFF = {
   expert: { aiSpd: 0.020,  returnSpd: 0.022,  jitter: 0.003, noise: 0.006, delayFr: 1,  whiffChance: 0.015, whiffMag: 0.05 }
 };
 let curDiff = 'normal';
-let wheelDir = 1;
+let wheelMode = 'normal';
+let wheelAngle = 0;
+let wheelRefAngle = 0;
+const WHEEL_ANGLE_PER_NOTCH = Math.PI / 48;
 let playerPadScale = 1.0;
 let speedScale = 1.0;
 
@@ -674,7 +678,11 @@ function step() {
   const playerPadW = PAD_W * playerPadScale;
   const playerLimit = 1 - playerPadW;
   const aiLimit = 1 - PAD_W;
-  padX = clamp((wheelOff / HALF) * playerLimit, -playerLimit, playerLimit);
+  if (wheelMode === 'angle') {
+    padX = clamp(Math.sin(wheelAngle - wheelRefAngle) * playerLimit, -playerLimit, playerLimit);
+  } else {
+    padX = clamp((wheelOff / HALF) * playerLimit, -playerLimit, playerLimit);
+  }
 
   if (smashT > 0) {
     const elapsed = SMASH_DURATION - smashT;
@@ -865,13 +873,18 @@ function drawGameOverOverlay() {
 function loop() {
   if (!modalOpen) step();
   draw();
-  const pct = ((wheelOff / HALF) + 1) / 2 * 100;
+  const limit = 1 - PAD_W * playerPadScale;
+  const pct = (padX / limit + 1) / 2 * 100;
   marker.style.left = clamp(pct, 0, 100) + '%';
   requestAnimationFrame(loop);
 }
 
 function calibrate() {
-  wheelOff = 0;
+  if (wheelMode === 'angle') {
+    wheelRefAngle = wheelAngle;
+  } else {
+    wheelOff = 0;
+  }
   calibrated = true;
 }
 
@@ -902,7 +915,12 @@ window.addEventListener('wheel', function(e) {
   }
   let inc = Math.round(e.deltaY / 100);
   if (inc === 0) inc = Math.sign(e.deltaY);
-  wheelOff = clamp(wheelOff + inc * wheelDir, -HALF, HALF);
+  if (wheelMode === 'angle') {
+    wheelAngle += inc * WHEEL_ANGLE_PER_NOTCH;
+  } else {
+    const dir = wheelMode === 'reverse' ? -1 : 1;
+    wheelOff = clamp(wheelOff + inc * dir, -HALF, HALF);
+  }
 }, { passive: false });
 
 document.addEventListener('keydown', function(e) {
@@ -945,7 +963,12 @@ document.querySelectorAll('input[name="diff"]').forEach(function(r) {
 
 document.querySelectorAll('input[name="wdir"]').forEach(function(r) {
   r.addEventListener('change', function() {
-    if (r.checked) wheelDir = parseInt(r.value, 10);
+    if (!r.checked) return;
+    wheelMode = r.value;
+    wheelOff = 0;
+    wheelAngle = 0;
+    wheelRefAngle = 0;
+    calibrated = false;
   });
 });
 
