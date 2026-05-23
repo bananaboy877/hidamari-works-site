@@ -574,7 +574,7 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function endMatch(outcome) {
   gameState = outcome;
   gameOverFrame = 0;
-  restartCooldown = 30;
+  restartCooldown = 150;
   puck.vx = 0; puck.vz = 0;
   smashT = 0; padZ = Z_FRONT;
   setTimeout(function() {
