@@ -422,6 +422,10 @@ let flash = 0;
 let calibrated = false;
 let pauseT = 90;
 let modalOpen = false;
+let gameState = 'playing';
+let gameOverFrame = 0;
+let restartCooldown = 0;
+const MATCH_POINT = 10;
 
 const HIST_LEN = 6;
 let padHist = new Array(HIST_LEN).fill(0);
@@ -453,6 +457,20 @@ function project(x, z) {
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function endMatch(outcome) {
+  gameState = outcome;
+  gameOverFrame = 0;
+  restartCooldown = 30;
+  puck.vx = 0; puck.vz = 0;
+}
+
+function restartMatch() {
+  scoreP = 0;
+  scoreA = 0;
+  gameState = 'playing';
+  reset();
+}
 
 function reset() {
   puck.x = 0; puck.z = 0.5;
@@ -529,6 +547,13 @@ function drawDisk(x, z, fill, stroke, rxBase, ryBase) {
 }
 
 function step() {
+  if (gameState !== 'playing') {
+    gameOverFrame++;
+    if (restartCooldown > 0) restartCooldown--;
+    if (flash > 0) flash--;
+    return;
+  }
+
   const playerPadW = PAD_W * playerPadScale;
   const playerLimit = 1 - playerPadW;
   const aiLimit = 1 - PAD_W;
@@ -594,8 +619,15 @@ function step() {
       }
     }
 
-    if (puck.z < -0.05) { scoreA++; flash = 35; reset(); }
-    else if (puck.z > 1.05) { scoreP++; flash = 35; reset(); }
+    if (puck.z < -0.05) {
+      scoreA++; flash = 35;
+      if (scoreA >= MATCH_POINT) endMatch('lose');
+      else reset();
+    } else if (puck.z > 1.05) {
+      scoreP++; flash = 35;
+      if (scoreP >= MATCH_POINT) endMatch('win');
+      else reset();
+    }
   }
 
   if (flash > 0) flash--;
@@ -604,7 +636,9 @@ function step() {
 function draw() {
   drawScene();
   drawDisk(aiX, Z_BACK, '#c44a3a', '#5a1810', 38, 14);
-  drawDisk(puck.x, puck.z, '#ffffff', '#888', 24, 9);
+  if (gameState === 'playing') {
+    drawDisk(puck.x, puck.z, '#ffffff', '#888', 24, 9);
+  }
   drawDisk(padX, Z_FRONT, '#3a7ed8', '#0e2f5a', 38 * playerPadScale, 14 * playerPadScale);
 
   if (flash > 0) {
@@ -619,11 +653,51 @@ function draw() {
   ctx.textAlign = 'right';
   ctx.fillText(scoreA + '  CPU', W - 20, 36);
 
-  if (pauseT > 30 && !flash) {
+  if (gameState !== 'playing') {
+    drawGameOverOverlay();
+  } else if (pauseT > 30 && !flash) {
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.font = '500 16px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(calibrated ? '次のフェイスオフ...' : 'Fキーで中心位置を校正してください', W/2, H/2);
+  }
+}
+
+function drawGameOverOverlay() {
+  const isWin = gameState === 'win';
+  const t = gameOverFrame / 60;
+
+  ctx.fillStyle = isWin ? 'rgba(8, 14, 30, 0.50)' : 'rgba(8, 14, 30, 0.62)';
+  ctx.fillRect(0, 0, W, H);
+
+  if (isWin) {
+    const pulse = (Math.sin(t * 4) + 1) * 0.5;
+    const haloR = 150 + pulse * 30;
+    const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, haloR);
+    grad.addColorStop(0, 'rgba(255, 230, 110, ' + (0.35 + pulse * 0.25) + ')');
+    grad.addColorStop(1, 'rgba(255, 230, 110, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.textAlign = 'center';
+  if (isWin) {
+    ctx.fillStyle = '#ffe170';
+    ctx.font = '700 68px sans-serif';
+    ctx.fillText('かちました！', W/2, H/2);
+  } else {
+    ctx.fillStyle = '#a8b8cc';
+    ctx.font = '700 58px sans-serif';
+    ctx.fillText('まけました…', W/2, H/2);
+  }
+
+  if (restartCooldown <= 0) {
+    const blink = (Math.sin(t * 2.4) + 1) * 0.5;
+    ctx.globalAlpha = 0.55 + blink * 0.45;
+    ctx.fillStyle = '#dde8f0';
+    ctx.font = '500 22px sans-serif';
+    ctx.fillText('ホイールをまわすと もういちど', W/2, H/2 + 60);
+    ctx.globalAlpha = 1.0;
   }
 }
 
@@ -659,6 +733,12 @@ loop();
 window.addEventListener('wheel', function(e) {
   if (modalOpen) return;
   e.preventDefault();
+  if (gameState !== 'playing') {
+    if (restartCooldown <= 0 && Math.abs(e.deltaY) > 0) {
+      restartMatch();
+    }
+    return;
+  }
   let inc = Math.round(e.deltaY / 100);
   if (inc === 0) inc = Math.sign(e.deltaY);
   wheelOff = clamp(wheelOff + inc * wheelDir, -HALF, HALF);
@@ -677,8 +757,7 @@ document.addEventListener('keydown', function(e) {
     calibrate();
   } else if (k === 'r') {
     e.preventDefault();
-    scoreP = 0; scoreA = 0;
-    reset();
+    restartMatch();
   }
 });
 
