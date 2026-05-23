@@ -732,12 +732,14 @@ function draw() {
     ctx.fillRect(0, 0, W, H);
   }
 
-  ctx.fillStyle = '#dde8f0';
-  ctx.font = '500 22px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('YOU  ' + scoreP, 20, 36);
+  ctx.font = '500 26px sans-serif';
+  const scoreY = 40;
+  ctx.fillStyle = '#8db4e8';
   ctx.textAlign = 'right';
-  ctx.fillText(scoreA + '  CPU', W - 20, 36);
+  ctx.fillText('じぶん ' + scoreP, W/2 - 24, scoreY);
+  ctx.fillStyle = '#e8a89a';
+  ctx.textAlign = 'left';
+  ctx.fillText('あいて ' + scoreA, W/2 + 24, scoreY);
 
   if (gameState !== 'playing') {
     drawGameOverOverlay();
