@@ -352,6 +352,10 @@ canvas {
       <label><input type="checkbox" id="rallyAccel" checked> ラリーが続くほどパックが加速 (5回目以降)</label>
     </div>
 
+    <div class="setting-row">
+      <label><input type="checkbox" id="soundOn" checked> 効果音を鳴らす</label>
+    </div>
+
     <button class="calibrate-btn" id="calibrateBtn">中心を校正 (F)</button>
   </div>
 </div>
@@ -426,6 +430,46 @@ let gameState = 'playing';
 let gameOverFrame = 0;
 let restartCooldown = 0;
 const MATCH_POINT = 10;
+
+let soundEnabled = true;
+let audioCtx = null;
+const soundBuffers = { paddle: [], wall: [], goal: [] };
+const SOUND_FILES = {
+  paddle: ['audio/paddle_01.wav', 'audio/paddle_02.wav', 'audio/paddle_03.wav'],
+  wall:   ['audio/wall_01.wav', 'audio/wall_02.wav', 'audio/wall_03.wav', 'audio/wall_04.wav', 'audio/wall_05.wav', 'audio/wall_06.wav'],
+  goal:   ['audio/goal_01.wav']
+};
+const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85 };
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (e) { return; }
+  for (const tag of Object.keys(SOUND_FILES)) {
+    SOUND_FILES[tag].forEach(function(f) {
+      fetch(f)
+        .then(function(r) { return r.arrayBuffer(); })
+        .then(function(b) { return audioCtx.decodeAudioData(b); })
+        .then(function(buf) { soundBuffers[tag].push(buf); })
+        .catch(function(e) { console.warn('audio load failed:', f, e); });
+    });
+  }
+}
+
+function playSound(tag) {
+  if (!soundEnabled || !audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const bufs = soundBuffers[tag];
+  if (!bufs || bufs.length === 0) return;
+  const buf = bufs[Math.floor(Math.random() * bufs.length)];
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const g = audioCtx.createGain();
+  g.gain.value = SOUND_GAIN[tag] != null ? SOUND_GAIN[tag] : 1.0;
+  src.connect(g).connect(audioCtx.destination);
+  src.start();
+}
 
 const HIST_LEN = 6;
 let padHist = new Array(HIST_LEN).fill(0);
@@ -594,8 +638,8 @@ function step() {
     puck.x += puck.vx;
     puck.z += puck.vz;
 
-    if (puck.x <= -1 + PUCK_R) { puck.x = -1 + PUCK_R; puck.vx = -puck.vx; }
-    else if (puck.x >= 1 - PUCK_R) { puck.x = 1 - PUCK_R; puck.vx = -puck.vx; }
+    if (puck.x <= -1 + PUCK_R) { puck.x = -1 + PUCK_R; puck.vx = -puck.vx; playSound('wall'); }
+    else if (puck.x >= 1 - PUCK_R) { puck.x = 1 - PUCK_R; puck.vx = -puck.vx; playSound('wall'); }
 
     if (puck.vz < 0 && puck.z <= Z_FRONT) {
       if (Math.abs(puck.x - padX) <= playerPadW + PUCK_R) {
@@ -607,6 +651,7 @@ function step() {
         puck.vx = clamp(puck.vx + hit * 0.005 + padV * 0.5, -0.020, 0.020);
         applyRallyAccel();
         rollWhiff();
+        playSound('paddle');
       }
     }
     if (puck.vz > 0 && puck.z >= Z_BACK) {
@@ -616,15 +661,18 @@ function step() {
         const hit = (puck.x - aiX) / PAD_W;
         puck.vx = clamp(puck.vx * 0.4 + hit * 0.006, -0.014, 0.014);
         applyRallyAccel();
+        playSound('paddle');
       }
     }
 
     if (puck.z < -0.05) {
       scoreA++; flash = 35;
+      playSound('goal');
       if (scoreA >= MATCH_POINT) endMatch('lose');
       else reset();
     } else if (puck.z > 1.05) {
       scoreP++; flash = 35;
+      playSound('goal');
       if (scoreP >= MATCH_POINT) endMatch('win');
       else reset();
     }
@@ -796,6 +844,20 @@ spdScaleSlider.addEventListener('input', function() {
 document.getElementById('rallyAccel').addEventListener('change', function(e) {
   rallyAccelEnabled = e.target.checked;
 });
+
+document.getElementById('soundOn').addEventListener('change', function(e) {
+  soundEnabled = e.target.checked;
+});
+
+function onFirstGesture() {
+  initAudio();
+  window.removeEventListener('pointerdown', onFirstGesture);
+  window.removeEventListener('keydown', onFirstGesture);
+  window.removeEventListener('wheel', onFirstGesture);
+}
+window.addEventListener('pointerdown', onFirstGesture);
+window.addEventListener('keydown', onFirstGesture);
+window.addEventListener('wheel', onFirstGesture);
 </script>
 </body>
 </html>
