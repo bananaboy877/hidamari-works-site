@@ -433,16 +433,17 @@ const MATCH_POINT = 10;
 
 let soundEnabled = true;
 let audioCtx = null;
-const soundBuffers = { paddle: [], wall: [], goal: [], win: [], lose: [], restart: [] };
+const soundBuffers = { paddle: [], wall: [], goal: [], cheer: [], win: [], lose: [], restart: [] };
 const SOUND_FILES = {
   paddle:  ['audio/paddle_01.wav', 'audio/paddle_02.wav', 'audio/paddle_03.wav'],
   wall:    ['audio/wall_01.wav', 'audio/wall_02.wav', 'audio/wall_03.wav', 'audio/wall_04.wav', 'audio/wall_05.wav', 'audio/wall_06.wav'],
   goal:    ['audio/goal_01.wav'],
+  cheer:   ['audio/cheer_01.wav', 'audio/cheer_02.wav', 'audio/cheer_03.wav', 'audio/cheer_04.wav'],
   win:     ['audio/voice_win.wav'],
   lose:    ['audio/voice_lose.wav'],
   restart: ['audio/voice_restart.wav']
 };
-const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85, win: 1.0, lose: 1.0, restart: 1.0 };
+const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85, cheer: 1.0, win: 1.0, lose: 1.0, restart: 1.0 };
 
 function initAudio() {
   if (audioCtx) return;
@@ -702,8 +703,14 @@ function step() {
     } else if (puck.z > 1.05) {
       scoreP++; flash = 35;
       playSound('goal');
-      if (scoreP >= MATCH_POINT) endMatch('win');
-      else reset();
+      if (scoreP >= MATCH_POINT) {
+        endMatch('win');
+      } else {
+        setTimeout(function() {
+          if (gameState === 'playing') playSound('cheer');
+        }, 220);
+        reset();
+      }
     }
   }
 

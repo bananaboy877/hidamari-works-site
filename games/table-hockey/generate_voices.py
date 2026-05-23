@@ -12,6 +12,10 @@ VOICES = [
     ("voice_win.wav",     "あなたの勝ち！"),
     ("voice_lose.wav",    "あいての勝ち！"),
     ("voice_restart.wav", "レバーを回すともう一度遊べます！"),
+    ("cheer_01.wav",      "ナイスゴール！"),
+    ("cheer_02.wav",      "いいぞ！"),
+    ("cheer_03.wav",      "やったね！"),
+    ("cheer_04.wav",      "決まった！"),
 ]
 
 def generate_voice(text, filename):
