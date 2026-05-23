@@ -375,6 +375,10 @@ canvas {
       <label><input type="checkbox" id="soundOn" checked> 効果音を鳴らす</label>
     </div>
 
+    <div class="setting-row">
+      <label><input type="checkbox" id="practiceMode"> れんしゅうモード (自分のパドルだけ)</label>
+    </div>
+
     <button class="calibrate-btn" id="calibrateBtn">中心を校正 (F)</button>
   </div>
 </div>
@@ -467,6 +471,7 @@ let restartCooldown = 0;
 const MATCH_POINT = 10;
 
 let soundEnabled = true;
+let practiceMode = false;
 let audioCtx = null;
 const soundBuffers = { paddle: [], wall: [], goal: [], applause: [], cheer: [], win: [], lose: [], restart: [] };
 const SOUND_FILES = {
@@ -659,7 +664,7 @@ function drawDisk(x, z, fill, stroke, rxBase, ryBase) {
 }
 
 function step() {
-  if (gameState !== 'playing') {
+  if (gameState !== 'playing' && !practiceMode) {
     gameOverFrame++;
     if (restartCooldown > 0) restartCooldown--;
     if (flash > 0) flash--;
@@ -685,6 +690,8 @@ function step() {
   } else {
     padZ = Z_FRONT;
   }
+
+  if (practiceMode) return;
 
   padHist.push(padX);
   padHist.shift();
@@ -776,12 +783,22 @@ function step() {
 
 function draw() {
   drawScene();
-  drawDisk(aiX, Z_BACK, '#c44a3a', '#5a1810', 38, 14);
-  if (gameState === 'playing') {
-    const pc = PUCK_COLORS[puckColor];
-    drawDisk(puck.x, puck.z, pc.fill, pc.stroke, 24, 9);
+  if (!practiceMode) {
+    drawDisk(aiX, Z_BACK, '#c44a3a', '#5a1810', 38, 14);
+    if (gameState === 'playing') {
+      const pc = PUCK_COLORS[puckColor];
+      drawDisk(puck.x, puck.z, pc.fill, pc.stroke, 24, 9);
+    }
   }
   drawDisk(padX, padZ, '#3a7ed8', '#0e2f5a', 38 * playerPadScale, 14 * playerPadScale);
+
+  if (practiceMode) {
+    ctx.fillStyle = 'rgba(220, 232, 240, 0.55)';
+    ctx.font = '500 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('れんしゅうモード', W/2, 40);
+    return;
+  }
 
   if (flash > 0) {
     ctx.fillStyle = 'rgba(255,240,150,' + (flash / 80) + ')';
@@ -954,6 +971,11 @@ document.getElementById('rallyAccel').addEventListener('change', function(e) {
 
 document.getElementById('soundOn').addEventListener('change', function(e) {
   soundEnabled = e.target.checked;
+});
+
+document.getElementById('practiceMode').addEventListener('change', function(e) {
+  practiceMode = e.target.checked;
+  reset();
 });
 
 function onFirstGesture() {
