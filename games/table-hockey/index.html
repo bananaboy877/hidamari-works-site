@@ -40,73 +40,57 @@
 
 * { box-sizing: border-box; }
 
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
-  background: var(--bg-primary);
+  background: #000;
   color: var(--text-primary);
-  margin: 0;
-  padding: 20px;
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.container {
-  max-width: 680px;
-  width: 100%;
-}
-
-h1 {
-  font-size: 22px;
-  font-weight: 500;
-  margin: 0 0 4px 0;
-}
-
-.subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0 0 18px 0;
-}
-
 .wrap {
-  outline: none;
-  cursor: pointer;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  border: 2px dashed var(--border-tertiary);
-  transition: border-color .2s, border-style .2s;
+  position: relative;
+  width: min(100vw, calc(100vh * 680 / 440));
+  aspect-ratio: 680 / 440;
   background: #0a1525;
-}
-
-.wrap.focused {
-  border-color: var(--border-info);
-  border-style: solid;
+  overflow: hidden;
 }
 
 canvas {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
-.bar {
+.hud-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 14px;
-  background: var(--bg-secondary);
-  border-radius: var(--r-md);
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: 2%;
+  padding: 1.2% 2.2%;
+  background: rgba(10, 21, 37, 0.55);
+  backdrop-filter: blur(2px);
+  font-size: clamp(10px, 1.6vmin, 14px);
+  color: rgba(220, 232, 240, 0.85);
 }
 
 .gauge {
   flex: 1;
-  height: 18px;
-  background: var(--bg-tertiary);
-  border-radius: 9px;
+  height: clamp(10px, 2vmin, 18px);
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
   position: relative;
 }
 
@@ -115,123 +99,227 @@ canvas {
   top: 0;
   width: 2px;
   height: 100%;
-  background: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .gauge-marker {
   position: absolute;
-  top: 1px;
-  width: 16px;
-  height: 16px;
-  background: var(--text-info);
+  top: 50%;
+  width: clamp(12px, 2.4vmin, 20px);
+  height: clamp(12px, 2.4vmin, 20px);
+  background: #85b7eb;
   border-radius: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   transition: left .08s linear;
+  box-shadow: 0 0 6px rgba(133, 183, 235, 0.6);
 }
 
-.tag {
-  padding: 2px 8px;
-  border-radius: var(--r-md);
-  background: var(--bg-info);
-  color: var(--text-info);
-  font-size: 12px;
-  font-weight: 500;
+.deg-label {
+  color: rgba(220, 232, 240, 0.55);
+  min-width: 3ch;
+  text-align: center;
 }
 
-.tag.warn {
-  background: var(--bg-warning);
-  color: var(--text-warning);
+.key-hints {
+  color: rgba(220, 232, 240, 0.7);
+  white-space: nowrap;
 }
 
-.diff {
+.key-hints kbd {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dde8f0;
+}
+
+.gear-btn {
+  position: absolute;
+  top: 2.2%;
+  right: 2.2%;
+  width: clamp(36px, 5vmin, 52px);
+  height: clamp(36px, 5vmin, 52px);
+  border-radius: 50%;
+  background: rgba(10, 21, 37, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #dde8f0;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 8px 14px;
-  background: var(--bg-secondary);
-  border-radius: var(--r-md);
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
+  justify-content: center;
+  padding: 0;
+  transition: background .15s, transform .15s;
 }
 
-.diff label {
+.gear-btn:hover {
+  background: rgba(20, 40, 70, 0.8);
+  transform: rotate(30deg);
+}
+
+.gear-btn svg {
+  width: 60%;
+  height: 60%;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: var(--r-lg);
+  padding: 22px 24px 24px;
+  width: min(420px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r-md);
+}
+
+.modal-close:hover {
+  background: var(--bg-secondary);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-tertiary);
+  font-size: 14px;
+}
+
+.setting-row:first-of-type {
+  border-top: none;
+}
+
+.setting-label {
+  flex: 0 0 100%;
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.setting-row label {
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
 }
 
-.swing {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-kbd {
-  font-family: ui-monospace, "SF Mono", Consolas, monospace;
-  font-size: 11px;
-  padding: 1px 5px;
-  border: 0.5px solid var(--border-tertiary);
-  border-radius: 4px;
-  background: var(--bg-primary);
-}
-
-footer {
+.calibrate-btn {
+  display: block;
+  width: 100%;
   margin-top: 14px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-align: center;
+  padding: 10px 16px;
+  background: var(--bg-info);
+  color: var(--text-info);
+  border: 1px solid var(--border-info);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.calibrate-btn:hover {
+  filter: brightness(1.05);
 }
 </style>
 </head>
 <body>
-<div class="container">
 
-<h1>Table Hockey</h1>
-<p class="subtitle">エンコーダを左右に回してパドルを操作。Fキーで中心位置を校正。</p>
-
-<div class="wrap" tabindex="0" id="wrap">
+<div class="wrap" id="wrap">
   <canvas id="game" width="680" height="440"></canvas>
-</div>
 
-<div class="bar">
-  <span id="hint" class="tag warn">クリックしてフォーカス</span>
-  <span style="color:var(--text-tertiary);">90°</span>
-  <div class="gauge">
-    <div class="gauge-tick" style="left:50%;"></div>
-    <div class="gauge-marker" id="marker" style="left:50%;"></div>
+  <button class="gear-btn" id="gearBtn" aria-label="設定">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+
+  <div class="hud-bottom">
+    <span class="deg-label">90°</span>
+    <div class="gauge">
+      <div class="gauge-tick" style="left:50%;"></div>
+      <div class="gauge-marker" id="marker" style="left:50%;"></div>
+    </div>
+    <span class="deg-label">270°</span>
+    <span class="key-hints"><kbd>F</kbd> 校正 · <kbd>R</kbd> リセット</span>
   </div>
-  <span style="color:var(--text-tertiary);">270°</span>
-  <span style="color:var(--text-secondary);min-width:96px;text-align:right;"><kbd>F</kbd> 校正 · <kbd>R</kbd> リセット</span>
 </div>
 
-<div class="diff">
-  <span>CPUの強さ:</span>
-  <label><input type="radio" name="diff" value="easy"> やさしい</label>
-  <label><input type="radio" name="diff" value="normal" checked> ふつう</label>
-  <label><input type="radio" name="diff" value="hard"> きびしい</label>
-  <span class="swing" id="swing">swing: 0.000</span>
-</div>
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">設定</h2>
+      <button class="modal-close" id="modalClose" aria-label="閉じる">×</button>
+    </div>
 
-<div class="diff">
-  <span>ホイール向き:</span>
-  <label><input type="radio" name="wdir" value="1" checked> 通常</label>
-  <label><input type="radio" name="wdir" value="-1"> 反転</label>
-</div>
+    <div class="setting-row">
+      <span class="setting-label">CPUの強さ</span>
+      <label><input type="radio" name="diff" value="easy"> やさしい</label>
+      <label><input type="radio" name="diff" value="normal" checked> ふつう</label>
+      <label><input type="radio" name="diff" value="hard"> きびしい</label>
+    </div>
 
-<footer>Hidamari Works · Table Hockey for Encoder Wheel Controller</footer>
+    <div class="setting-row">
+      <span class="setting-label">ホイール向き</span>
+      <label><input type="radio" name="wdir" value="1" checked> 通常</label>
+      <label><input type="radio" name="wdir" value="-1"> 反転</label>
+    </div>
 
+    <button class="calibrate-btn" id="calibrateBtn">中心を校正 (F)</button>
+  </div>
 </div>
 
 <script>
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
-const wrap = document.getElementById('wrap');
 const marker = document.getElementById('marker');
-const hint = document.getElementById('hint');
-const swingLabel = document.getElementById('swing');
+const gearBtn = document.getElementById('gearBtn');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalClose = document.getElementById('modalClose');
+const calibrateBtn = document.getElementById('calibrateBtn');
 
 const HALF = 12;
 const PAD_W = 0.18;
@@ -256,6 +344,7 @@ let scoreP = 0, scoreA = 0;
 let flash = 0;
 let calibrated = false;
 let pauseT = 90;
+let modalOpen = false;
 
 const HIST_LEN = 6;
 let padHist = new Array(HIST_LEN).fill(0);
@@ -417,30 +506,33 @@ function draw() {
 }
 
 function loop() {
-  step();
+  if (!modalOpen) step();
   draw();
   const pct = ((wheelOff / HALF) + 1) / 2 * 100;
   marker.style.left = clamp(pct, 0, 100) + '%';
-  swingLabel.textContent = 'swing: ' + Math.abs(padV).toFixed(3);
   requestAnimationFrame(loop);
+}
+
+function calibrate() {
+  wheelOff = 0;
+  calibrated = true;
+}
+
+function openModal() {
+  modalOpen = true;
+  modalBackdrop.classList.add('open');
+}
+
+function closeModal() {
+  modalOpen = false;
+  modalBackdrop.classList.remove('open');
 }
 
 reset();
 loop();
 
-wrap.addEventListener('focus', function() {
-  wrap.classList.add('focused');
-  hint.textContent = calibrated ? 'プレイ中' : 'Fキーで中心校正';
-  hint.classList.toggle('warn', !calibrated);
-});
-wrap.addEventListener('blur', function() {
-  wrap.classList.remove('focused');
-  hint.textContent = 'クリックしてフォーカス';
-  hint.classList.add('warn');
-});
-wrap.addEventListener('click', function() { wrap.focus(); });
-
-wrap.addEventListener('wheel', function(e) {
+window.addEventListener('wheel', function(e) {
+  if (modalOpen) return;
   e.preventDefault();
   let inc = Math.round(e.deltaY / 100);
   if (inc === 0) inc = Math.sign(e.deltaY);
@@ -449,17 +541,30 @@ wrap.addEventListener('wheel', function(e) {
 
 document.addEventListener('keydown', function(e) {
   const k = e.key.toLowerCase();
+  if (e.key === 'Escape' && modalOpen) {
+    e.preventDefault();
+    closeModal();
+    return;
+  }
+  if (modalOpen) return;
   if (k === 'f') {
     e.preventDefault();
-    wheelOff = 0;
-    calibrated = true;
-    hint.textContent = 'プレイ中';
-    hint.classList.remove('warn');
+    calibrate();
   } else if (k === 'r') {
     e.preventDefault();
     scoreP = 0; scoreA = 0;
     reset();
   }
+});
+
+gearBtn.addEventListener('click', openModal);
+modalClose.addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', function(e) {
+  if (e.target === modalBackdrop) closeModal();
+});
+calibrateBtn.addEventListener('click', function() {
+  calibrate();
+  closeModal();
 });
 
 document.querySelectorAll('input[name="diff"]').forEach(function(r) {
