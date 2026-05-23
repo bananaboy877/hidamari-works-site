@@ -447,14 +447,34 @@ function initAudio() {
   if (audioCtx) return;
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  } catch (e) { return; }
+  } catch (e) {
+    console.error('[audio] AudioContext creation failed:', e);
+    return;
+  }
+  console.log('[audio] AudioContext state:', audioCtx.state, 'sampleRate:', audioCtx.sampleRate);
+
+  const silent = audioCtx.createBuffer(1, 1, 22050);
+  const us = audioCtx.createBufferSource();
+  us.buffer = silent;
+  us.connect(audioCtx.destination);
+  us.start(0);
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(function() { console.log('[audio] resumed →', audioCtx.state); });
+  }
+
   for (const tag of Object.keys(SOUND_FILES)) {
     SOUND_FILES[tag].forEach(function(f) {
       fetch(f)
-        .then(function(r) { return r.arrayBuffer(); })
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + f);
+          return r.arrayBuffer();
+        })
         .then(function(b) { return audioCtx.decodeAudioData(b); })
-        .then(function(buf) { soundBuffers[tag].push(buf); })
-        .catch(function(e) { console.warn('audio load failed:', f, e); });
+        .then(function(buf) {
+          soundBuffers[tag].push(buf);
+          console.log('[audio] loaded:', f, '(' + buf.duration.toFixed(2) + 's)');
+        })
+        .catch(function(e) { console.error('[audio] failed:', f, e.message || e); });
     });
   }
 }
