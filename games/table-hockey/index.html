@@ -348,6 +348,10 @@ canvas {
       <input type="range" id="spdScale" min="0.5" max="2.0" step="0.1" value="1.0">
     </div>
 
+    <div class="setting-row">
+      <label><input type="checkbox" id="rallyAccel" checked> ラリーが続くほどパックが加速 (5回目以降)</label>
+    </div>
+
     <button class="calibrate-btn" id="calibrateBtn">中心を校正 (F)</button>
   </div>
 </div>
@@ -395,6 +399,19 @@ let curDiff = 'normal';
 let wheelDir = 1;
 let playerPadScale = 1.0;
 let speedScale = 1.0;
+let rallyAccelEnabled = true;
+let rallyHits = 0;
+const RALLY_THRESHOLD = 5;
+const RALLY_FACTOR = 1.01;
+
+function applyRallyAccel() {
+  rallyHits++;
+  if (rallyAccelEnabled && rallyHits >= RALLY_THRESHOLD) {
+    const mult = Math.pow(RALLY_FACTOR, rallyHits - RALLY_THRESHOLD + 1);
+    puck.vz *= mult;
+    puck.vx *= mult;
+  }
+}
 
 let wheelOff = 0;
 let padX = 0;
@@ -449,6 +466,7 @@ function reset() {
   aiJitter = (Math.random() - 0.5) * 2;
   aiJitterTimer = 30 + Math.random() * 90;
   whiffOffset = 0;
+  rallyHits = 0;
   if (puck.vz > 0) rollWhiff();
 }
 
@@ -562,6 +580,7 @@ function step() {
         puck.vz = Math.min(incoming + boost, 0.030 * speedScale);
         const hit = (puck.x - padX) / playerPadW;
         puck.vx = clamp(puck.vx + hit * 0.005 + padV * 0.5, -0.020, 0.020);
+        applyRallyAccel();
         rollWhiff();
       }
     }
@@ -571,6 +590,7 @@ function step() {
         puck.vz = -returnSpd;
         const hit = (puck.x - aiX) / PAD_W;
         puck.vx = clamp(puck.vx * 0.4 + hit * 0.006, -0.014, 0.014);
+        applyRallyAccel();
       }
     }
 
@@ -692,6 +712,10 @@ padScaleSlider.addEventListener('input', function() {
 spdScaleSlider.addEventListener('input', function() {
   speedScale = parseFloat(spdScaleSlider.value);
   spdScaleVal.textContent = speedScale.toFixed(1) + '×';
+});
+
+document.getElementById('rallyAccel').addEventListener('change', function(e) {
+  rallyAccelEnabled = e.target.checked;
 });
 </script>
 </body>
