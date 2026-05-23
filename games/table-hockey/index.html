@@ -387,9 +387,9 @@ const Z_FRONT = 0.07;
 const Z_BACK = 0.93;
 
 const DIFF = {
-  easy:   { aiSpd: 0.0065, returnSpd: 0.0075, jitter: 0.06 },
-  normal: { aiSpd: 0.0098, returnSpd: 0.011,  jitter: 0.02 },
-  hard:   { aiSpd: 0.014,  returnSpd: 0.016,  jitter: 0    }
+  easy:   { aiSpd: 0.0065, returnSpd: 0.0075, jitter: 0.06,  noise: 0.040, delayFr: 10, whiffChance: 0.22, whiffMag: 0.22 },
+  normal: { aiSpd: 0.0098, returnSpd: 0.011,  jitter: 0.025, noise: 0.025, delayFr: 5,  whiffChance: 0.10, whiffMag: 0.14 },
+  hard:   { aiSpd: 0.014,  returnSpd: 0.016,  jitter: 0.008, noise: 0.012, delayFr: 2,  whiffChance: 0.04, whiffMag: 0.10 }
 };
 let curDiff = 'normal';
 let wheelDir = 1;
@@ -410,6 +410,22 @@ const HIST_LEN = 6;
 let padHist = new Array(HIST_LEN).fill(0);
 let padV = 0;
 let aiJitter = 0;
+let aiJitterTimer = 0;
+let aiNoise = 0;
+let whiffOffset = 0;
+const PUCK_HIST_LEN = 16;
+let puckXHist = [];
+
+function rollWhiff() {
+  const d = DIFF[curDiff];
+  if (Math.random() < d.whiffChance) {
+    const sign = Math.random() < 0.5 ? -1 : 1;
+    const mag = d.whiffMag * (0.5 + Math.random() * 0.5);
+    whiffOffset = sign * mag;
+  } else {
+    whiffOffset = 0;
+  }
+}
 
 const FG_Y = H * 0.86, BG_Y = H * 0.22;
 const FG_HW = W * 0.46, BG_HW = W * 0.16;
@@ -431,6 +447,9 @@ function reset() {
   puck.vx = Math.sin(a) * s;
   pauseT = 60;
   aiJitter = (Math.random() - 0.5) * 2;
+  aiJitterTimer = 30 + Math.random() * 90;
+  whiffOffset = 0;
+  if (puck.vz > 0) rollWhiff();
 }
 
 function drawScene() {
@@ -501,13 +520,30 @@ function step() {
   padHist.shift();
   padV = (padX - padHist[0]) / HIST_LEN;
 
+  aiNoise = aiNoise * 0.94 + (Math.random() - 0.5) * 0.4;
+
+  puckXHist.push(puck.x);
+  if (puckXHist.length > PUCK_HIST_LEN) puckXHist.shift();
+
+  aiJitterTimer--;
+  if (aiJitterTimer <= 0) {
+    aiJitter = (Math.random() - 0.5) * 2;
+    aiJitterTimer = 30 + Math.random() * 90;
+  }
+
   if (pauseT > 0) {
     pauseT--;
   } else {
     const d = DIFF[curDiff];
     const aiSpd = d.aiSpd * speedScale;
     const returnSpd = d.returnSpd * speedScale;
-    const target = puck.vz > 0 ? puck.x + aiJitter * d.jitter : aiX * 0.95;
+
+    const delayFr = Math.min(d.delayFr, puckXHist.length - 1);
+    const delayedX = puckXHist[puckXHist.length - 1 - delayFr];
+
+    const target = puck.vz > 0
+      ? delayedX + aiJitter * d.jitter + aiNoise * d.noise + whiffOffset
+      : aiX * 0.95;
     const dx = target - aiX;
     aiX += clamp(dx, -aiSpd, aiSpd);
     aiX = clamp(aiX, -aiLimit, aiLimit);
@@ -526,6 +562,7 @@ function step() {
         puck.vz = Math.min(incoming + boost, 0.030 * speedScale);
         const hit = (puck.x - padX) / playerPadW;
         puck.vx = clamp(puck.vx + hit * 0.005 + padV * 0.5, -0.020, 0.020);
+        rollWhiff();
       }
     }
     if (puck.vz > 0 && puck.z >= Z_BACK) {
