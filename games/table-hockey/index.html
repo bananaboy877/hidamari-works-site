@@ -245,6 +245,31 @@ canvas {
   cursor: pointer;
 }
 
+.slider-row {
+  display: block;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-tertiary);
+  font-size: 14px;
+}
+
+.slider-row .setting-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.slider-row .slider-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-info);
+  font-weight: 500;
+}
+
+.slider-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--text-info);
+}
+
 .calibrate-btn {
   display: block;
   width: 100%;
@@ -307,6 +332,22 @@ canvas {
       <label><input type="radio" name="wdir" value="-1"> 反転</label>
     </div>
 
+    <div class="slider-row">
+      <div class="setting-label">
+        <span>自分のパドルの大きさ</span>
+        <span class="slider-value" id="padScaleVal">1.0×</span>
+      </div>
+      <input type="range" id="padScale" min="0.5" max="2.0" step="0.1" value="1.0">
+    </div>
+
+    <div class="slider-row">
+      <div class="setting-label">
+        <span>スピード倍率 (パック・相手パドル)</span>
+        <span class="slider-value" id="spdScaleVal">1.0×</span>
+      </div>
+      <input type="range" id="spdScale" min="0.5" max="2.0" step="0.1" value="1.0">
+    </div>
+
     <button class="calibrate-btn" id="calibrateBtn">中心を校正 (F)</button>
   </div>
 </div>
@@ -314,12 +355,29 @@ canvas {
 <script>
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height;
+const W = 680, H = 440;
 const marker = document.getElementById('marker');
 const gearBtn = document.getElementById('gearBtn');
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modalClose = document.getElementById('modalClose');
 const calibrateBtn = document.getElementById('calibrateBtn');
+const padScaleSlider = document.getElementById('padScale');
+const spdScaleSlider = document.getElementById('spdScale');
+const padScaleVal = document.getElementById('padScaleVal');
+const spdScaleVal = document.getElementById('spdScaleVal');
+
+let renderScale = 1;
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = cv.getBoundingClientRect();
+  if (rect.width === 0) return;
+  renderScale = (rect.width * dpr) / W;
+  cv.width = Math.round(W * renderScale);
+  cv.height = Math.round(H * renderScale);
+  ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+}
 
 const HALF = 12;
 const PAD_W = 0.18;
@@ -335,6 +393,8 @@ const DIFF = {
 };
 let curDiff = 'normal';
 let wheelDir = 1;
+let playerPadScale = 1.0;
+let speedScale = 1.0;
 
 let wheelOff = 0;
 let padX = 0;
@@ -366,8 +426,9 @@ function reset() {
   const fwd = Math.random() < 0.5;
   const lat = (Math.random() - 0.5) * Math.PI * 0.55;
   const a = fwd ? lat : Math.PI + lat;
-  puck.vz = Math.cos(a) * INIT_SPEED;
-  puck.vx = Math.sin(a) * INIT_SPEED;
+  const s = INIT_SPEED * speedScale;
+  puck.vz = Math.cos(a) * s;
+  puck.vx = Math.sin(a) * s;
   pauseT = 60;
   aiJitter = (Math.random() - 0.5) * 2;
 }
@@ -431,8 +492,10 @@ function drawDisk(x, z, fill, stroke, rxBase, ryBase) {
 }
 
 function step() {
-  const limit = 1 - PAD_W;
-  padX = clamp((wheelOff / HALF) * limit, -limit, limit);
+  const playerPadW = PAD_W * playerPadScale;
+  const playerLimit = 1 - playerPadW;
+  const aiLimit = 1 - PAD_W;
+  padX = clamp((wheelOff / HALF) * playerLimit, -playerLimit, playerLimit);
 
   padHist.push(padX);
   padHist.shift();
@@ -442,10 +505,12 @@ function step() {
     pauseT--;
   } else {
     const d = DIFF[curDiff];
+    const aiSpd = d.aiSpd * speedScale;
+    const returnSpd = d.returnSpd * speedScale;
     const target = puck.vz > 0 ? puck.x + aiJitter * d.jitter : aiX * 0.95;
     const dx = target - aiX;
-    aiX += clamp(dx, -d.aiSpd, d.aiSpd);
-    aiX = clamp(aiX, -limit, limit);
+    aiX += clamp(dx, -aiSpd, aiSpd);
+    aiX = clamp(aiX, -aiLimit, aiLimit);
 
     puck.x += puck.vx;
     puck.z += puck.vz;
@@ -454,19 +519,19 @@ function step() {
     else if (puck.x >= 1 - PUCK_R) { puck.x = 1 - PUCK_R; puck.vx = -puck.vx; }
 
     if (puck.vz < 0 && puck.z <= Z_FRONT) {
-      if (Math.abs(puck.x - padX) <= PAD_W + PUCK_R) {
+      if (Math.abs(puck.x - padX) <= playerPadW + PUCK_R) {
         puck.z = Z_FRONT;
         const incoming = Math.abs(puck.vz);
         const boost = Math.abs(padV) * 0.32;
-        puck.vz = Math.min(incoming + boost, 0.030);
-        const hit = (puck.x - padX) / PAD_W;
+        puck.vz = Math.min(incoming + boost, 0.030 * speedScale);
+        const hit = (puck.x - padX) / playerPadW;
         puck.vx = clamp(puck.vx + hit * 0.005 + padV * 0.5, -0.020, 0.020);
       }
     }
     if (puck.vz > 0 && puck.z >= Z_BACK) {
       if (Math.abs(puck.x - aiX) <= PAD_W + PUCK_R) {
         puck.z = Z_BACK;
-        puck.vz = -d.returnSpd;
+        puck.vz = -returnSpd;
         const hit = (puck.x - aiX) / PAD_W;
         puck.vx = clamp(puck.vx * 0.4 + hit * 0.006, -0.014, 0.014);
       }
@@ -483,7 +548,7 @@ function draw() {
   drawScene();
   drawDisk(aiX, Z_BACK, '#c44a3a', '#5a1810', 38, 14);
   drawDisk(puck.x, puck.z, '#ffffff', '#888', 24, 9);
-  drawDisk(padX, Z_FRONT, '#3a7ed8', '#0e2f5a', 38, 14);
+  drawDisk(padX, Z_FRONT, '#3a7ed8', '#0e2f5a', 38 * playerPadScale, 14 * playerPadScale);
 
   if (flash > 0) {
     ctx.fillStyle = 'rgba(255,240,150,' + (flash / 80) + ')';
@@ -527,6 +592,9 @@ function closeModal() {
   modalOpen = false;
   modalBackdrop.classList.remove('open');
 }
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 reset();
 loop();
@@ -577,6 +645,16 @@ document.querySelectorAll('input[name="wdir"]').forEach(function(r) {
   r.addEventListener('change', function() {
     if (r.checked) wheelDir = parseInt(r.value, 10);
   });
+});
+
+padScaleSlider.addEventListener('input', function() {
+  playerPadScale = parseFloat(padScaleSlider.value);
+  padScaleVal.textContent = playerPadScale.toFixed(1) + '×';
+});
+
+spdScaleSlider.addEventListener('input', function() {
+  speedScale = parseFloat(spdScaleSlider.value);
+  spdScaleVal.textContent = speedScale.toFixed(1) + '×';
 });
 </script>
 </body>
