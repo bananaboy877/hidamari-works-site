@@ -338,9 +338,9 @@ canvas {
 
     <div class="setting-row">
       <span class="setting-label">パックの色</span>
-      <label><input type="radio" name="puckColor" value="white" checked><span class="swatch" style="background:#ffffff"></span>しろ</label>
+      <label><input type="radio" name="puckColor" value="white"><span class="swatch" style="background:#ffffff"></span>しろ</label>
       <label><input type="radio" name="puckColor" value="black"><span class="swatch" style="background:#2a2a2a"></span>くろ</label>
-      <label><input type="radio" name="puckColor" value="yellow"><span class="swatch" style="background:#f4c430"></span>きいろ</label>
+      <label><input type="radio" name="puckColor" value="yellow" checked><span class="swatch" style="background:#f4c430"></span>きいろ</label>
       <label><input type="radio" name="puckColor" value="green"><span class="swatch" style="background:#4caf50"></span>みどり</label>
       <label><input type="radio" name="puckColor" value="pink"><span class="swatch" style="background:#ec407a"></span>ピンク</label>
     </div>
@@ -437,7 +437,7 @@ const PUCK_COLORS = {
   green:  { fill: '#4caf50', stroke: '#1b5e20' },
   pink:   { fill: '#ec407a', stroke: '#880e4f' }
 };
-let puckColor = 'white';
+let puckColor = 'yellow';
 let rallyAccelEnabled = true;
 let rallyHits = 0;
 const RALLY_THRESHOLD = 5;
