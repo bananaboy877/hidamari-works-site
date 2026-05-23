@@ -333,6 +333,7 @@ canvas {
       <label><input type="radio" name="diff" value="easy"> やさしい</label>
       <label><input type="radio" name="diff" value="normal" checked> ふつう</label>
       <label><input type="radio" name="diff" value="hard"> きびしい</label>
+      <label><input type="radio" name="diff" value="expert"> ごくきびしい</label>
     </div>
 
     <div class="setting-row">
@@ -419,9 +420,10 @@ let smashT = 0;
 let padZ = Z_FRONT;
 
 const DIFF = {
-  easy:   { aiSpd: 0.0065, returnSpd: 0.0075, jitter: 0.06,  noise: 0.040, delayFr: 10, whiffChance: 0.22, whiffMag: 0.22 },
-  normal: { aiSpd: 0.0098, returnSpd: 0.011,  jitter: 0.025, noise: 0.025, delayFr: 5,  whiffChance: 0.10, whiffMag: 0.14 },
-  hard:   { aiSpd: 0.014,  returnSpd: 0.016,  jitter: 0.008, noise: 0.012, delayFr: 2,  whiffChance: 0.04, whiffMag: 0.10 }
+  easy:   { aiSpd: 0.0065, returnSpd: 0.0075, jitter: 0.06,  noise: 0.040, delayFr: 10, whiffChance: 0.22,  whiffMag: 0.22 },
+  normal: { aiSpd: 0.0098, returnSpd: 0.011,  jitter: 0.025, noise: 0.025, delayFr: 5,  whiffChance: 0.10,  whiffMag: 0.14 },
+  hard:   { aiSpd: 0.014,  returnSpd: 0.016,  jitter: 0.008, noise: 0.012, delayFr: 2,  whiffChance: 0.04,  whiffMag: 0.10 },
+  expert: { aiSpd: 0.020,  returnSpd: 0.022,  jitter: 0.003, noise: 0.006, delayFr: 1,  whiffChance: 0.015, whiffMag: 0.05 }
 };
 let curDiff = 'normal';
 let wheelDir = 1;
