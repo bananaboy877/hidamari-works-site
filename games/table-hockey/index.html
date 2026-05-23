@@ -433,13 +433,15 @@ const MATCH_POINT = 10;
 
 let soundEnabled = true;
 let audioCtx = null;
-const soundBuffers = { paddle: [], wall: [], goal: [] };
+const soundBuffers = { paddle: [], wall: [], goal: [], win: [], lose: [] };
 const SOUND_FILES = {
   paddle: ['audio/paddle_01.wav', 'audio/paddle_02.wav', 'audio/paddle_03.wav'],
   wall:   ['audio/wall_01.wav', 'audio/wall_02.wav', 'audio/wall_03.wav', 'audio/wall_04.wav', 'audio/wall_05.wav', 'audio/wall_06.wav'],
-  goal:   ['audio/goal_01.wav']
+  goal:   ['audio/goal_01.wav'],
+  win:    ['audio/voice_win.wav'],
+  lose:   ['audio/voice_lose.wav']
 };
-const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85 };
+const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85, win: 1.0, lose: 1.0 };
 
 function initAudio() {
   if (audioCtx) return;
@@ -507,6 +509,9 @@ function endMatch(outcome) {
   gameOverFrame = 0;
   restartCooldown = 30;
   puck.vx = 0; puck.vz = 0;
+  setTimeout(function() {
+    if (gameState === outcome) playSound(outcome);
+  }, 600);
 }
 
 function restartMatch() {
@@ -731,12 +736,12 @@ function drawGameOverOverlay() {
   ctx.textAlign = 'center';
   if (isWin) {
     ctx.fillStyle = '#ffe170';
-    ctx.font = '700 68px sans-serif';
-    ctx.fillText('かちました！', W/2, H/2);
+    ctx.font = '700 64px sans-serif';
+    ctx.fillText('あなたの勝ち！', W/2, H/2);
   } else {
     ctx.fillStyle = '#a8b8cc';
     ctx.font = '700 58px sans-serif';
-    ctx.fillText('まけました…', W/2, H/2);
+    ctx.fillText('あいての勝ち！', W/2, H/2);
   }
 
   if (restartCooldown <= 0) {
