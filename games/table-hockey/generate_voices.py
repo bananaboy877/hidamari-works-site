@@ -9,8 +9,9 @@ SPEAKER_ID = 3  # ずんだもん ノーマル
 OUTPUT_DIR = r"C:\hidamari-works\hidamari-works-site\games\table-hockey\audio"
 
 VOICES = [
-    ("voice_win.wav",  "あなたの勝ち！"),
-    ("voice_lose.wav", "あいての勝ち！"),
+    ("voice_win.wav",     "あなたの勝ち！"),
+    ("voice_lose.wav",    "あいての勝ち！"),
+    ("voice_restart.wav", "レバーを回すともう一度遊べます！"),
 ]
 
 def generate_voice(text, filename):

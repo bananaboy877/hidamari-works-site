@@ -433,15 +433,16 @@ const MATCH_POINT = 10;
 
 let soundEnabled = true;
 let audioCtx = null;
-const soundBuffers = { paddle: [], wall: [], goal: [], win: [], lose: [] };
+const soundBuffers = { paddle: [], wall: [], goal: [], win: [], lose: [], restart: [] };
 const SOUND_FILES = {
-  paddle: ['audio/paddle_01.wav', 'audio/paddle_02.wav', 'audio/paddle_03.wav'],
-  wall:   ['audio/wall_01.wav', 'audio/wall_02.wav', 'audio/wall_03.wav', 'audio/wall_04.wav', 'audio/wall_05.wav', 'audio/wall_06.wav'],
-  goal:   ['audio/goal_01.wav'],
-  win:    ['audio/voice_win.wav'],
-  lose:   ['audio/voice_lose.wav']
+  paddle:  ['audio/paddle_01.wav', 'audio/paddle_02.wav', 'audio/paddle_03.wav'],
+  wall:    ['audio/wall_01.wav', 'audio/wall_02.wav', 'audio/wall_03.wav', 'audio/wall_04.wav', 'audio/wall_05.wav', 'audio/wall_06.wav'],
+  goal:    ['audio/goal_01.wav'],
+  win:     ['audio/voice_win.wav'],
+  lose:    ['audio/voice_lose.wav'],
+  restart: ['audio/voice_restart.wav']
 };
-const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85, win: 1.0, lose: 1.0 };
+const SOUND_GAIN = { paddle: 0.6, wall: 0.4, goal: 0.85, win: 1.0, lose: 1.0, restart: 1.0 };
 
 function initAudio() {
   if (audioCtx) return;
@@ -532,6 +533,9 @@ function endMatch(outcome) {
   setTimeout(function() {
     if (gameState === outcome) playSound(outcome);
   }, 600);
+  setTimeout(function() {
+    if (gameState === outcome) playSound('restart');
+  }, 2400);
 }
 
 function restartMatch() {
@@ -769,7 +773,7 @@ function drawGameOverOverlay() {
     ctx.globalAlpha = 0.55 + blink * 0.45;
     ctx.fillStyle = '#dde8f0';
     ctx.font = '500 22px sans-serif';
-    ctx.fillText('ホイールをまわすと もういちど', W/2, H/2 + 60);
+    ctx.fillText('レバーを回すともう一度遊べます！', W/2, H/2 + 60);
     ctx.globalAlpha = 1.0;
   }
 }
