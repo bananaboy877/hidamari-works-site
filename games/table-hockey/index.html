@@ -317,7 +317,7 @@ canvas {
       <div class="gauge-marker" id="marker" style="left:50%;"></div>
     </div>
     <span class="deg-label">270°</span>
-    <span class="key-hints"><kbd>F</kbd> 校正 · <kbd>R</kbd> リセット</span>
+    <span class="key-hints"><kbd>D</kbd> スマッシュ · <kbd>F</kbd> 校正 · <kbd>R</kbd> リセット</span>
   </div>
 </div>
 
@@ -411,6 +411,12 @@ const PUCK_R = 0.04;
 const INIT_SPEED = 0.0085;
 const Z_FRONT = 0.07;
 const Z_BACK = 0.93;
+
+const SMASH_DURATION = 18;
+const SMASH_FORWARD = 7;
+const SMASH_DISTANCE = 0.13;
+let smashT = 0;
+let padZ = Z_FRONT;
 
 const DIFF = {
   easy:   { aiSpd: 0.0065, returnSpd: 0.0075, jitter: 0.06,  noise: 0.040, delayFr: 10, whiffChance: 0.22, whiffMag: 0.22 },
@@ -559,6 +565,7 @@ function endMatch(outcome) {
   gameOverFrame = 0;
   restartCooldown = 30;
   puck.vx = 0; puck.vz = 0;
+  smashT = 0; padZ = Z_FRONT;
   setTimeout(function() {
     if (gameState === outcome) playSound(outcome);
   }, 600);
@@ -587,6 +594,7 @@ function reset() {
   aiJitterTimer = 30 + Math.random() * 90;
   whiffOffset = 0;
   rallyHits = 0;
+  smashT = 0;
   if (puck.vz > 0) rollWhiff();
 }
 
@@ -661,6 +669,21 @@ function step() {
   const aiLimit = 1 - PAD_W;
   padX = clamp((wheelOff / HALF) * playerLimit, -playerLimit, playerLimit);
 
+  if (smashT > 0) {
+    const elapsed = SMASH_DURATION - smashT;
+    let p;
+    if (elapsed < SMASH_FORWARD) {
+      p = elapsed / SMASH_FORWARD;
+    } else {
+      p = 1 - (elapsed - SMASH_FORWARD) / (SMASH_DURATION - SMASH_FORWARD);
+    }
+    p = p * p * (3 - 2 * p);
+    padZ = Z_FRONT + SMASH_DISTANCE * p;
+    smashT--;
+  } else {
+    padZ = Z_FRONT;
+  }
+
   padHist.push(padX);
   padHist.shift();
   padV = (padX - padHist[0]) / HIST_LEN;
@@ -699,12 +722,15 @@ function step() {
     if (puck.x <= -1 + PUCK_R) { puck.x = -1 + PUCK_R; puck.vx = -puck.vx; playSound('wall'); }
     else if (puck.x >= 1 - PUCK_R) { puck.x = 1 - PUCK_R; puck.vx = -puck.vx; playSound('wall'); }
 
-    if (puck.vz < 0 && puck.z <= Z_FRONT) {
+    if (puck.vz < 0 && puck.z <= padZ) {
       if (Math.abs(puck.x - padX) <= playerPadW + PUCK_R) {
-        puck.z = Z_FRONT;
+        puck.z = padZ;
         const incoming = Math.abs(puck.vz);
         const boost = Math.abs(padV) * 0.32;
-        puck.vz = Math.min(incoming + boost, 0.030 * speedScale);
+        const smashing = smashT > 0;
+        const cap = (smashing ? 0.045 : 0.030) * speedScale;
+        const extra = smashing ? 0.010 : 0;
+        puck.vz = Math.min(incoming + boost + extra, cap);
         const hit = (puck.x - padX) / playerPadW;
         puck.vx = clamp(puck.vx + hit * 0.005 + padV * 0.5, -0.020, 0.020);
         applyRallyAccel();
@@ -753,7 +779,7 @@ function draw() {
     const pc = PUCK_COLORS[puckColor];
     drawDisk(puck.x, puck.z, pc.fill, pc.stroke, 24, 9);
   }
-  drawDisk(padX, Z_FRONT, '#3a7ed8', '#0e2f5a', 38 * playerPadScale, 14 * playerPadScale);
+  drawDisk(padX, padZ, '#3a7ed8', '#0e2f5a', 38 * playerPadScale, 14 * playerPadScale);
 
   if (flash > 0) {
     ctx.fillStyle = 'rgba(255,240,150,' + (flash / 80) + ')';
@@ -874,6 +900,11 @@ document.addEventListener('keydown', function(e) {
   } else if (k === 'r') {
     e.preventDefault();
     restartMatch();
+  } else if (k === 'd') {
+    e.preventDefault();
+    if (gameState === 'playing' && smashT === 0) {
+      smashT = SMASH_DURATION;
+    }
   }
 });
 
