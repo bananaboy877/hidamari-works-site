@@ -865,6 +865,7 @@ const State = {
   playerProfile: null, // { reading: 'たかし', gender: 'M' } or null
   yukidama: { currentSize: 0, pillarHeight: 0 }, // 雪玉ころがしの永続状態
   travel: { currentPrefIdx: 0, stepsInPref: 0, totalSteps: 0, completedLoops: 0 }, // 日本一周の旅 永続状態
+  travelRand: { currentPrefIdx: 0, stepsInPref: 0, totalSteps: 0, completedLoops: 0 }, // 日本一周の旅(ランダム) 永続状態
   haikuCollection: [], // これまでに作った俳句のリスト (永続) [{theme,first,middle,last,firstAudio,middleAudio,lastAudio,ts}]
   audioEnabled: true, // ヘッダーの音声オン/オフトグル (永続)
 };
@@ -901,6 +902,12 @@ function loadState() {
         State.travel.totalSteps = data.travel.totalSteps | 0;
         State.travel.completedLoops = data.travel.completedLoops | 0;
       }
+      if (data.travelRand && typeof data.travelRand === 'object') {
+        State.travelRand.currentPrefIdx = data.travelRand.currentPrefIdx | 0;
+        State.travelRand.stepsInPref = data.travelRand.stepsInPref | 0;
+        State.travelRand.totalSteps = data.travelRand.totalSteps | 0;
+        State.travelRand.completedLoops = data.travelRand.completedLoops | 0;
+      }
       if (Array.isArray(data.haikuCollection)) {
         State.haikuCollection = data.haikuCollection;
       }
@@ -923,6 +930,7 @@ function saveState() {
       playerProfile: State.playerProfile,
       yukidama: State.yukidama,
       travel: State.travel,
+      travelRand: State.travelRand,
       haikuCollection: State.haikuCollection,
       audioEnabled: State.audioEnabled,
     }));
@@ -1005,7 +1013,20 @@ function updateHeaderName() {
 // 登録画面を開く（戻り先を記憶）
 let _registerFromScreen = 'title';
 function openRegister() {
-  _registerFromScreen = (State.screen === 'register') ? 'title' : State.screen;
+  // ゲームプレイ中に開いた場合はゲームを止める。止めないと裏でゲームが進行し続け、
+  // タイムアップ時に登録画面が結果画面に強制切替されてしまう
+  if (State.screen === 'playing') {
+    if (State.currentGame) {
+      const game = GameRegistry[State.currentGame];
+      if (game && game.cleanup) { try { game.cleanup(); } catch (e) {} }
+    }
+    onGameKey = null;
+    State.currentGame = null;
+    State.currentScore = 0;
+    _registerFromScreen = 'title';
+  } else {
+    _registerFromScreen = (State.screen === 'register') ? 'title' : State.screen;
+  }
   playSE('se_button.mp3');
   switchScreen('register');
   // 既存プロフィールがあれば入力欄に流し込み
@@ -1651,6 +1672,9 @@ function showIntroScreen(gameId) {
 }
 
 function showIntroReadyHint() {
+  // イントロを離れた後に3秒タイマーや音声完了から呼ばれると、
+  // 移動先画面のプロンプト繰り返しを乗っ取ってしまうためガード
+  if (State.screen !== 'intro') return;
   if (introReady) return;
   introReady = true;
   const hint = document.getElementById('intro-start-hint');
@@ -1776,9 +1800,15 @@ function showResultScreen(game, score, rankText, rankClass, medalCount, seName) 
     : rankClass === 'bronze' ? 'audio/result_bronze.wav'
     : 'audio/result_bronze.wav';
   setTimeout(() => {
+    // 結果画面を離れた後は読み上げチェーンを継続しない
+    // (stopAllAudio が合成 ended で pending の Promise を resolve するため、
+    //  ガードが無いと次画面のイントロ音声に重なって再生される)
+    if (State.screen !== 'result') return;
     playAudio(resultVoice).then(() => {
+      if (State.screen !== 'result') return;
       // 結果読み上げ後、「次のゲームへ」を読み上げ
       playAudio('audio/result_next.wav').then(() => {
+        if (State.screen !== 'result') return;
         startPromptRepeat('result');
       });
     });
@@ -2865,6 +2895,7 @@ registerGame('rhythm', {
           noteElements[idx].style.opacity = '0';
           combo = 0;
           missCount++;
+          updateScoreDisplay(); // 見逃しMissでもコンボ表示を0にリセットする
           showJudge('Miss', '#999');
           playSE('se_wrong.mp3');
         } else {
@@ -4484,9 +4515,11 @@ registerGame('hyakunin', {
       playSE('se_correct.mp3');
       // タイム読み上げ (下の句は既に読み上げ済み・表示済みなのでスキップ)
       const roundedSec = Math.min(10.0, Math.floor(reactionMs / 100) / 10);
-      const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
-      await playAudio(timeFile);
-      if (self._destroyed) return;
+      if (roundedSec > 0) { // time_0_0.wav は存在しない (0.1秒未満の反応はタイム読み上げをスキップ)
+        const timeFile = 'audio/time_' + roundedSec.toFixed(1).replace('.', '_') + '.wav';
+        await playAudio(timeFile);
+        if (self._destroyed) return;
+      }
       // 名前+褒め
       const profile = getPlayerProfile();
       const PRAISES = [
@@ -4849,36 +4882,40 @@ registerGame('haiku', {
       stopAllAudio();
       clearPromptRepeat();
       clearRestartHintRepeat();
+      // 読み上げ中にボタンで startTheme() が走ると picks が null になるため、
+      // ここでローカルに確保し、以降は phase が 'done' のままかも確認する
+      const done = { first: picks.first, middle: picks.middle, last: picks.last };
+      const alive = () => !self._destroyed && phase === 'done';
       // 完成俳句をコレクションに記録 (永続)
       State.haikuCollection.push({
         theme: selectedTheme,
-        first: picks.first.text,
-        middle: picks.middle.text,
-        last: picks.last.text,
-        firstAudio: picks.first.audio,
-        middleAudio: picks.middle.audio,
-        lastAudio: picks.last.audio,
+        first: done.first.text,
+        middle: done.middle.text,
+        last: done.last.text,
+        firstAudio: done.first.audio,
+        middleAudio: done.middle.audio,
+        lastAudio: done.last.audio,
         ts: Date.now(),
       });
       saveState();
       // できあがり → 上 → 中 → 下 を順に読み上げ
       await playAudio('audio/haiku/prompt_done.wav');
-      if (self._destroyed) return;
+      if (!alive()) return;
       await new Promise(r => setTimeout(r, 200));
-      if (self._destroyed) return;
-      await playAudio(picks.first.audio);
-      if (self._destroyed) return;
+      if (!alive()) return;
+      await playAudio(done.first.audio);
+      if (!alive()) return;
       await new Promise(r => setTimeout(r, 250));
-      if (self._destroyed) return;
-      await playAudio(picks.middle.audio);
-      if (self._destroyed) return;
+      if (!alive()) return;
+      await playAudio(done.middle.audio);
+      if (!alive()) return;
       await new Promise(r => setTimeout(r, 250));
-      if (self._destroyed) return;
-      await playAudio(picks.last.audio);
-      if (self._destroyed) return;
+      if (!alive()) return;
+      await playAudio(done.last.audio);
+      if (!alive()) return;
       // 完成俳句読み上げ後に名前+褒め (○○さん、すごい！)
       await playFinishPraise();
-      if (self._destroyed) return;
+      if (!alive()) return;
       // 5秒後に「新しい俳句をつくりたいときはボタンを押してね」、終了ごとに5秒待ってまた再生
       startRestartHintRepeat();
     }
@@ -5182,17 +5219,23 @@ registerGame('collection', {
     function startCurrentPlayback() {
       clearAutoAdvance();
       stopAllAudio();
+      // 世代カウンタ: stopAllAudio は合成 ended で旧チェーンの Promise を resolve するため、
+      // ガードが無いと手動送りのたびに旧チェーンが継続して音声が重なり
+      // 旧チェーン末尾の scheduleAutoAdvance が読み上げ途中のスキップを引き起こす
+      self._playGen = (self._playGen || 0) + 1;
+      const gen = self._playGen;
       if (filtered.length === 0) { autoStatus.textContent = ''; return; }
       autoStatus.textContent = '🎵 自動再生中';
       // 5俳句ごとに AudioContext リフレッシュ (ノード上限回避)
       if (currentIdx > 0 && currentIdx % 5 === 0) refreshAudioCtx();
       const entry = filtered[currentIdx];
+      const alive = () => !self._destroyed && gen === self._playGen;
       playAudio(entry.firstAudio)
         .then(() => new Promise(r => setTimeout(r, 250)))
-        .then(() => { if (!self._destroyed) return playAudio(entry.middleAudio); })
+        .then(() => { if (alive()) return playAudio(entry.middleAudio); })
         .then(() => new Promise(r => setTimeout(r, 250)))
-        .then(() => { if (!self._destroyed) return playAudio(entry.lastAudio); })
-        .then(() => { if (!self._destroyed) scheduleAutoAdvance(2500); });
+        .then(() => { if (alive()) return playAudio(entry.lastAudio); })
+        .then(() => { if (alive()) scheduleAutoAdvance(2500); });
     }
 
     // === 入力 ===
@@ -5258,6 +5301,10 @@ registerGame('travel', {
     self._timers = [];
     self._destroyed = false;
 
+    // 派生モード用パラメータ: stateKey = 進行状況の保存先、randomHands = 出題方式
+    const TS = State[self.stateKey || 'travel'];
+    const randomHands = !!self.randomHands;
+
     const PREFS = [
       '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県',
       '茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県',
@@ -5285,8 +5332,23 @@ registerGame('travel', {
       { voice: 'audio/praise_sugosugi.wav' },
     ];
 
+    // 手ごとの表示スタイルと指示音声 (a=グー, s=チョキ, d=パー)
+    const HAND_STYLES = {
+      a: { hand: 'rock',     name: 'グー',   border: '#ef5350', bg: 'rgba(255,228,231,0.92)', text: '#c62828', voice: 'audio/travel_press_goo.wav' },
+      s: { hand: 'scissors', name: 'チョキ', border: '#fbc02d', bg: 'rgba(255,248,214,0.92)', text: '#f57f17', voice: 'audio/travel_press_choki.wav' },
+      d: { hand: 'paper',    name: 'パー',   border: '#1e88e5', bg: 'rgba(220,236,252,0.92)', text: '#1565c0', voice: 'audio/travel_press_paa.wav' },
+    };
+    const HAND_KEYS = ['a', 's', 'd'];
+    // ランダム版の抽選: 直前に押した手 (= 今出ている手) は続けて出さない
+    function pickNextKey(prevKey) {
+      const pool = HAND_KEYS.filter(k => k !== prevKey);
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
     let lastPressTime = 0;
-    let expectedKey = State.travel.totalSteps % 2 === 0 ? 'a' : 'd'; // a=グー, d=パー
+    let expectedKey = randomHands
+      ? pickNextKey(null)
+      : (TS.totalSteps % 2 === 0 ? 'a' : 'd'); // 交互版: グー↔パー
     let busyAudio = false;
 
     // === UI構築 ===
@@ -5486,7 +5548,7 @@ registerGame('travel', {
     }
 
     function stepScene() {
-      const prefIdx = State.travel.currentPrefIdx;
+      const prefIdx = TS.currentPrefIdx;
       if (prefIdx !== currentPrefSceneIdx) applyPrefScene(prefIdx, false);
       roadside.forEach(el => {
         el.depth += 1 / 14;
@@ -5508,13 +5570,13 @@ registerGame('travel', {
     }
 
     // 初期シーン適用
-    applyPrefScene(State.travel.currentPrefIdx, true);
+    applyPrefScene(TS.currentPrefIdx, true);
     // === /道シーンここまで ===
 
     // 動物 (右上)
     const animalDiv = document.createElement('div');
     animalDiv.style.cssText = 'position:absolute;top:20px;right:40px;z-index:10;';
-    animalDiv.innerHTML = getAnimalSVG('rabbit', 90);
+    animalDiv.innerHTML = getAnimalSVG(self.animal || 'rabbit', 90);
     container.appendChild(animalDiv);
 
     // 通算歩数 (左上)
@@ -5563,30 +5625,21 @@ registerGame('travel', {
 
     // === 表示更新 ===
     function updateDisplay() {
-      const t = State.travel;
+      const t = TS;
       prefDiv.textContent = PREFS[t.currentPrefIdx % PREFS.length];
       totalDiv.textContent = '🚶 通算 ' + t.totalSteps + ' 歩';
       const pct = (t.stepsInPref / STEPS_PER_PREF) * 100;
       progressBar.style.width = pct + '%';
       progressLabel.textContent = t.stepsInPref + ' / ' + STEPS_PER_PREF + ' 歩';
       // ボタン指示更新 (じゃんけんバトルと同じ色 = 枠線とラベルで識別)
-      if (expectedKey === 'a') {
-        hintBtn.style.borderColor = '#ef5350';
-        hintBtn.style.background = 'rgba(255,228,231,0.92)';
-        hintImg.innerHTML = handImg('rock', 200);
-        hintName.textContent = 'グー';
-        hintName.style.color = '#c62828';
-        hintLabel.textContent = 'グーのボタンを押してね';
-        hintLabel.style.color = '#c62828';
-      } else {
-        hintBtn.style.borderColor = '#1e88e5';
-        hintBtn.style.background = 'rgba(220,236,252,0.92)';
-        hintImg.innerHTML = handImg('paper', 200);
-        hintName.textContent = 'パー';
-        hintName.style.color = '#1565c0';
-        hintLabel.textContent = 'パーのボタンを押してね';
-        hintLabel.style.color = '#1565c0';
-      }
+      const hs = HAND_STYLES[expectedKey] || HAND_STYLES.a;
+      hintBtn.style.borderColor = hs.border;
+      hintBtn.style.background = hs.bg;
+      hintImg.innerHTML = handImg(hs.hand, 200);
+      hintName.textContent = hs.name;
+      hintName.style.color = hs.text;
+      hintLabel.textContent = hs.name + 'のボタンを押してね';
+      hintLabel.style.color = hs.text;
     }
 
     function showEnterOverlay(prefName) {
@@ -5610,7 +5663,7 @@ registerGame('travel', {
         + '<div style="font-size:120px;font-weight:900;color:#d84315;text-shadow:6px 6px 0 #fff,-4px -4px 0 #fff,4px -4px 0 #fff,-4px 4px 0 #fff,0 6px 16px rgba(0,0,0,0.25);letter-spacing:14px;line-height:1.1;">日本一周</div>'
         + '<div style="font-size:104px;font-weight:900;color:#e65100;text-shadow:6px 6px 0 #fff,-4px -4px 0 #fff,4px -4px 0 #fff,-4px 4px 0 #fff,0 6px 16px rgba(0,0,0,0.25);letter-spacing:10px;margin-top:12px;">おめでとう！！</div>'
         + '<div style="font-size:70px;margin-top:24px;">🚶 🎌 🚶</div>'
-        + '<div style="font-size:34px;font-weight:700;color:#bf360c;margin-top:16px;text-shadow:2px 2px 0 #fff;">' + (State.travel.completedLoops) + ' 周め達成</div>';
+        + '<div style="font-size:34px;font-weight:700;color:#bf360c;margin-top:16px;text-shadow:2px 2px 0 #fff;">' + (TS.completedLoops) + ' 周め達成</div>';
       container.appendChild(overlay);
       requestAnimationFrame(() => { overlay.style.opacity = '1'; });
       const tFade = setTimeout(() => {
@@ -5623,7 +5676,7 @@ registerGame('travel', {
     }
 
     function currentPromptSrc() {
-      return expectedKey === 'a' ? 'audio/travel_press_goo.wav' : 'audio/travel_press_paa.wav';
+      return (HAND_STYLES[expectedKey] || HAND_STYLES.a).voice;
     }
     function clearPromptRepeat() {
       if (self._promptRepeatTimer) { clearInterval(self._promptRepeatTimer); self._promptRepeatTimer = null; }
@@ -5642,9 +5695,14 @@ registerGame('travel', {
       if (self._destroyed) return;
       clearPromptRepeat();
       busyAudio = true;
+      // 世代カウンタ: stopAllAudio は合成 ended で待機中の await を resolve するため、
+      // ガードが無いと連打時に旧チェーンが継続して褒め音声と指示音声が重なって再生される
+      self._flowGen = (self._flowGen || 0) + 1;
+      const gen = self._flowGen;
+      const stale = () => self._destroyed || gen !== self._flowGen;
       stopAllAudio();
       // 20歩ごとに AudioContext をリフレッシュ (ノード上限回避、長時間プレイ時の音切れ防止)
-      if (State.travel.totalSteps > 0 && State.travel.totalSteps % 20 === 0) {
+      if (TS.totalSteps > 0 && TS.totalSteps % 20 === 0) {
         refreshAudioCtx();
       }
       // SE は stopAllAudio の後で鳴らす (前に置くと即停止されて聞こえなくなる)
@@ -5657,34 +5715,34 @@ registerGame('travel', {
           // 沖縄踏破 → 日本一周完了！祝福演出 + 祝福TTS、その後 北海道へ
           playSE('se_victory.mp3');
           await playAudio('audio/travel_complete.wav');
-          if (self._destroyed) { busyAudio = false; return; }
+          if (stale()) { busyAudio = false; return; }
           // 余韻
           await new Promise(r => setTimeout(r, 500));
-          if (self._destroyed) { busyAudio = false; return; }
+          if (stale()) { busyAudio = false; return; }
           // 北海道入境
           await playAudio('audio/pref_01.wav');
         } else if (crossed) {
-          const idx = State.travel.currentPrefIdx;
+          const idx = TS.currentPrefIdx;
           await playAudio('audio/pref_' + String(idx + 1).padStart(2, '0') + '.wav');
         } else if (shouldPraise) {
           const profile = getPlayerProfile();
           const p = PRAISES[Math.floor(Math.random() * PRAISES.length)];
           if (profile) {
             await speakName(profile.reading, profile.gender);
-            if (self._destroyed) { busyAudio = false; return; }
+            if (stale()) { busyAudio = false; return; }
             await playAudio(p.voice);
           } else {
             await playAudio(p.voice);
           }
         }
-        if (self._destroyed) { busyAudio = false; return; }
+        if (stale()) { busyAudio = false; return; }
         // 次のボタン指示
         await playAudio(currentPromptSrc());
       } finally {
         busyAudio = false;
       }
-      // 押されないまま5秒経過したら繰り返し催促
-      if (!self._destroyed) startPromptRepeat();
+      // 押されないまま5秒経過したら繰り返し催促 (新しいチェーンが始まっていたら任せる)
+      if (!stale()) startPromptRepeat();
     }
 
     // === 入力ハンドラ ===
@@ -5700,34 +5758,34 @@ registerGame('travel', {
       const sinceLast = lastPressTime ? now - lastPressTime : 0;
       lastPressTime = now;
 
-      State.travel.totalSteps += 1;
-      State.travel.stepsInPref += 1;
+      TS.totalSteps += 1;
+      TS.stepsInPref += 1;
       let crossed = false;
       let justCompletedJapan = false;
-      if (State.travel.stepsInPref >= STEPS_PER_PREF) {
-        const wasLast = State.travel.currentPrefIdx === PREFS.length - 1; // 沖縄
-        State.travel.currentPrefIdx = (State.travel.currentPrefIdx + 1) % PREFS.length;
-        State.travel.stepsInPref = 0;
+      if (TS.stepsInPref >= STEPS_PER_PREF) {
+        const wasLast = TS.currentPrefIdx === PREFS.length - 1; // 沖縄
+        TS.currentPrefIdx = (TS.currentPrefIdx + 1) % PREFS.length;
+        TS.stepsInPref = 0;
         crossed = true;
         if (wasLast) {
           justCompletedJapan = true;
-          State.travel.completedLoops = (State.travel.completedLoops || 0) + 1;
+          TS.completedLoops = (TS.completedLoops || 0) + 1;
         }
       }
-      // 期待ボタン交代
-      expectedKey = expectedKey === 'a' ? 'd' : 'a';
+      // 次の出題: ランダム版は今押した手を除いて抽選、交互版はグー↔パー
+      expectedKey = randomHands ? pickNextKey(expectedKey) : (expectedKey === 'a' ? 'd' : 'a');
       saveState();
       updateDisplay();
       stepScene();
       if (justCompletedJapan) {
         showJapanCompleteOverlay();
       } else if (crossed) {
-        showEnterOverlay(PREFS[State.travel.currentPrefIdx]);
+        showEnterOverlay(PREFS[TS.currentPrefIdx]);
       }
 
       // 褒め判定: 入境が無く、(10歩ごと または 5秒以上空けた)
-      const shouldPraise = !crossed && State.travel.totalSteps > 0 &&
-        (State.travel.totalSteps % 10 === 0 || sinceLast >= PRAISE_DELAY_MS);
+      const shouldPraise = !crossed && TS.totalSteps > 0 &&
+        (TS.totalSteps % 10 === 0 || sinceLast >= PRAISE_DELAY_MS);
 
       // 正解SE は playFlow 内で stopAllAudio 後に鳴らす
       playFlow(crossed, shouldPraise, true, justCompletedJapan);
@@ -5748,6 +5806,22 @@ registerGame('travel', {
     if (this._promptRepeatTimer) { clearInterval(this._promptRepeatTimer); this._promptRepeatTimer = null; }
     onGameKey = null;
   },
+});
+
+// 日本一周の旅(ランダム): グー・チョキ・パーがランダムに出る派生版
+// (直前に押した手は続けて出ない。進行状況は本家と別セーブ = State.travelRand)
+registerGame('travel_rand', {
+  name: '日本一周の旅(ランダム)',
+  animal: 'tanuki',
+  description: 'グー・チョキ・パーがランダムに出る！出た手を押して日本中を旅しよう！',
+  introVoice: 'audio/intro_travel_rand.wav',
+  medalThresholds: { gold: 30, silver: 10, bronze: 1 },
+  stateKey: 'travelRand',
+  randomHands: true,
+  _timers: [],
+  _destroyed: false,
+  init: GameRegistry['travel'].init,
+  cleanup: GameRegistry['travel'].cleanup,
 });
 
 // 雪玉ころがし: はやおしバトル+雪玉成長 (永続。1問正解で1コ、1000で雪玉MAX→雪柱に積む)
