@@ -21,22 +21,40 @@ const TXT = '#3D2C2E';
 export const MODES = ['mix', 'bubble', 'sparkle', 'pop', 'burst', 'note'];
 export const LEVELS = { calm: 0.55, normal: 1, lively: 1.8 };
 
-// ---------------------------------------------------------------- レイアウト定数
-const CW = 3.9, CH = 2.95;
-const FW = CW - 0.2, FH = FW * 0.75;
+// ---------------------------------------------------------------- メモ帳のサイズ・文字の大きさ
+/** メモ帳のサイズ（3D の単位）。wide 系は横に長いノートのように書ける */
+export const SIZES = {
+  small:  { w: 3.2, h: 2.5,  label: '小さめ' },
+  normal: { w: 3.9, h: 2.95, label: 'ふつう' },
+  wide:   { w: 5.6, h: 3.0,  label: 'ワイド' },
+  xwide:  { w: 7.2, h: 3.1,  label: '特大ワイド' },
+};
+export const FONT_SCALE = { min: 0.6, max: 1.8, def: 1 };
+// 以下はレイアウトの現在値。configure() で書き換える（1 ページに 1 つの世界を想定）
+const PX_PER_UNIT = 1024 / 3.7;   // カード面テクスチャの解像度（1 単位あたりの画素）
 const FACE_Y = -0.06;
-const TW = 1024, TH = 768;
-const FRONT = { p: [0, 1.95, -0.35], r: [-0.08, 0, 0] };
+let CW, CH, FW, FH, TW, TH, FRONT;
 const SLOT_RZ = [0, 0.045, -0.035, 0.06];
-const slot = (k) => ({ p: [0.17 * k, 1.95 - 0.07 * k, -0.35 - 0.27 * k], r: [-0.08, -0.035 * k, SLOT_RZ[k] || 0.05] });
+const slot = (k) => ({ p: [0.17 * k, FRONT.p[1] - 0.07 * k, -0.35 - 0.27 * k], r: [-0.08, -0.035 * k, SLOT_RZ[k] || 0.05] });
 const KB = { x: -0.45, y: 0.03, z: 2.05, rx: 0.08 };
 const U = 0.36;           // キー 1 単位
 const PLUS = [3.6, 0.03, 2.05];
 
-// 文字組み
+// 文字組み（fontScale 倍）
 const PAD_X = 60, TOP = 64, BOTTOM = 30;
-const TITLE = { size: 108, lh: 132, weight: 900 };
-const BODY = { size: 78, lh: 104, weight: 800 };
+let TITLE, BODY;
+function setLayout(size = 'normal', fontScale = 1) {
+  const z = SIZES[size] || SIZES.normal;
+  CW = z.w; CH = z.h;
+  FW = CW - 0.2; FH = CH - 0.175;
+  TW = Math.round(FW * PX_PER_UNIT); TH = Math.round(FH * PX_PER_UNIT);
+  // カードの下端の高さはサイズによらずそろえる（キーボードに重ならない）
+  FRONT = { p: [0, 0.475 + CH / 2, -0.35], r: [-0.08, 0, 0] };
+  const k = clamp(fontScale, FONT_SCALE.min, FONT_SCALE.max);
+  TITLE = { size: Math.round(108 * k), lh: Math.round(132 * k), weight: 900 };
+  BODY = { size: Math.round(78 * k), lh: Math.round(104 * k), weight: 800 };
+}
+setLayout();
 
 // ---------------------------------------------------------------- キーボード配列（JIS）
 // [code, ラベル, 幅, 種類]  種類: '' 文字 / 'mod' 修飾 / 'enter' / 'bs' / 'space'
@@ -84,6 +102,18 @@ function layoutText(text) {
     }
     const w = measureCtx.measureText(ch).width;
     if (x + w > PAD_X + maxW && cur.text.length) {
+      // 英単語の途中なら、単語ごと次の行へ送る（日本語は 1 文字単位で折り返す）
+      const sp = cur.text.lastIndexOf(' ');
+      if (/[A-Za-z0-9]/.test(ch) && /[A-Za-z0-9]$/.test(cur.text) && sp > 0) {
+        const cut = cur.start + sp + 1;
+        cur.text = cur.text.slice(0, sp + 1);
+        push();
+        y += st.lh;
+        x = PAD_X;
+        cur = { start: cut, text: '', y, st, title: isTitle };
+        i = cut - 1;
+        continue;
+      }
       push();
       y += st.lh;
       x = PAD_X;
@@ -114,10 +144,8 @@ export function createMemoWorld() {
     for (let y = 120; y < h - 10; y += 46) { ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(w - 30, y); ctx.stroke(); }
   });
 
-  // ---- メモカード（表示用 2 枚 + 後ろに重なる 3 枚）
-  const cardGeo = G.box(CW, CH, 0.09, 0.14);
-  const stripGeo = G.box(CW - 0.12, 0.18, 0.11, 0.05);
-  const faceGeo = G.plane(FW, FH);
+  // ---- メモカード（表示用 2 枚 + 後ろに重なる 3 枚）。サイズ変更時は作り直す
+  let cardGeo, stripGeo, faceGeo;
   const pinSphere = G.sphere(0.14, 20, 14), pinNeck = G.cyl(0.1, 0.055, 0.1, 16);
 
   function makeCard(textured) {
@@ -135,9 +163,9 @@ export function createMemoWorld() {
       tex = canvasTexture(TW, TH, drawCardFace);
       face = mesh(faceGeo, new THREE.MeshBasicMaterial({ map: tex.tex, transparent: true }), { y: FACE_Y, z: 0.047, line: false, parent: body });
     } else {
-      face = mesh(G.plane(FW, FH), new THREE.MeshBasicMaterial({ map: ruled.tex }), { y: FACE_Y, z: 0.047, line: false, parent: body });
+      face = mesh(faceGeo, new THREE.MeshBasicMaterial({ map: ruled.tex }), { y: FACE_Y, z: 0.047, line: false, parent: body });
     }
-    const shadow = blobShadow(root, 1.6, { sz: 0.35 });
+    const shadow = blobShadow(root, CW * 0.41, { sz: 0.35 });
     return { g, body, stripMat, pinMat, tex, face, shadow, key: '', layout: null };
   }
 
@@ -185,8 +213,23 @@ export function createMemoWorld() {
     ctx.restore();
   }
 
-  const cardA = makeCard(true), cardB = makeCard(true);
-  const stack = [makeCard(false), makeCard(false), makeCard(false)];
+  let cardA, cardB, stack = [];
+  let layoutKey = '';
+  function disposeCard(c) {
+    root.remove(c.g); root.remove(c.shadow);
+    if (c.tex) { c.tex.tex.dispose(); c.face.material.dispose(); }
+  }
+  function buildCards() {
+    for (const c of [cardA, cardB, ...stack]) if (c) disposeCard(c);
+    for (const gm of [cardGeo, stripGeo, faceGeo]) if (gm) gm.dispose();
+    cardGeo = G.box(CW, CH, 0.09, 0.14);
+    stripGeo = G.box(CW - 0.12, 0.18, 0.11, 0.05);
+    faceGeo = G.plane(FW, FH);
+    cardA = makeCard(true); cardB = makeCard(true);
+    stack = [makeCard(false), makeCard(false), makeCard(false)];
+    layoutKey = TW + 'x' + TH + ':' + TITLE.size;
+  }
+  buildCards();
 
   function scrollFor(L, caret) {
     const p = L.pos[Math.min(caret, L.pos.length - 1)] || [0, 0];
@@ -340,6 +383,21 @@ export function createMemoWorld() {
   });
   const shine = mesh(G.plane(0.9, CH * 1.3), new THREE.MeshBasicMaterial({ map: shineTex.tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }), { z: 0.06, rz: -0.35, parent: cardA.body, line: false });
 
+  // ---------------------------------------------------------------- サイズ・文字の大きさの変更
+  let bumpPending = false, bumpT = -9;
+  /** メモ帳のサイズ（SIZES のキー）と文字の倍率を変える。カードを作り直してぽよんと弾ませる */
+  function configure({ size = 'normal', fontScale = 1 } = {}) {
+    const before = layoutKey + CW;
+    setLayout(size, fontScale);
+    if (before === TW + 'x' + TH + ':' + TITLE.size + CW) return;
+    buildCards();
+    cardA.body.add(caretMesh);
+    cardA.body.add(shine);
+    shine.scale.y = CH / 2.95;
+    fxRoot.position.set(FRONT.p[0], FRONT.p[1], FRONT.p[2]);
+    bumpPending = true;
+  }
+
   // ---------------------------------------------------------------- パーティクルの仕様
   const MODE_CYCLE = ['bubble', 'sparkle', 'pop', 'burst', 'note'];
   /** 1 イベントぶんの粒リスト（イベントに一度だけ計算してキャッシュ） */
@@ -469,10 +527,10 @@ export function createMemoWorld() {
         // 手前のカード → 右へスワイプしてから一番後ろへ回り込む
         bVis = true;
         const k1 = seg(p, 0, 0.5, easeInOut), k2 = seg(p, 0.45, 1, easeInOut);
-        const swipe = { p: [3.9, FRONT.p[1] + 0.55, FRONT.p[2] + 0.5], r: [-0.05, -0.85, -0.32] };
+        const swipe = { p: [CW / 2 + 1.95, FRONT.p[1] + 0.55, FRONT.p[2] + 0.5], r: [-0.05, -0.85, -0.32] };
         const s1 = mixT(front, swipe, k1);
         bT = k2 > 0 ? mixT(swipe, lastSlot, k2) : s1;
-        if (k2 > 0) bT.p = qbez(swipe.p, [2.4, FRONT.p[1] + 0.9, lastSlot.p[2] - 0.8], lastSlot.p, k2);
+        if (k2 > 0) bT.p = qbez(swipe.p, [CW / 2 + 0.45, FRONT.p[1] + 0.9, lastSlot.p[2] - 0.8], lastSlot.p, k2);
         bS = lerp(1.04, 1, k2);
         // 次のカード: 後ろから手前へ
         const k = seg(p, 0.12, 0.72, easeOutBack);
@@ -486,9 +544,9 @@ export function createMemoWorld() {
         const kb2 = seg(p, 0.1, 0.7, easeInOut);
         bT = mixT(front, slot(1), kb2);
         bS = 1;
-        const swipe = { p: [-3.9, FRONT.p[1] + 0.55, FRONT.p[2] + 0.5], r: [-0.05, 0.85, 0.32] };
+        const swipe = { p: [-(CW / 2 + 1.95), FRONT.p[1] + 0.55, FRONT.p[2] + 0.5], r: [-0.05, 0.85, 0.32] };
         const k1 = seg(p, 0, 0.45, easeInOut), k2 = seg(p, 0.4, 1, easeOutBack);
-        if (k2 <= 0) { aT = mixT(lastSlot, swipe, k1); aT.p = qbez(lastSlot.p, [-2.4, FRONT.p[1] + 0.9, lastSlot.p[2] - 0.8], swipe.p, k1); }
+        if (k2 <= 0) { aT = mixT(lastSlot, swipe, k1); aT.p = qbez(lastSlot.p, [-(CW / 2 + 0.45), FRONT.p[1] + 0.9, lastSlot.p[2] - 0.8], swipe.p, k1); }
         else aT = mixT(swipe, front, k2);
         aS = 1 + bump(p, 0.7, 1) * 0.05;
       } else if (tr.type === 'new') {
@@ -519,6 +577,10 @@ export function createMemoWorld() {
         aT.p[1] += bump(p, 0.32, 0.9) * 0.3;
       }
     }
+    if (bumpPending) { bumpT = now; bumpPending = false; }
+    const bz = bump(now - bumpT, 0, 0.5);
+    aS *= 1 + bz * 0.07;
+    aT.r[2] += Math.sin((now - bumpT) * 18) * bz * 0.04;
     setT(cardA.g, aT.p, aT.r, aS);
     cardA.g.visible = aVis;
     cardB.g.visible = bVis;
@@ -551,7 +613,7 @@ export function createMemoWorld() {
     for (const [c, vis] of [[cardA, aVis], [cardB, bVis]]) {
       c.shadow.visible = vis;
       c.shadow.position.set(c.g.position.x, 0.013, c.g.position.z + 0.3);
-      c.shadow.scale.setScalar(Math.max(1e-3, c.g.scale.x * clamp(1.2 - (c.g.position.y - 1.9) * 0.35, 0.3, 1.2)));
+      c.shadow.scale.setScalar(Math.max(1e-3, c.g.scale.x * clamp(1.2 - (c.g.position.y - FRONT.p[1]) * 0.35, 0.3, 1.2)));
     }
 
     // 光の帯（到着した瞬間にカードを走る）
@@ -664,7 +726,7 @@ export function createMemoWorld() {
           const a = age - born;
           if (a < 0 || a > 0.6) continue;
           const kk = born / TR_DUR[tr.type];
-          const px = tr.type === 'next' ? lerp(FRONT.p[0], 3.9, easeInOut(clamp(kk * 2))) : lerp(-3.9, FRONT.p[0], easeOutBack(clamp((kk - 0.4) / 0.6)));
+          const px = tr.type === 'next' ? lerp(FRONT.p[0], CW / 2 + 1.95, easeInOut(clamp(kk * 2))) : lerp(-(CW / 2 + 1.95), FRONT.p[0], easeOutBack(clamp((kk - 0.4) / 0.6)));
           const py = FRONT.p[1] + 0.3 + Math.sin(j * 2.3) * 0.9;
           const s = easeOutBack(clamp(a / 0.12)) * (1 - seg(a, 0.3, 0.6)) * 1.1;
           trail.set(tc++, px - sign * a * 0.8, py - a * 0.6, FRONT.p[2] + 0.4, 0, 0, a * 8 + j, s, PAL_NUM[j % 6]);
@@ -686,5 +748,5 @@ export function createMemoWorld() {
     trail.commit(tc); confWorld.commit(cc);
   }
 
-  return { scene, camera, root, update, fit, pick, caretLocal, keyCodes: () => [...keyMeshes.keys()] };
+  return { scene, camera, root, update, fit, pick, caretLocal, configure, keyCodes: () => [...keyMeshes.keys()] };
 }

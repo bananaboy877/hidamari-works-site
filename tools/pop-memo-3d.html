@@ -96,6 +96,45 @@ h1 {
 .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
 .seg .emoji { font-size: 17px; line-height: 1; }
 
+/* せってい */
+.set-btn {
+  font: inherit; font-size: 16px; font-weight: 800; color: var(--txt);
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 999px; box-shadow: var(--shadow); cursor: pointer;
+}
+.set-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+.set-btn[aria-expanded="true"] { background: var(--ink); color: #fff; }
+.settings {
+  position: fixed; right: 16px; top: 76px; z-index: 6;
+  width: 360px; max-width: calc(100vw - 24px); max-height: calc(100vh - 176px); overflow: auto;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 22px; box-shadow: 5px 6px 0 var(--ink);
+  padding: 16px 18px 18px;
+  transform-origin: top right;
+  transition: opacity .18s, transform .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+.settings[hidden] { display: block; opacity: 0; transform: scale(.92) translateY(-6px); pointer-events: none; visibility: hidden; }
+.settings h2 { font-size: 19px; font-weight: 900; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.settings h3 { font-size: 15px; font-weight: 900; margin: 14px 0 8px; display: flex; justify-content: space-between; align-items: baseline; }
+.settings h3 output { font-size: 15px; color: var(--pink); font-variant-numeric: tabular-nums; }
+.settings .close { font: inherit; font-size: 14px; font-weight: 800; border: 2px solid var(--ink); background: #fff; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.settings .seg { box-shadow: none; flex-wrap: wrap; border-radius: 18px; }
+.settings .seg button { flex: 1 1 auto; padding: 6px 8px; }
+.sizes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sizes button {
+  font: inherit; font-size: 12px; white-space: nowrap; font-weight: 800; color: var(--txt);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px;
+  height: 78px; padding: 8px 4px;
+  background: #fff; border: 2px solid var(--ink); border-radius: 14px; cursor: pointer;
+}
+.sizes button i { display: block; width: var(--w); height: var(--h); background: #fff; border: 2px solid var(--ink); border-top: 5px solid var(--pink); border-radius: 4px; }
+.sizes button[aria-pressed="true"] { background: #fff0f5; box-shadow: inset 0 0 0 2px var(--pink); }
+.slider { display: flex; align-items: center; gap: 10px; }
+.slider span { font-weight: 900; line-height: 1; }
+.slider .a-s { font-size: 14px; } .slider .a-l { font-size: 26px; }
+.slider input { flex: 1; accent-color: var(--pink); height: 32px; cursor: pointer; }
+.dep.off { opacity: .4; pointer-events: none; }
+.note { font-size: 12.5px; color: #8a7478; margin-top: 6px; font-weight: 700; }
+
 /* 下のバー */
 .bar {
   position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 5;
@@ -179,22 +218,49 @@ h1 {
     <a class="back" href="../">← ひだまりワークス</a>
     <h1>🍬 PoP MeMo! 3D</h1>
   </div>
-  <div class="fx">
+  <button class="set-btn" id="setBtn" type="button" aria-expanded="false" aria-controls="settings">🎨 せってい</button>
+</header>
+
+<div class="settings" id="settings" role="dialog" aria-label="せってい" hidden>
+  <h2>せってい <button class="close" id="setClose" type="button">とじる</button></h2>
+
+  <h3>メモ帳のサイズ</h3>
+  <div class="sizes" id="sizes" role="group" aria-label="メモ帳のサイズ">
+    <button type="button" data-size="small"  style="--w:26px;--h:20px"><i></i>小さめ</button>
+    <button type="button" data-size="normal" style="--w:32px;--h:24px"><i></i>ふつう</button>
+    <button type="button" data-size="wide"   style="--w:46px;--h:25px"><i></i>ワイド</button>
+    <button type="button" data-size="xwide"  style="--w:58px;--h:26px"><i></i>特大ワイド</button>
+  </div>
+
+  <h3><label for="fs">文字の大きさ</label> <output id="fsv" for="fs">100%</output></h3>
+  <div class="slider"><span class="a-s" aria-hidden="true">あ</span><input type="range" id="fs" min="60" max="180" step="5" value="100"><span class="a-l" aria-hidden="true">あ</span></div>
+
+  <h3>打ったときの演出</h3>
+  <div class="seg" role="group" aria-label="打ったときの演出" id="fxon">
+    <button type="button" data-fx="all">✨ ぜんぶ</button>
+    <button type="button" data-fx="enter">⏎ Enter だけ</button>
+    <button type="button" data-fx="none">🔕 なし</button>
+  </div>
+  <p class="note" id="fxNote"></p>
+
+  <div class="dep" id="dep">
+    <h3>演出のしゅるい</h3>
     <div class="seg" role="group" aria-label="演出のしゅるい" id="modes">
-      <button type="button" data-mode="mix" title="おまかせ"><span class="emoji">🎁</span> おまかせ</button>
-      <button type="button" data-mode="bubble" title="あわ"><span class="emoji">🫧</span></button>
-      <button type="button" data-mode="sparkle" title="キラキラ"><span class="emoji">✨</span></button>
-      <button type="button" data-mode="pop" title="ポップ"><span class="emoji">🎉</span></button>
-      <button type="button" data-mode="burst" title="かみふぶき"><span class="emoji">🎊</span></button>
-      <button type="button" data-mode="note" title="おんぷ"><span class="emoji">🎵</span></button>
+      <button type="button" data-mode="mix" title="おまかせ">🎁 おまかせ</button>
+      <button type="button" data-mode="bubble" title="あわ">🫧</button>
+      <button type="button" data-mode="sparkle" title="キラキラ">✨</button>
+      <button type="button" data-mode="pop" title="ポップ">🎉</button>
+      <button type="button" data-mode="burst" title="かみふぶき">🎊</button>
+      <button type="button" data-mode="note" title="おんぷ">🎵</button>
     </div>
+    <h3>にぎやかさ</h3>
     <div class="seg" role="group" aria-label="にぎやかさ" id="levels">
-      <button type="button" data-level="calm" title="おだやか">🌸<span class="lv-label"> おだやか</span></button>
-      <button type="button" data-level="normal" title="ふつう">🎪<span class="lv-label"> ふつう</span></button>
-      <button type="button" data-level="lively" title="にぎやか">🎆<span class="lv-label"> にぎやか</span></button>
+      <button type="button" data-level="calm">🌸 おだやか</button>
+      <button type="button" data-level="normal">🎪 ふつう</button>
+      <button type="button" data-level="lively">🎆 にぎやか</button>
     </div>
   </div>
-</header>
+</div>
 
 <div class="colors" id="colors" role="group" aria-label="新しいメモの色">
   <span>いろを えらぶ</span>
@@ -232,7 +298,7 @@ try {
 }
 const { THREE, renderer, renderFull, loadFonts } = engine;
 const UP = new THREE.Vector3(0, 1, 0);
-const { createMemoWorld, PALETTE, KEY_CHAR, normCode } = world;
+const { createMemoWorld, PALETTE, KEY_CHAR, normCode, SIZES } = world;
 
 // ---------------------------------------------------------------- 保存
 const KEY = 'popMemo3d.v1';
@@ -247,10 +313,12 @@ function loadStore() {
   return {
     memos: [{ id: uid(), text: '', color: 'pink' }, { id: uid(), ...HELP }],
     index: 0, mode: 'mix', level: reduce ? 'calm' : 'normal', seen: false,
+    size: 'normal', fontScale: 1, fxOn: 'all',
   };
 }
 const store = loadStore();
 store.index = Math.min(Math.max(0, store.index | 0), store.memos.length - 1);
+store.size ??= 'normal'; store.fontScale ??= 1; store.fxOn ??= 'all';
 let saveTimer = 0;
 function save(now = false) {
   clearTimeout(saveTimer);
@@ -262,6 +330,8 @@ addEventListener('pagehide', () => save(true));
 // ---------------------------------------------------------------- 3D
 await loadFonts();
 const W = createMemoWorld();
+if (!SIZES[store.size]) store.size = 'normal';
+W.configure({ size: store.size, fontScale: store.fontScale });
 const stageEl = document.getElementById('stage');
 stageEl.appendChild(renderer.domElement);
 
@@ -278,8 +348,16 @@ const S = {
 };
 let seed = 1;
 
+/** 演出を出してよいか（せってい「打ったときの演出」） */
+function fxAllowed(kind) {
+  if (store.fxOn === 'none') return false;
+  if (store.fxOn === 'enter') return kind === 'enter';
+  return true;
+}
 function spawn(kind, strength = 1) {
   const now = clock();
+  S.typedAt = now;
+  if (!fxAllowed(kind)) return;
   const memo = cur();
   const [x, y, s] = W.caretLocal(memo, ta.selectionEnd);
   S.fx.push({ t: now, kind, x, y, s: s * strength, seed: seed++, mode: store.mode });
@@ -310,12 +388,12 @@ addEventListener('keydown', (e) => {
   S.typedAt = now;
   if (e.key === 'PageDown') { e.preventDefault(); go(1); }
   else if (e.key === 'PageUp') { e.preventDefault(); go(-1); }
-  else if (e.key === 'Escape') setPlus(false);
+  else if (e.key === 'Escape') { setPlus(false); if (!setPanel.hidden) openSettings(false); }
   if (document.activeElement !== ta && !e.ctrlKey && !e.metaKey && !e.altKey && !isControl(document.activeElement)) ta.focus({ preventScroll: true });
 });
 addEventListener('keyup', (e) => { S.keys.set(normCode(e.code), { down: false, t: clock() }); });
 addEventListener('blur', () => { const now = clock(); for (const [k, v] of S.keys) if (v.down) S.keys.set(k, { down: false, t: now }); });
-const isControl = (el) => el && (el.tagName === 'BUTTON' || el.tagName === 'A');
+const isControl = (el) => el && (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'INPUT');
 
 // 画面のキーをクリックしたとき
 function virtualKey(code) {
@@ -442,6 +520,48 @@ document.querySelectorAll('#levels button').forEach(b => b.onclick = () => { sto
 syncSeg('modes', 'mode', store.mode);
 syncSeg('levels', 'level', store.level);
 
+// せっていパネル
+const setPanel = $('settings'), setBtn = $('setBtn');
+function openSettings(open) {
+  setPanel.hidden = !open;
+  setBtn.setAttribute('aria-expanded', String(open));
+  if (!open) ta.focus({ preventScroll: true });
+}
+setBtn.onclick = () => openSettings(setPanel.hidden);
+$('setClose').onclick = () => openSettings(false);
+setBtn.addEventListener('mousedown', (e) => e.preventDefault());
+
+// メモ帳のサイズ・文字の大きさ（スライダーは 1 フレームにまとめて反映）
+let pendingConfig = null;
+function reconfigure() { pendingConfig = { size: store.size, fontScale: store.fontScale }; }
+document.querySelectorAll('#sizes button').forEach(b => {
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+  b.onclick = () => { store.size = b.dataset.size; syncSeg('sizes', 'size', store.size); reconfigure(); save(); ta.focus({ preventScroll: true }); };
+});
+syncSeg('sizes', 'size', store.size);
+const fs = $('fs'), fsv = $('fsv');
+fs.value = Math.round(store.fontScale * 100);
+fsv.textContent = fs.value + '%';
+fs.addEventListener('input', () => { store.fontScale = fs.value / 100; fsv.textContent = fs.value + '%'; reconfigure(); save(); });
+fs.addEventListener('change', () => ta.focus({ preventScroll: true }));
+
+// 打ったときの演出
+const FX_NOTE = {
+  all: '1 文字ごとにキラキラ、Enter で大きなリングが出ます。',
+  enter: '文字を打つときは静か。Enter で改行したときだけ演出が出ます。',
+  none: '演出は出ません。キーボードの動きだけになります。',
+};
+function syncFx() {
+  syncSeg('fxon', 'fx', store.fxOn);
+  $('fxNote').textContent = FX_NOTE[store.fxOn];
+  $('dep').classList.toggle('off', store.fxOn === 'none');
+}
+document.querySelectorAll('#fxon button').forEach(b => {
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+  b.onclick = () => { store.fxOn = b.dataset.fx; syncFx(); save(); ta.focus({ preventScroll: true }); if (store.fxOn !== 'none') spawn('enter', 0.8); };
+});
+syncFx();
+
 let toastTimer = 0;
 function toast(msg) {
   const el = $('toast'); el.textContent = msg; el.classList.add('show');
@@ -459,6 +579,7 @@ let down = null;
 const ptr = { x: 0, y: 0 }, ptrS = { x: 0, y: 0 };
 function ndc(e) { return [(e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1]; }
 stageEl.addEventListener('pointerdown', (e) => {
+  if (!setPanel.hidden) openSettings(false);
   const [x, y] = ndc(e);
   down = { x: e.clientX, y: e.clientY, hit: W.pick(x, y), swiped: false };
   ta.focus({ preventScroll: true });
@@ -517,6 +638,7 @@ function frame() {
   }
   cam.aspect = w / h;
   cam.setViewOffset(innerWidth, innerHeight, 0, viewShift, innerWidth, innerHeight);
+  if (pendingConfig) { W.configure(pendingConfig); pendingConfig = null; }
   S.memos = store.memos; S.index = store.index;
   S.caret = ta.selectionEnd;
   S.focused = document.activeElement === ta && document.hasFocus();
