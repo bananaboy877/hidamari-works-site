@@ -503,7 +503,6 @@ export function createMemoWorld() {
 
     // ---- メモカード
     applyCard(cardA, memo, S.comp, S.caret);
-    const bob = Math.sin(now * 1.3) * 0.03;
     // 入力のたびに小さく弾む
     let jig = 0, hop = 0;
     for (const e of S.fx) {
@@ -512,8 +511,9 @@ export function createMemoWorld() {
       if (e.kind === 'enter') { jig += bump(a, 0, 0.4) * 0.05; hop += bump(a, 0, 0.35) * 0.09; }
       else jig += bump(a, 0, 0.18) * 0.012;
     }
-    const front = { p: [FRONT.p[0], FRONT.p[1] + bob + hop, FRONT.p[2]], r: FRONT.r.slice() };
-    front.r[2] = Math.sin(now * 0.9) * 0.012 + jig * 0.4;
+    // 何もしていないときは静止（ゆらゆらさせない）。打鍵・改行のときだけ弾む
+    const front = { p: [FRONT.p[0], FRONT.p[1] + hop, FRONT.p[2]], r: FRONT.r.slice() };
+    front.r[2] = jig * 0.4;
 
     let aT = front, aS = 1 + jig, aVis = true;
     let bVis = false, bT = front, bS = 1, ballVis = false;
