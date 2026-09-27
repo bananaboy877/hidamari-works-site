@@ -297,7 +297,6 @@ try {
   throw e;
 }
 const { THREE, renderer, renderFull, loadFonts } = engine;
-const UP = new THREE.Vector3(0, 1, 0);
 const { createMemoWorld, PALETTE, KEY_CHAR, normCode, SIZES } = world;
 
 // ---------------------------------------------------------------- 保存
@@ -576,7 +575,6 @@ $('hint').addEventListener('click', hideHint);
 
 // ---------------------------------------------------------------- ポインター（3D のキー・＋・ドット・メモのドラッグ）
 let down = null;
-const ptr = { x: 0, y: 0 }, ptrS = { x: 0, y: 0 };
 function ndc(e) { return [(e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1]; }
 stageEl.addEventListener('pointerdown', (e) => {
   if (!setPanel.hidden) openSettings(false);
@@ -585,7 +583,6 @@ stageEl.addEventListener('pointerdown', (e) => {
   ta.focus({ preventScroll: true });
 });
 addEventListener('pointermove', (e) => {
-  ptr.x = (e.clientX / innerWidth) * 2 - 1; ptr.y = (e.clientY / innerHeight) * 2 - 1;
   if (!down || down.swiped || !down.hit || down.hit.type !== 'card') return;
   const dx = e.clientX - down.x;
   if (Math.abs(dx) > 70) { down.swiped = true; go(dx < 0 ? 1 : -1); }
@@ -627,15 +624,9 @@ function frame() {
   const now = clock();
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
-  // 少しだけマウスに合わせて回り込む
-  ptrS.x += (ptr.x - ptrS.x) * 0.05; ptrS.y += (ptr.y - ptrS.y) * 0.05;
+  // カメラは固定（マウスで画面を動かさない）
   const base = cam.userData.base, tg = cam.userData.target;
-  if (base) {
-    const off = base.clone().sub(tg);
-    off.applyAxisAngle(UP, -ptrS.x * 0.08);
-    off.y += ptrS.y * off.length() * 0.03;
-    cam.position.copy(tg).add(off); cam.lookAt(tg);
-  }
+  if (base) { cam.position.copy(base); cam.lookAt(tg); }
   cam.aspect = w / h;
   cam.setViewOffset(innerWidth, innerHeight, 0, viewShift, innerWidth, innerHeight);
   if (pendingConfig) { W.configure(pendingConfig); pendingConfig = null; }
