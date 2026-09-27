@@ -87,7 +87,7 @@ function layoutText(text) {
   let y = TOP + TITLE.size + 6;
   let st = TITLE, x = PAD_X, lineStart = 0, isTitle = true;
   measureCtx.font = fontOf(st);
-  let cur = { start: 0, text: '', y, st, title: true };
+  let cur = { start: 0, text: '', y, st, title: true, xs: [PAD_X] };
   const push = () => { lines.push(cur); };
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
@@ -97,7 +97,7 @@ function layoutText(text) {
       if (isTitle) { isTitle = false; st = BODY; measureCtx.font = fontOf(st); y += TITLE.lh - TITLE.size + BODY.size + 8; }
       else y += BODY.lh;
       x = PAD_X; lineStart = i + 1;
-      cur = { start: i + 1, text: '', y, st, title: false };
+      cur = { start: i + 1, text: '', y, st, title: false, xs: [PAD_X] };
       continue;
     }
     const w = measureCtx.measureText(ch).width;
@@ -107,21 +107,23 @@ function layoutText(text) {
       if (/[A-Za-z0-9]/.test(ch) && /[A-Za-z0-9]$/.test(cur.text) && sp > 0) {
         const cut = cur.start + sp + 1;
         cur.text = cur.text.slice(0, sp + 1);
+        cur.xs = cur.xs.slice(0, sp + 2);
         push();
         y += st.lh;
         x = PAD_X;
-        cur = { start: cut, text: '', y, st, title: isTitle };
+        cur = { start: cut, text: '', y, st, title: isTitle, xs: [PAD_X] };
         i = cut - 1;
         continue;
       }
       push();
       y += st.lh;
       x = PAD_X;
-      cur = { start: i, text: '', y, st, title: isTitle };
+      cur = { start: i, text: '', y, st, title: isTitle, xs: [PAD_X] };
     }
     pos[i] = [x, y, st];
     cur.text += ch;
     x += w;
+    cur.xs.push(x);
   }
   pos[text.length] = [x, y, st];
   push();
@@ -170,7 +172,7 @@ export function createMemoWorld() {
   }
 
   // カード面の描画: memo = { text, color }, comp = [a, b] | null, scroll(px)
-  function drawCardFace(ctx, w, h, memo, comp, L, scroll = 0) {
+  function drawCardFace(ctx, w, h, memo, comp, L, scroll = 0, sel = null) {
     if (!memo) return;
     const c = colorOf(memo.color);
     // 罫線
@@ -186,6 +188,19 @@ export function createMemoWorld() {
       ctx.fillText('ここに書いてね ✏', PAD_X, TOP + TITLE.size + 6);
       ctx.font = fontOf(BODY);
       ctx.fillText('キーボードを打つだけ！', PAD_X, TOP + TITLE.size + 6 + TITLE.lh - TITLE.size + BODY.size + 8);
+    }
+    // 選択範囲（文字の後ろに、メモの色で薄く塗る）
+    if (sel && sel[1] > sel[0]) {
+      ctx.fillStyle = c.hex + '80';
+      for (const ln of L.lines) {
+        const a = Math.max(sel[0], ln.start), b = Math.min(sel[1], ln.start + ln.text.length);
+        const nl = memo.text[ln.start + ln.text.length] === '\n' && sel[0] <= ln.start + ln.text.length && sel[1] > ln.start + ln.text.length;
+        if (b <= a && !nl) continue;
+        const x1 = ln.xs[Math.max(0, a - ln.start)] ?? PAD_X;
+        const x2 = (b > a ? ln.xs[b - ln.start] : x1) + (nl ? 22 : 0);
+        const y = ln.y - scroll;
+        ctx.beginPath(); ctx.roundRect(x1 - 3, y - ln.st.size * 0.98, x2 - x1 + 6, ln.st.size * 1.24, 8); ctx.fill();
+      }
     }
     for (const ln of L.lines) {
       if (!ln.text) continue;
@@ -236,12 +251,12 @@ export function createMemoWorld() {
     const limit = TH - BOTTOM;
     return Math.max(0, p[1] + 22 - limit);
   }
-  function applyCard(card, memo, comp, caret) {
+  function applyCard(card, memo, comp, caret, sel = null) {
     const L = (card.layout && card.layout.text === memo.text) ? card.layout : Object.assign(layoutText(memo.text), { text: memo.text });
     card.layout = L;
     const scroll = scrollFor(L, caret ?? memo.text.length);
-    const key = memo.color + '\u0000' + memo.text + '\u0000' + (comp ? comp.join(',') : '') + '\u0000' + scroll;
-    if (card.key !== key) { card.tex.redraw(memo, comp, L, scroll); card.key = key; }
+    const key = memo.color + '\u0000' + memo.text + '\u0000' + (comp ? comp.join(',') : '') + '\u0000' + scroll + '\u0000' + (sel ? sel.join(',') : '');
+    if (card.key !== key) { card.tex.redraw(memo, comp, L, scroll, sel); card.key = key; }
     card.stripMat.color.setHex(colorOf(memo.color).num);
     card.scroll = scroll;
   }
@@ -504,6 +519,35 @@ export function createMemoWorld() {
     return null;
   }
 
+  // ---------------------------------------------------------------- 画面の点 → メモ帳の文字位置（クリック・ドラッグ選択用）
+  const hitPlane = new THREE.Plane(), hitPoint = new THREE.Vector3(), hitN = new THREE.Vector3(), hitO = new THREE.Vector3();
+  /** 画面座標（NDC）がメモ帳の何文字目のすき間に当たるか。{ index, inside } */
+  function hitCaret(ndcX, ndcY) {
+    const L = cardA.layout;
+    if (!L) return null;
+    ray.setFromCamera({ x: ndcX, y: ndcY }, camera);
+    const f = cardA.face;
+    f.updateWorldMatrix(true, false);
+    hitN.set(0, 0, 1).transformDirection(f.matrixWorld);
+    hitO.setFromMatrixPosition(f.matrixWorld);
+    hitPlane.setFromNormalAndCoplanarPoint(hitN, hitO);
+    if (!ray.ray.intersectPlane(hitPlane, hitPoint)) return null;
+    const lp = f.worldToLocal(hitPoint.clone());
+    const px = (lp.x / FW + 0.5) * TW, py = (0.5 - lp.y / FH) * TH;
+    const yy = py + (cardA.scroll || 0);
+    let best = L.lines[0], bd = Infinity;
+    for (const ln of L.lines) {
+      const d = Math.abs(yy - (ln.y - ln.st.size * 0.36));
+      if (d < bd) { bd = d; best = ln; }
+    }
+    let k = 0, kd = Infinity;
+    best.xs.forEach((x, j) => { const d = Math.abs(px - x); if (d < kd) { kd = d; k = j; } });
+    // ポインターの真下にある文字（ダブルクリックの語選択用）
+    let ch = best.start + best.text.length - 1;
+    for (let j = 0; j < best.text.length; j++) if (px < best.xs[j + 1]) { ch = best.start + j; break; }
+    return { index: best.start + k, char: Math.max(best.start, ch), inside: px >= 0 && px <= TW && py >= 0 && py <= TH };
+  }
+
   // ---------------------------------------------------------------- 描画ヘルパー
   const setT = (obj, p, r, s = 1) => {
     obj.position.set(p[0], p[1], p[2]);
@@ -532,7 +576,7 @@ export function createMemoWorld() {
     const p = tr ? clamp((now - tr.t) / TR_DUR[tr.type]) : 1;
 
     // ---- メモカード
-    applyCard(cardA, memo, S.comp, S.caret);
+    applyCard(cardA, memo, S.comp, S.caret, S.sel);
     // 入力のたびに小さく弾む
     let jig = 0, hop = 0;
     for (const e of S.fx) {
@@ -778,5 +822,5 @@ export function createMemoWorld() {
     trail.commit(tc); confWorld.commit(cc);
   }
 
-  return { scene, camera, root, update, fit, setView, pick, caretLocal, configure, keyCodes: () => [...keyMeshes.keys()] };
+  return { scene, camera, root, update, fit, setView, pick, hitCaret, caretLocal, configure, keyCodes: () => [...keyMeshes.keys()] };
 }

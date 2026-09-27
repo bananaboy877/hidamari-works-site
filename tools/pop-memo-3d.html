@@ -296,6 +296,7 @@ h1 {
 <div class="hint" id="hint">
   キーボードで <b>文字を打つ</b> と、メモ帳に書けます ✏️<br>
   画面のキーボードをクリックしても打てます。<br>
+  メモ帳を <b>ドラッグ</b> すると文字を選べます（Ctrl+C でコピー、Ctrl+V で貼りつけ）。<br>
   <small>◀ ▶ ボタンで、メモを切りかえ</small>
 </div>
 <div class="nogl" id="nogl">
@@ -494,10 +495,13 @@ function del() {
 }
 function disarm() { const b = $('del'); b.dataset.armed = 'false'; b.querySelector('.label').textContent = ' けす'; }
 async function copy() {
-  const text = cur().text;
+  const all = cur().text;
+  const part = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+  const text = part || all;
   if (!text) { toast('まだ何も書いていません'); return; }
-  try { await navigator.clipboard.writeText(text); toast('コピーしました 📋'); }
-  catch (_) { ta.select(); document.execCommand('copy'); toast('コピーしました 📋'); }
+  const msg = part ? '選んだところを コピーしました 📋' : 'メモを まるごと コピーしました 📋';
+  try { await navigator.clipboard.writeText(text); toast(msg); }
+  catch (_) { if (!part) ta.select(); document.execCommand('copy'); toast(msg); }
   spawn('enter', 0.8);
 }
 
@@ -601,29 +605,68 @@ function hideHint() {
 if (store.seen) $('hint').classList.add('hide');
 $('hint').addEventListener('click', hideHint);
 
-// ---------------------------------------------------------------- ポインター（3D のキー・＋・ドット）
-let down = null;
+// ---------------------------------------------------------------- ポインター（3D のキー・＋・ドット・メモ帳の文字選択）
+let down = null, drag = null;
 function ndc(e) { return [(e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1]; }
+// 画面をクリックしても入力欄のフォーカスが外れないように
+stageEl.addEventListener('mousedown', (e) => e.preventDefault());
 stageEl.addEventListener('pointerdown', (e) => {
   if (!setPanel.hidden) openSettings(false);
   const [x, y] = ndc(e);
   down = { hit: W.pick(x, y) };
   ta.focus({ preventScroll: true });
+  // メモ帳の上: クリックでカーソル移動、ドラッグで範囲選択（Shift+クリックで範囲をのばす）
+  if (down.hit && down.hit.type === 'card' && !S.comp && !busy()) {
+    const r = W.hitCaret(x, y);
+    if (r) {
+      const anchor = e.shiftKey ? (ta.selectionDirection === 'backward' ? ta.selectionEnd : ta.selectionStart) : r.index;
+      drag = { anchor };
+      selectTo(r.index);
+      stageEl.setPointerCapture(e.pointerId);
+    }
+  }
+});
+function selectTo(i) {
+  const a = drag.anchor;
+  ta.setSelectionRange(Math.min(a, i), Math.max(a, i), i < a ? 'backward' : 'forward');
+  S.typedAt = clock();
+}
+stageEl.addEventListener('pointermove', (e) => {
+  const [x, y] = ndc(e);
+  if (drag) {
+    const r = W.hitCaret(x, y);
+    if (r) selectTo(r.index);
+    return;
+  }
+  const h = W.pick(x, y);
+  stageEl.style.cursor = !h ? 'default' : h.type === 'card' ? 'text' : 'pointer';
 });
 addEventListener('pointerup', () => {
-  if (down && down.hit) {
+  if (down && down.hit && !drag) {
     const h = down.hit;
     if (h.type === 'key') virtualKey(h.code);
     else if (h.type === 'plus') setPlus(!S.plus.open);
     else if (h.type === 'dot') newMemo(h.color);
   }
-  down = null;
+  down = null; drag = null;
   setTimeout(() => ta.focus({ preventScroll: true }), 0);
 });
-stageEl.addEventListener('pointermove', (e) => {
+// ダブルクリックで、ひとまとまりの語（英単語・ひらがな・カタカナ・漢字の続き）を選ぶ
+const charClass = (c) => /[A-Za-z0-9_]/.test(c) ? 'w' : /[\u3041-\u309f]/.test(c) ? 'h' : /[\u30a0-\u30ff\uff66-\uff9f]/.test(c) ? 'k' : /[\u3400-\u9fff\uf900-\ufaff々]/.test(c) ? 'j' : c === '\n' ? 'n' : /\s/.test(c) ? 's' : 'o';
+stageEl.addEventListener('dblclick', (e) => {
   const [x, y] = ndc(e);
   const h = W.pick(x, y);
-  stageEl.style.cursor = h && h.type !== 'card' ? 'pointer' : 'default';
+  if (!h || h.type !== 'card' || S.comp) return;
+  const r = W.hitCaret(x, y);
+  if (!r) return;
+  const t = ta.value;
+  let i = Math.min(r.char ?? r.index, t.length - 1);
+  const cls = charClass(t[i] || '');
+  if (!t.length || cls === 'n') return;
+  let a = i, b = i + 1;
+  while (a > 0 && charClass(t[a - 1]) === cls) a--;
+  while (b < t.length && charClass(t[b]) === cls) b++;
+  ta.setSelectionRange(a, b, 'forward');
 });
 
 // ---------------------------------------------------------------- ループ
@@ -652,7 +695,9 @@ function frame() {
   cam.setViewOffset(innerWidth, innerHeight, 0, viewShift, innerWidth, innerHeight);
   if (pendingConfig) { W.configure(pendingConfig); pendingConfig = null; }
   S.memos = store.memos; S.index = store.index;
-  S.caret = ta.selectionEnd;
+  // キャレットは選択の「動かしている側」、選択範囲は色付けに使う
+  S.caret = ta.selectionDirection === 'backward' ? ta.selectionStart : ta.selectionEnd;
+  S.sel = ta.selectionStart !== ta.selectionEnd ? [ta.selectionStart, ta.selectionEnd] : null;
   S.focused = document.activeElement === ta && document.hasFocus();
   S.fx = S.fx.filter(e => now - e.t < 2);
   W.update(now, S);
