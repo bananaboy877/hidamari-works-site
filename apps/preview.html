@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シーン プレビュー（開発用）</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #f6ecdc; font-family: sans-serif; }
+  #wrap { padding: 12px; }
+  canvas { display: block; background: var(--bg, #fde7c8); border: 2px solid #2b2320; border-radius: 14px; }
+  .bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 13px; }
+  input[type=range] { width: 480px; }
+  body.cap #wrap { padding: 0; }
+  body.cap canvas { border: 0; border-radius: 0; }
+  body.cap .bar { display: none; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div class="bar">
+    <select id="sel"></select>
+    <input id="t" type="range" min="0" max="1" step="0.001" value="0">
+    <span id="tv"></span>
+    <label><input id="play" type="checkbox" checked> 再生</label>
+  </div>
+</div>
+<script type="module">
+import { loadScene, renderTo } from './engine.js';
+import { APPS } from './apps-data.js';
+
+const q = new URLSearchParams(location.search);
+const slug = q.get('slug') || APPS[0].slug;
+const W = +(q.get('w') || 640), H = +(q.get('h') || 480);
+if (q.has('cap')) document.body.classList.add('cap');
+const app = APPS.find(a => a.slug === slug);
+const cv = document.getElementById('c');
+cv.width = W; cv.height = H;
+cv.style.width = W + 'px'; cv.style.height = H + 'px';
+if (app) cv.style.setProperty('--bg', app.bg);
+
+const sel = document.getElementById('sel');
+for (const a of APPS) sel.add(new Option(a.title, a.slug, false, a.slug === slug));
+sel.onchange = () => { q.set('slug', sel.value); location.search = q.toString(); };
+
+await document.fonts.ready;
+const inst = await loadScene(slug);
+const slider = document.getElementById('t');
+slider.max = inst.duration;
+const tv = document.getElementById('tv');
+window.__duration = inst.duration;
+window.__renderAt = (t) => { renderTo(inst, cv, t, null); return true; };
+window.__ready = true;
+
+const play = document.getElementById('play');
+let t0 = performance.now(), last = 0;
+function loop(now) {
+  if (!q.has('cap')) {
+    if (play.checked) { last = ((now - t0) / 1000) % inst.duration; slider.value = last; }
+    else { last = +slider.value; t0 = now - last * 1000; }
+    tv.textContent = last.toFixed(2) + ' / ' + inst.duration + 's';
+    renderTo(inst, cv, last, null);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

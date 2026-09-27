@@ -4,3 +4,6 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# 3D パネルのキャプチャ（開発用）
+apps/_frames/

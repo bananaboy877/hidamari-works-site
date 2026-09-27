@@ -152,6 +152,19 @@ button { font: inherit; cursor: pointer; }
   max-width: 540px;
 }
 
+.hero-cta {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 15px; font-weight: 800;
+  text-decoration: none;
+  background: var(--ink); color: var(--panel);
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  box-shadow: 3px 4px 0 var(--accent);
+  transition: transform .15s, box-shadow .15s;
+}
+.hero-cta:hover { transform: translate(-1px, -2px); box-shadow: 4px 6px 0 var(--accent); }
+
 /* Showcase */
 .showcase { padding: 6px 0 30px; }
 .showcase-head {
@@ -431,9 +444,10 @@ button { font: inherit; cursor: pointer; }
     transform: none;
     box-shadow: var(--shadow-base);
   }
-  html { scroll-behavior: auto; }
 }
-html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 </style>
 </head>
 <body>
@@ -446,6 +460,7 @@ html { scroll-behavior: smooth; }
     <span class="nav-brand-text">ひだまりワークス</span>
   </a>
   <div class="nav-links">
+    <a href="apps/">アプリ一覧</a>
     <a href="#works">Works</a>
     <a href="#about">About</a>
     <a href="#notes">Notes</a>
@@ -458,6 +473,7 @@ html { scroll-behavior: smooth; }
     <mark>ぽかぽか</mark>な つくりもの、あつめました。
   </h1>
   <p class="hero-sub">ツール、ゲーム、アプリ。気軽に使ったり、遊んでみてください。</p>
+  <a class="hero-cta" href="apps/">はじめての方は こちら → 動く絵でアプリをえらぶ</a>
 </header>
 
 <section class="showcase" aria-labelledby="showcase-h2">
