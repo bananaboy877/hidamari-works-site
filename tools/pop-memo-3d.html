@@ -128,6 +128,16 @@ h1 {
 }
 .sizes button i { display: block; width: var(--w); height: var(--h); background: #fff; border: 2px solid var(--ink); border-top: 5px solid var(--pink); border-radius: 4px; }
 .sizes button[aria-pressed="true"] { background: #fff0f5; box-shadow: inset 0 0 0 2px var(--pink); }
+.views { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.views button {
+  font: inherit; font-size: 15px; font-weight: 900; color: var(--txt);
+  display: grid; justify-items: center; gap: 4px; padding: 10px 6px;
+  background: #fff; border: 2px solid var(--ink); border-radius: 14px; cursor: pointer;
+}
+.views button small { font-size: 11.5px; font-weight: 700; color: #8a7478; }
+.views button[aria-pressed="true"] { background: #fff0f5; box-shadow: inset 0 0 0 2px var(--pink); }
+.views b { display: block; width: 44px; height: 30px; border: 2px solid var(--ink); border-top: 6px solid var(--pink); border-radius: 4px; background: #fff; }
+.views .v-angle { transform: perspective(60px) rotateX(38deg); }
 .slider { display: flex; align-items: center; gap: 10px; }
 .slider span { font-weight: 900; line-height: 1; }
 .slider .a-s { font-size: 14px; } .slider .a-l { font-size: 26px; }
@@ -224,6 +234,12 @@ h1 {
 <div class="settings" id="settings" role="dialog" aria-label="せってい" hidden>
   <h2>せってい <button class="close" id="setClose" type="button">とじる</button></h2>
 
+  <h3>見る角度</h3>
+  <div class="views" id="views" role="group" aria-label="見る角度">
+    <button type="button" data-view="angle"><b class="v-angle" aria-hidden="true"></b>ななめ<small>机ぜんたい</small></button>
+    <button type="button" data-view="front"><b class="v-front" aria-hidden="true"></b>正面<small>メモが見やすい</small></button>
+  </div>
+
   <h3>メモ帳のサイズ</h3>
   <div class="sizes" id="sizes" role="group" aria-label="メモ帳のサイズ">
     <button type="button" data-size="small"  style="--w:26px;--h:20px"><i></i>小さめ</button>
@@ -312,12 +328,12 @@ function loadStore() {
   return {
     memos: [{ id: uid(), text: '', color: 'pink' }, { id: uid(), ...HELP }],
     index: 0, mode: 'mix', level: reduce ? 'calm' : 'normal', seen: false,
-    size: 'normal', fontScale: 1, fxOn: 'all',
+    size: 'normal', fontScale: 1, fxOn: 'all', view: 'angle',
   };
 }
 const store = loadStore();
 store.index = Math.min(Math.max(0, store.index | 0), store.memos.length - 1);
-store.size ??= 'normal'; store.fontScale ??= 1; store.fxOn ??= 'all';
+store.size ??= 'normal'; store.fontScale ??= 1; store.fxOn ??= 'all'; store.view ??= 'angle';
 let saveTimer = 0;
 function save(now = false) {
   clearTimeout(saveTimer);
@@ -331,6 +347,7 @@ await loadFonts();
 const W = createMemoWorld();
 if (!SIZES[store.size]) store.size = 'normal';
 W.configure({ size: store.size, fontScale: store.fontScale });
+W.setView(store.view);
 const stageEl = document.getElementById('stage');
 stageEl.appendChild(renderer.domElement);
 
@@ -538,6 +555,17 @@ document.querySelectorAll('#sizes button').forEach(b => {
   b.onclick = () => { store.size = b.dataset.size; syncSeg('sizes', 'size', store.size); reconfigure(); save(); ta.focus({ preventScroll: true }); };
 });
 syncSeg('sizes', 'size', store.size);
+
+// 見る角度
+document.querySelectorAll('#views button').forEach(b => {
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+  b.onclick = () => {
+    if (store.view === b.dataset.view) return;
+    store.view = b.dataset.view; syncSeg('views', 'view', store.view);
+    W.setView(store.view, clock()); save(); ta.focus({ preventScroll: true });
+  };
+});
+syncSeg('views', 'view', store.view);
 const fs = $('fs'), fsv = $('fsv');
 fs.value = Math.round(store.fontScale * 100);
 fsv.textContent = fs.value + '%';
@@ -624,9 +652,7 @@ function frame() {
   const now = clock();
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
-  // カメラは固定（マウスで画面を動かさない）
-  const base = cam.userData.base, tg = cam.userData.target;
-  if (base) { cam.position.copy(base); cam.lookAt(tg); }
+  // カメラは固定（マウスで画面を動かさない）。角度の切り替え中はワールドが動かす
   cam.aspect = w / h;
   cam.setViewOffset(innerWidth, innerHeight, 0, viewShift, innerWidth, innerHeight);
   if (pendingConfig) { W.configure(pendingConfig); pendingConfig = null; }

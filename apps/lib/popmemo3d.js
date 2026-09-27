@@ -35,7 +35,7 @@ const PX_PER_UNIT = 1024 / 3.7;   // カード面テクスチャの解像度（1
 const FACE_Y = -0.06;
 let CW, CH, FW, FH, TW, TH, FRONT;
 const SLOT_RZ = [0, 0.045, -0.035, 0.06];
-const slot = (k) => ({ p: [0.17 * k, FRONT.p[1] - 0.07 * k, -0.35 - 0.27 * k], r: [-0.08, -0.035 * k, SLOT_RZ[k] || 0.05] });
+const slot = (k) => ({ p: [0.17 * k, FRONT.p[1] - 0.07 * k, -0.35 - 0.27 * k], r: [FRONT.r[0], -0.035 * k, SLOT_RZ[k] || 0.05] });
 const KB = { x: -0.45, y: 0.03, z: 2.05, rx: 0.08 };
 const U = 0.36;           // キー 1 単位
 const PLUS = [3.6, 0.03, 2.05];
@@ -395,6 +395,7 @@ export function createMemoWorld() {
     cardA.body.add(shine);
     shine.scale.y = CH / 2.95;
     fxRoot.position.set(FRONT.p[0], FRONT.p[1], FRONT.p[2]);
+    placeCamera(viewT + 99); // 傾き（見る角度）とカメラの寄りを新しいサイズで置き直す
     bumpPending = true;
   }
 
@@ -440,21 +441,49 @@ export function createMemoWorld() {
     return out;
   }
 
-  // ---------------------------------------------------------------- カメラ
-  const camDir = new THREE.Vector3(0, 0.42, 1).normalize();
-  const camTarget = new THREE.Vector3(0.3, 1.32, 0.55);
+  // ---------------------------------------------------------------- カメラ（見る角度）
+  // angle: 机ぜんたいを斜め上から / front: メモ帳を正面から（紙に書く感覚で読みやすい）
+  const VIEWS = {
+    angle: { dir: new THREE.Vector3(0, 0.42, 1).normalize(), target: new THREE.Vector3(0.3, 1.32, 0.55), cardRx: -0.08 },
+    front: { dir: new THREE.Vector3(0, 0.16, 1).normalize(), target: new THREE.Vector3(0, 1.28, 0.2), cardRx: -0.16 },
+  };
+  let fitArgs = { aspect: 4 / 3, vfrac: 1, zoom: 1 };
+  let viewFrom = 0, viewTo = 0, viewT = -99;
+  const viewAmount = (now) => lerp(viewFrom, viewTo, easeInOut(clamp((now - viewT) / 0.7)));
+  /** 見る角度を変える（now 秒から 0.7 秒かけて移る。now を省くと即座に） */
+  function setView(view, now) {
+    const to = view === 'front' ? 1 : 0;
+    if (now == null) { viewFrom = viewTo = to; viewT = -99; }
+    else { viewFrom = viewAmount(now); viewTo = to; viewT = now; }
+    placeCamera(now ?? 0);
+  }
+  const tmpDir = new THREE.Vector3(), tmpTg = new THREE.Vector3();
+  /** いまの角度でカメラを置く。カードの傾きもここで合わせる */
+  function placeCamera(now) {
+    const a = viewAmount(now);
+    const A = VIEWS.angle, F = VIEWS.front;
+    tmpDir.copy(A.dir).lerp(F.dir, a).normalize();
+    tmpTg.copy(A.target).lerp(F.target, a);
+    FRONT.r[0] = lerp(A.cardRx, F.cardRx, a);
+    fxRoot.rotation.x = FRONT.r[0];
+    const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
+    // 正面ではメモ帳を大きく（キーボードは下に少し見える程度）
+    const hw = lerp(4.45, Math.max(CW / 2 + 0.7, 3.9), a);
+    const hh = lerp(3.0, 2.55, a);
+    const { aspect, vfrac, zoom } = fitArgs;
+    const d = Math.max(hh / (Math.tan(vf) * vfrac), hw / (Math.tan(vf) * aspect)) / zoom;
+    camera.position.copy(tmpTg).addScaledVector(tmpDir, d);
+    camera.lookAt(tmpTg);
+    camera.userData.base = camera.position.clone();
+    camera.userData.target = tmpTg.clone();
+  }
   /**
    * 机の上のもの全体が収まるようにカメラを引く
    * vfrac: 画面の高さのうち実際に使える割合（上下に UI がある場合）
    */
   function fit(aspect, { vfrac = 1, zoom = 1 } = {}) {
-    const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
-    const hw = 4.45, hh = 3.0;
-    const d = Math.max(hh / (Math.tan(vf) * vfrac), hw / (Math.tan(vf) * aspect)) / zoom;
-    camera.position.copy(camTarget).addScaledVector(camDir, d);
-    camera.lookAt(camTarget);
-    camera.userData.base = camera.position.clone();
-    camera.userData.target = camTarget.clone();
+    fitArgs = { aspect, vfrac, zoom };
+    placeCamera(viewT + 99);
   }
 
   // ---------------------------------------------------------------- ピック
@@ -496,6 +525,7 @@ export function createMemoWorld() {
    * }
    */
   function update(now, S) {
+    if (now - viewT < 0.75) placeCamera(now);
     const memo = S.memos[S.index];
     const n = S.memos.length;
     const tr = S.trans && now - S.trans.t < TR_DUR[S.trans.type] ? S.trans : null;
@@ -748,5 +778,5 @@ export function createMemoWorld() {
     trail.commit(tc); confWorld.commit(cc);
   }
 
-  return { scene, camera, root, update, fit, pick, caretLocal, configure, keyCodes: () => [...keyMeshes.keys()] };
+  return { scene, camera, root, update, fit, setView, pick, caretLocal, configure, keyCodes: () => [...keyMeshes.keys()] };
 }
