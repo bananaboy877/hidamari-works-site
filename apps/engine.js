@@ -70,13 +70,18 @@ export function outlineMaterial(color = INK, px = 2.2) {
     vertexShader: /* glsl */`
       uniform vec2 uRes; uniform float uPx;
       void main() {
-        vec4 clip = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        vec3 vn = normalize(normalMatrix * normal);
+        #ifdef USE_INSTANCING
+          mat4 im = instanceMatrix;
+        #else
+          mat4 im = mat4(1.0);
+        #endif
+        vec4 clip = projectionMatrix * modelViewMatrix * im * vec4(position, 1.0);
+        vec3 vn = normalize(normalMatrix * (mat3(im) * normal));
         vec2 d = (projectionMatrix * vec4(vn, 0.0)).xy * uRes;
         float l = length(d);
         d = l > 1e-6 ? d / l : vec2(0.0);
         // ポップ登場などで極小スケールになったメッシュは輪郭も細らせる（点だけ残るのを防ぐ）
-        float sc = pow(abs(determinant(mat3(modelMatrix))), 1.0 / 3.0);
+        float sc = pow(abs(determinant(mat3(modelMatrix) * mat3(im))), 1.0 / 3.0);
         float px = uPx * uRes.y / 480.0 * smoothstep(0.0, 0.03, sc);
         clip.xy += d * px * 2.0 / uRes * clip.w;
         clip.z += 0.0004 * clip.w;
@@ -100,6 +105,40 @@ export function outline(mesh, { color = INK, px = 2.2 } = {}) {
   h.renderOrder = mesh.renderOrder;
   mesh.add(h);
   return mesh;
+}
+
+/**
+ * 輪郭線つきのインスタンス描画（大量のパーティクル向け）
+ * @returns {{ mesh, set(i, x,y,z, rx,ry,rz, s, color?), commit(n) }}
+ */
+export function instanced(geo, material, count, { line = { color: INK, px: 1.4 } } = {}) {
+  const mat = (material && material.isMaterial) ? material : toon(material, { unique: true });
+  const m = new THREE.InstancedMesh(geo, mat, count);
+  m.frustumCulled = false;
+  m.count = 0;
+  let hull = null;
+  if (line) {
+    hull = new THREE.InstancedMesh(hullGeometry(geo), outlineMaterial(line.color ?? INK, line.px ?? 1.4), count);
+    hull.instanceMatrix = m.instanceMatrix; // 行列は本体と共有
+    hull.frustumCulled = false;
+    hull.raycast = () => {};
+    hull.count = 0;
+    m.add(hull);
+  }
+  const o = new THREE.Object3D(), c = new THREE.Color();
+  return {
+    mesh: m,
+    set(i, x, y, z, rx, ry, rz, s, color) {
+      o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.scale.setScalar(Math.max(1e-4, s));
+      o.updateMatrix(); m.setMatrixAt(i, o.matrix);
+      if (color != null) m.setColorAt(i, c.set(color));
+    },
+    commit(n) {
+      m.count = n; if (hull) hull.count = n;
+      m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    },
+  };
 }
 
 /**
@@ -337,6 +376,17 @@ export async function loadScene(slug) {
 function ensureSize(w, h) {
   const c = renderer.domElement;
   if (c.width < w || c.height < h) renderer.setSize(Math.max(c.width, w), Math.max(c.height, h), false);
+}
+
+/** 画面いっぱいのアプリ用: renderer.domElement に直接描く（w, h はデバイスピクセル） */
+export function renderFull(scene, camera, w, h) {
+  const c = renderer.domElement;
+  if (c.width !== w || c.height !== h) renderer.setSize(w, h, false);
+  resUniform.value.set(w, h);
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, w, h);
+  renderer.clear();
+  renderer.render(scene, camera);
 }
 
 /** 1 フレームをレンダリングして dst(2D canvas) へ転写 */

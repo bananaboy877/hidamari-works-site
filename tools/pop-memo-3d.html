@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🍬 PoP MeMo! 3D | ひだまりワークス</title>
+<meta name="description" content="キーボードを打つと、画面の中の 3D キーボードも動いて、メモ帳に文字が書かれていく。書くたびにキラキラ演出が出る、たのしいメモアプリ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<style>
+:root {
+  --ink: #2b2320;
+  --txt: #3D2C2E;
+  --pink: #FF6B9D; --orange: #FF8A5C; --yellow: #FFC75F; --green: #65E6A7; --blue: #5BB5F0; --purple: #B47AEA;
+  --panel: #fff;
+  --shadow: 3px 3px 0 var(--ink);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+  font-weight: 700;
+  color: var(--txt);
+  background: #fff5f0;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* ふわふわ浮かぶ背景の丸 */
+.bg { position: fixed; inset: 0; overflow: hidden; background: linear-gradient(180deg, #ffe6f0 0%, #fff5f0 60%, #fff0e6 100%); }
+.bg i { position: absolute; border-radius: 50%; filter: blur(40px); opacity: .45; animation: float 18s ease-in-out infinite alternate; }
+.bg i:nth-child(1) { width: 38vmax; height: 38vmax; background: var(--pink); left: -10vmax; top: -12vmax; opacity: .22; }
+.bg i:nth-child(2) { width: 30vmax; height: 30vmax; background: var(--yellow); right: -8vmax; top: 10vh; opacity: .25; animation-duration: 23s; }
+.bg i:nth-child(3) { width: 26vmax; height: 26vmax; background: var(--blue); left: 20vw; bottom: -14vmax; opacity: .18; animation-duration: 27s; }
+.bg i:nth-child(4) { width: 22vmax; height: 22vmax; background: var(--purple); right: 18vw; bottom: -10vmax; opacity: .16; animation-duration: 21s; }
+@keyframes float { to { transform: translate(4vmax, 3vmax) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .bg i { animation: none; } }
+
+#stage { position: fixed; inset: 0; touch-action: none; }
+#stage canvas { width: 100%; height: 100%; display: block; }
+
+/* 入力を受ける見えない textarea（IME の候補窓がメモの近くに出るよう中央寄りに置く） */
+#input {
+  position: fixed; left: 40%; top: 38%;
+  width: 20%; height: 2em;
+  opacity: 0; resize: none; border: 0; outline: 0;
+  font-size: 16px; color: transparent; caret-color: transparent; background: transparent;
+  z-index: 1; pointer-events: none;
+}
+
+/* 上のバー */
+.top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 14px 18px;
+  pointer-events: none;
+}
+.top > * { pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.back {
+  text-decoration: none; color: var(--ink);
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 999px; box-shadow: var(--shadow);
+  padding: 7px 14px; font-size: 14px; font-weight: 800;
+}
+.back:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+h1 {
+  font-size: 26px; font-weight: 900; letter-spacing: .01em;
+  background: linear-gradient(90deg, var(--pink), var(--orange), var(--yellow), var(--green), var(--blue), var(--purple), var(--pink));
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 1px rgb(61 44 46 / .15);
+  animation: rainbow 6s linear infinite;
+}
+@keyframes rainbow { to { background-position: 200% 0; } }
+@media (prefers-reduced-motion: reduce) { h1 { animation: none; } }
+
+.fx { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.seg {
+  display: flex; gap: 2px;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 999px; box-shadow: var(--shadow);
+  padding: 3px;
+}
+.seg button {
+  font: inherit; font-size: 14px; font-weight: 800; color: var(--txt);
+  border: 0; background: transparent; border-radius: 999px;
+  padding: 6px 11px; cursor: pointer; min-height: 36px;
+}
+.seg button:hover { background: #fff0f5; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.seg .emoji { font-size: 17px; line-height: 1; }
+
+/* 下のバー */
+.bar {
+  position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 5;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 26px; box-shadow: 4px 5px 0 var(--ink);
+  padding: 8px 10px;
+  max-width: calc(100vw - 24px);
+}
+.btn {
+  font: inherit; font-size: 16px; font-weight: 800; color: var(--txt);
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 48px; padding: 0 16px;
+  background: #fff; border: 2px solid var(--ink); border-radius: 999px;
+  cursor: pointer; transition: transform .12s, box-shadow .12s, background .12s;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.btn:active { transform: translate(1px, 1px); box-shadow: 0 0 0 var(--ink); }
+.btn:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 2px 2px 0 var(--ink); }
+.btn.icon { width: 48px; justify-content: center; padding: 0; font-size: 20px; }
+.btn.plus { background: linear-gradient(135deg, var(--pink), var(--orange)); color: #fff; }
+.btn.danger[data-armed="true"] { background: #ffe3e8; color: #c2185b; }
+.count { min-width: 64px; text-align: center; font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.sep { width: 2px; height: 30px; background: #f0dfe3; border-radius: 2px; }
+
+/* 色えらび（＋を押すと出る） */
+.colors {
+  position: fixed; left: 50%; transform: translate(-50%, 8px) scale(.9); z-index: 6;
+  display: flex; gap: 10px; align-items: center;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 4px 5px 0 var(--ink);
+  padding: 10px 14px;
+  opacity: 0; pointer-events: none; transition: opacity .18s, transform .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+.colors.open { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+.colors span { font-size: 14px; font-weight: 800; margin-right: 4px; }
+.colors button {
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); cursor: pointer;
+  background: var(--c); box-shadow: 2px 2px 0 var(--ink); transition: transform .12s;
+}
+.colors button:hover { transform: scale(1.15); }
+
+.toast {
+  position: fixed; left: 50%; top: 84px; transform: translate(-50%, -10px); z-index: 7;
+  background: var(--ink); color: #fff; border-radius: 999px; padding: 10px 20px;
+  font-size: 16px; font-weight: 800;
+  opacity: 0; transition: opacity .2s, transform .25s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.hint {
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 4; width: max-content; max-width: calc(100vw - 32px);
+  background: rgb(255 255 255 / .95); border: 2px solid var(--ink); border-radius: 22px; box-shadow: 4px 5px 0 var(--ink);
+  padding: 20px 26px; text-align: center; font-size: 17px; line-height: 1.8;
+  transition: opacity .3s;
+}
+.hint b { color: var(--pink); }
+.hint.hide { opacity: 0; pointer-events: none; }
+
+.nogl { position: fixed; inset: 0; display: none; place-items: center; text-align: center; padding: 24px; font-size: 17px; line-height: 1.8; z-index: 9; }
+.nogl.show { display: grid; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .top { padding: 10px 12px; }
+  h1 { font-size: 20px; }
+  .seg button { padding: 5px 8px; font-size: 13px; }
+  .lv-label { display: none; }
+  .btn .label { display: none; }
+  .btn { padding: 0 12px; }
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div id="stage" aria-hidden="true"></div>
+<textarea id="input" aria-label="メモの内容" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+
+<header class="top">
+  <div class="brand">
+    <a class="back" href="../">← ひだまりワークス</a>
+    <h1>🍬 PoP MeMo! 3D</h1>
+  </div>
+  <div class="fx">
+    <div class="seg" role="group" aria-label="演出のしゅるい" id="modes">
+      <button type="button" data-mode="mix" title="おまかせ"><span class="emoji">🎁</span> おまかせ</button>
+      <button type="button" data-mode="bubble" title="あわ"><span class="emoji">🫧</span></button>
+      <button type="button" data-mode="sparkle" title="キラキラ"><span class="emoji">✨</span></button>
+      <button type="button" data-mode="pop" title="ポップ"><span class="emoji">🎉</span></button>
+      <button type="button" data-mode="burst" title="かみふぶき"><span class="emoji">🎊</span></button>
+      <button type="button" data-mode="note" title="おんぷ"><span class="emoji">🎵</span></button>
+    </div>
+    <div class="seg" role="group" aria-label="にぎやかさ" id="levels">
+      <button type="button" data-level="calm" title="おだやか">🌸<span class="lv-label"> おだやか</span></button>
+      <button type="button" data-level="normal" title="ふつう">🎪<span class="lv-label"> ふつう</span></button>
+      <button type="button" data-level="lively" title="にぎやか">🎆<span class="lv-label"> にぎやか</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="colors" id="colors" role="group" aria-label="新しいメモの色">
+  <span>いろを えらぶ</span>
+</div>
+
+<nav class="bar" aria-label="メモの操作">
+  <button class="btn icon" id="prev" type="button" aria-label="前のメモ">◀</button>
+  <div class="count" id="count" aria-live="polite">1 / 1</div>
+  <button class="btn icon" id="next" type="button" aria-label="次のメモ">▶</button>
+  <span class="sep" aria-hidden="true"></span>
+  <button class="btn plus" id="new" type="button">＋<span class="label"> あたらしいメモ</span></button>
+  <button class="btn" id="copy" type="button">📋<span class="label"> コピー</span></button>
+  <button class="btn danger" id="del" type="button">🗑<span class="label"> けす</span></button>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="hint" id="hint">
+  キーボードで <b>文字を打つ</b> と、メモ帳に書けます ✏️<br>
+  画面のキーボードをクリックしても打てます。<br>
+  <small>◀ ▶ やメモ帳を左右にドラッグして、メモを切りかえ</small>
+</div>
+<div class="nogl" id="nogl">
+  <div>ごめんなさい、このブラウザでは 3D を表示できませんでした。<br><a href="pop-memo.html">ふつうの PoP MeMo! をひらく</a></div>
+</div>
+
+<script type="module">
+let engine, world;
+try {
+  engine = await import('../apps/engine.js');
+  world = await import('../apps/lib/popmemo3d.js');
+} catch (e) {
+  console.warn(e);
+  document.getElementById('nogl').classList.add('show');
+  throw e;
+}
+const { THREE, renderer, renderFull, loadFonts } = engine;
+const UP = new THREE.Vector3(0, 1, 0);
+const { createMemoWorld, PALETTE, KEY_CHAR, normCode } = world;
+
+// ---------------------------------------------------------------- 保存
+const KEY = 'popMemo3d.v1';
+const HELP = { text: 'つかいかた\n打つとキラキラ！\n◀ ▶ で切りかえ\n＋ で新しいメモ', color: 'yellow' };
+const uid = () => Math.random().toString(36).slice(2, 10);
+function loadStore() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (s && Array.isArray(s.memos) && s.memos.length) return s;
+  } catch (_) {}
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return {
+    memos: [{ id: uid(), text: '', color: 'pink' }, { id: uid(), ...HELP }],
+    index: 0, mode: 'mix', level: reduce ? 'calm' : 'normal', seen: false,
+  };
+}
+const store = loadStore();
+store.index = Math.min(Math.max(0, store.index | 0), store.memos.length - 1);
+let saveTimer = 0;
+function save(now = false) {
+  clearTimeout(saveTimer);
+  const run = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (_) {} };
+  now ? run() : (saveTimer = setTimeout(run, 400));
+}
+addEventListener('pagehide', () => save(true));
+
+// ---------------------------------------------------------------- 3D
+await loadFonts();
+const W = createMemoWorld();
+const stageEl = document.getElementById('stage');
+stageEl.appendChild(renderer.domElement);
+
+const $ = (id) => document.getElementById(id);
+const ta = $('input');
+const cur = () => store.memos[store.index];
+const clock = () => performance.now() / 1000;
+
+// 描画に渡す状態
+const S = {
+  memos: store.memos, index: store.index, caret: 0, comp: null,
+  keys: new Map(), fx: [], trans: null, plus: { open: false, t: -9 },
+  level: store.level, focused: true, typedAt: -9,
+};
+let seed = 1;
+
+function spawn(kind, strength = 1) {
+  const now = clock();
+  const memo = cur();
+  const [x, y, s] = W.caretLocal(memo, ta.selectionEnd);
+  S.fx.push({ t: now, kind, x, y, s: s * strength, seed: seed++, mode: store.mode });
+  S.typedAt = now;
+}
+
+// ---------------------------------------------------------------- 入力
+let compStart = -1;
+ta.addEventListener('compositionstart', () => { compStart = ta.selectionStart; });
+ta.addEventListener('compositionupdate', (e) => { S.comp = [compStart, compStart + (e.data || '').length]; });
+ta.addEventListener('compositionend', () => { S.comp = null; compStart = -1; });
+ta.addEventListener('input', (e) => {
+  const memo = cur();
+  memo.text = ta.value;
+  const t = e.inputType || '';
+  if (t.startsWith('delete')) spawn('del');
+  else if (t === 'insertLineBreak' || e.data === '\n') spawn('enter');
+  else if (t === 'insertFromPaste' || t === 'insertFromDrop') spawn('enter', 1.2);
+  else spawn('char');
+  hideHint();
+  save();
+});
+
+addEventListener('keydown', (e) => {
+  const now = clock();
+  const code = normCode(e.code);
+  if (!e.repeat) S.keys.set(code, { down: true, t: now });
+  S.typedAt = now;
+  if (e.key === 'PageDown') { e.preventDefault(); go(1); }
+  else if (e.key === 'PageUp') { e.preventDefault(); go(-1); }
+  else if (e.key === 'Escape') setPlus(false);
+  if (document.activeElement !== ta && !e.ctrlKey && !e.metaKey && !e.altKey && !isControl(document.activeElement)) ta.focus({ preventScroll: true });
+});
+addEventListener('keyup', (e) => { S.keys.set(normCode(e.code), { down: false, t: clock() }); });
+addEventListener('blur', () => { const now = clock(); for (const [k, v] of S.keys) if (v.down) S.keys.set(k, { down: false, t: now }); });
+const isControl = (el) => el && (el.tagName === 'BUTTON' || el.tagName === 'A');
+
+// 画面のキーをクリックしたとき
+function virtualKey(code) {
+  const now = clock();
+  S.keys.set(code, { down: true, t: now });
+  setTimeout(() => S.keys.set(code, { down: false, t: clock() }), 110);
+  ta.focus({ preventScroll: true });
+  const a = ta.selectionStart, b = ta.selectionEnd;
+  let ch = null;
+  if (code.startsWith('Key')) ch = code.slice(3).toLowerCase();
+  else if (code.startsWith('Digit')) ch = code.slice(5);
+  else if (code === 'Enter') ch = '\n';
+  else if (KEY_CHAR[code] != null) ch = KEY_CHAR[code];
+  if (code === 'Backspace') {
+    if (a === b && a === 0) return;
+    ta.setRangeText('', a === b ? a - 1 : a, b, 'end');
+    cur().text = ta.value; spawn('del');
+  } else if (ch != null) {
+    ta.setRangeText(ch, a, b, 'end');
+    cur().text = ta.value; spawn(ch === '\n' ? 'enter' : 'char');
+  } else return;
+  hideHint();
+  save();
+}
+
+// ---------------------------------------------------------------- メモ操作
+function snapshot() { const m = cur(); return { id: m.id, text: m.text, color: m.color }; }
+function busy() { return S.trans && clock() - S.trans.t < 0.45; }
+function loadMemoIntoInput() {
+  ta.value = cur().text;
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  S.comp = null;
+  S.index = store.index;
+  updateBar();
+}
+function go(dir) {
+  if (store.memos.length < 2) { toast('メモは 1 まいだけです。＋ で増やせます'); return; }
+  if (busy() || S.comp) return;
+  const from = snapshot();
+  store.index = (store.index + dir + store.memos.length) % store.memos.length;
+  S.trans = { type: dir > 0 ? 'next' : 'prev', t: clock(), from };
+  loadMemoIntoInput();
+  save();
+}
+function setPlus(open) {
+  if (S.plus.open === open) return;
+  S.plus = { open, t: clock() };
+  $('colors').classList.toggle('open', open);
+}
+function newMemo(color) {
+  if (busy()) return;
+  const from = snapshot();
+  store.memos.splice(store.index, 0, { id: uid(), text: '', color });
+  S.trans = { type: 'new', t: clock(), from, color };
+  S.plus = { open: false, t: clock() };
+  $('colors').classList.remove('open');
+  loadMemoIntoInput();
+  save();
+  ta.focus({ preventScroll: true });
+}
+let armTimer = 0;
+function del() {
+  const b = $('del');
+  if (b.dataset.armed !== 'true') {
+    b.dataset.armed = 'true';
+    b.querySelector('.label').textContent = ' もう一度で けす';
+    toast('もう一度おすと、このメモを けします');
+    clearTimeout(armTimer);
+    armTimer = setTimeout(disarm, 3000);
+    return;
+  }
+  disarm();
+  if (busy()) return;
+  const from = snapshot();
+  store.memos.splice(store.index, 1);
+  if (!store.memos.length) store.memos.push({ id: uid(), text: '', color: 'pink' });
+  store.index = store.index % store.memos.length;
+  S.trans = { type: 'delete', t: clock(), from };
+  loadMemoIntoInput();
+  save();
+  toast('けしました');
+}
+function disarm() { const b = $('del'); b.dataset.armed = 'false'; b.querySelector('.label').textContent = ' けす'; }
+async function copy() {
+  const text = cur().text;
+  if (!text) { toast('まだ何も書いていません'); return; }
+  try { await navigator.clipboard.writeText(text); toast('コピーしました 📋'); }
+  catch (_) { ta.select(); document.execCommand('copy'); toast('コピーしました 📋'); }
+  spawn('enter', 0.8);
+}
+
+// ---------------------------------------------------------------- UI
+function updateBar() {
+  const n = store.memos.length;
+  $('count').textContent = `${store.index + 1} / ${n}`;
+  $('prev').disabled = $('next').disabled = n < 2;
+}
+$('prev').onclick = () => go(-1);
+$('next').onclick = () => go(1);
+$('new').onclick = () => setPlus(!S.plus.open);
+$('copy').onclick = copy;
+$('del').onclick = del;
+for (const b of document.querySelectorAll('.bar button, .seg button')) {
+  // ボタンを押しても入力欄のフォーカスを失わない
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+}
+const colorsEl = $('colors');
+for (const c of PALETTE) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.style.setProperty('--c', c.hex); b.setAttribute('aria-label', c.id + ' のメモ');
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+  b.onclick = () => newMemo(c.id);
+  colorsEl.appendChild(b);
+}
+function placeColors() {
+  const r = $('new').getBoundingClientRect();
+  colorsEl.style.bottom = (innerHeight - r.top + 12) + 'px';
+}
+function syncSeg(id, attr, val) {
+  for (const b of document.querySelectorAll(`#${id} button`)) b.setAttribute('aria-pressed', String(b.dataset[attr] === val));
+}
+document.querySelectorAll('#modes button').forEach(b => b.onclick = () => { store.mode = b.dataset.mode; syncSeg('modes', 'mode', store.mode); save(); ta.focus({ preventScroll: true }); spawn('char'); });
+document.querySelectorAll('#levels button').forEach(b => b.onclick = () => { store.level = S.level = b.dataset.level; syncSeg('levels', 'level', store.level); save(); ta.focus({ preventScroll: true }); spawn('enter', 0.8); });
+syncSeg('modes', 'mode', store.mode);
+syncSeg('levels', 'level', store.level);
+
+let toastTimer = 0;
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+function hideHint() {
+  if (store.seen) return;
+  store.seen = true; $('hint').classList.add('hide'); save();
+}
+if (store.seen) $('hint').classList.add('hide');
+$('hint').addEventListener('click', hideHint);
+
+// ---------------------------------------------------------------- ポインター（3D のキー・＋・ドット・メモのドラッグ）
+let down = null;
+const ptr = { x: 0, y: 0 }, ptrS = { x: 0, y: 0 };
+function ndc(e) { return [(e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1]; }
+stageEl.addEventListener('pointerdown', (e) => {
+  const [x, y] = ndc(e);
+  down = { x: e.clientX, y: e.clientY, hit: W.pick(x, y), swiped: false };
+  ta.focus({ preventScroll: true });
+});
+addEventListener('pointermove', (e) => {
+  ptr.x = (e.clientX / innerWidth) * 2 - 1; ptr.y = (e.clientY / innerHeight) * 2 - 1;
+  if (!down || down.swiped || !down.hit || down.hit.type !== 'card') return;
+  const dx = e.clientX - down.x;
+  if (Math.abs(dx) > 70) { down.swiped = true; go(dx < 0 ? 1 : -1); }
+});
+addEventListener('pointerup', () => {
+  if (down && !down.swiped && down.hit) {
+    const h = down.hit;
+    if (h.type === 'key') virtualKey(h.code);
+    else if (h.type === 'plus') setPlus(!S.plus.open);
+    else if (h.type === 'dot') newMemo(h.color);
+  }
+  down = null;
+  setTimeout(() => ta.focus({ preventScroll: true }), 0);
+});
+stageEl.addEventListener('pointermove', (e) => {
+  const [x, y] = ndc(e);
+  const h = W.pick(x, y);
+  stageEl.style.cursor = h && h.type !== 'card' ? 'pointer' : h ? 'grab' : 'default';
+});
+
+// ---------------------------------------------------------------- ループ
+let viewShift = 0;
+function layout() {
+  const top = document.querySelector('.top').getBoundingClientRect().bottom;
+  const bot = innerHeight - document.querySelector('.bar').getBoundingClientRect().top;
+  // 上下のバーのあいだの帯に机全体が収まるよう引き、投影の中心を帯の中心へずらす
+  W.fit(innerWidth / innerHeight, { vfrac: Math.max(0.4, (innerHeight - top - bot - 16) / innerHeight) });
+  viewShift = (bot - top) / 2;
+  placeColors();
+}
+addEventListener('resize', layout);
+loadMemoIntoInput();
+layout();
+ta.focus({ preventScroll: true });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ta.focus({ preventScroll: true }); });
+
+const cam = W.camera;
+function frame() {
+  const now = clock();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+  // 少しだけマウスに合わせて回り込む
+  ptrS.x += (ptr.x - ptrS.x) * 0.05; ptrS.y += (ptr.y - ptrS.y) * 0.05;
+  const base = cam.userData.base, tg = cam.userData.target;
+  if (base) {
+    const off = base.clone().sub(tg);
+    off.applyAxisAngle(UP, -ptrS.x * 0.08);
+    off.y += ptrS.y * off.length() * 0.03;
+    cam.position.copy(tg).add(off); cam.lookAt(tg);
+  }
+  cam.aspect = w / h;
+  cam.setViewOffset(innerWidth, innerHeight, 0, viewShift, innerWidth, innerHeight);
+  S.memos = store.memos; S.index = store.index;
+  S.caret = ta.selectionEnd;
+  S.focused = document.activeElement === ta && document.hasFocus();
+  S.fx = S.fx.filter(e => now - e.t < 2);
+  W.update(now, S);
+  renderFull(W.scene, cam, w, h);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -3,43 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ひだまりワークス | ぽかぽかなつくりもの</title>
-<meta name="description" content="ツール、ゲーム、アプリ。ひだまりワークスがつくる、ぽかぽかな個人制作の置き場所です。気軽に使ったり、遊んでみてください。">
+<title>ひだまりワークス | やってみたいものを、えらんでください</title>
+<meta name="description" content="ひだまりワークスのゲームとツールの置き場所。動く絵を見て、やってみたいアプリをえらんでください。リハビリ向けゲーム、メモ、画像加工、3Dプリント用のツールがあります。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
 <style>
 :root {
   --bg: oklch(95% 0.04 75);
   --bg-dot: oklch(85% 0.06 65 / 0.4);
-  --ink: oklch(22% 0.01 60);
+  --ink: #2b2320;
   --sub: oklch(40% 0.01 60);
   --panel: #fff;
   --accent: oklch(72% 0.15 55);
   --accent-deep: oklch(50% 0.12 55);
-  --accent-ink: #fff;
   --highlight: oklch(88% 0.12 75);
   --tag-bg: oklch(94% 0.04 70);
-  --tag-ink: oklch(35% 0.02 60);
   --logo-fill: oklch(80% 0.14 75);
   --shadow-base: 4px 5px 0 var(--ink);
-  --shadow-hover: 6px 8px 0 var(--ink);
-  --shadow-pill: 2px 2px 0 var(--ink);
-  --shadow-pill-md: 3px 3px 0 var(--ink);
+  --shadow-hover: 6px 9px 0 var(--ink);
   --ease: cubic-bezier(.34, 1.56, .64, 1);
-  --radius-card: 22px;
+  --radius-card: 24px;
   --radius-pill: 999px;
-  --container-w: 1180px;
+  --container-w: 1200px;
   --container-pad: 32px;
-  --card-w: 320px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 html, body {
   background: var(--bg);
   color: var(--ink);
-  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "M PLUS Rounded 1c", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
   -webkit-font-smoothing: antialiased;
   line-height: 1.6;
@@ -51,667 +50,312 @@ body {
   overflow-x: hidden;
 }
 a { color: inherit; }
-img { max-width: 100%; display: block; }
-button { font: inherit; cursor: pointer; }
+.container { max-width: var(--container-w); margin: 0 auto; padding: 0 var(--container-pad); }
 
-.container {
-  max-width: var(--container-w);
-  margin: 0 auto;
-  padding: 0 var(--container-pad);
-}
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-}
-.is-hidden { display: none !important; }
-
-/* Nav */
-.nav {
-  margin: 20px auto 0;
-  max-width: calc(var(--container-w) - var(--container-pad) * 2);
-  padding: 12px 22px;
-  display: flex; align-items: center; justify-content: space-between;
-  background: var(--panel);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-base);
-  gap: 16px;
-  position: relative; z-index: 5;
-}
-.nav-brand {
-  display: flex; align-items: center; gap: 10px;
-  text-decoration: none; color: inherit;
-}
-.nav-logo {
-  width: 30px; height: 30px;
+/* Logo mark */
+.logo {
+  display: inline-block;
+  width: 56px; height: 56px;
   background: var(--logo-fill);
-  border: 2px solid var(--ink);
-  border-radius: 50%;
+  border: 3px solid var(--ink); border-radius: 50%;
+  box-shadow: 3px 4px 0 var(--ink);
   position: relative;
-  flex-shrink: 0;
+  margin-bottom: 14px;
 }
-.nav-logo::before, .nav-logo::after {
-  content: ''; position: absolute; top: 9px;
-  width: 4px; height: 4px; border-radius: 50%; background: var(--ink);
+.logo::before, .logo::after {
+  content: ''; position: absolute; top: 17px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--ink);
 }
-.nav-logo::before { left: 7px; }
-.nav-logo::after { right: 7px; }
-.nav-logo-mouth {
-  position: absolute; bottom: 7px; left: 50%;
-  transform: translateX(-50%);
-  width: 8px; height: 4px;
-  border-top: 2px solid var(--ink);
+.logo::before { left: 13px; }
+.logo::after { right: 13px; }
+.logo i {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  width: 15px; height: 7px; border-top: 3px solid var(--ink);
   border-radius: 0 0 50% 50% / 0 0 100% 100%;
 }
-.nav-brand-text { font-weight: 800; font-size: 14px; }
-.nav-links { display: flex; align-items: center; gap: 22px; font-size: 12px; font-weight: 700; }
-.nav-links a {
-  text-decoration: none;
-  padding: 4px 2px;
-  transition: color .15s;
-}
-.nav-links a:hover { color: var(--accent-deep); }
 
 /* Hero */
-.hero {
-  text-align: center;
-  padding: 36px var(--container-pad) 18px;
-  max-width: var(--container-w);
-  margin: 0 auto;
-}
-.hero-pill {
-  display: inline-block;
-  font-size: 11px; font-weight: 800; letter-spacing: .1em;
-  background: var(--panel);
-  color: var(--accent-deep);
-  padding: 5px 14px;
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-pill-md);
-  margin-bottom: 18px;
-}
-.hero-title {
-  margin: 0 0 14px;
-  font-size: clamp(34px, 4.5vw + 1rem, 52px);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -.02em;
+.hero { text-align: center; padding: 44px var(--container-pad) 8px; max-width: 900px; margin: 0 auto; }
+/* サイト名と呼びかけを同じ大きさで 2 行に */
+.hero h1, .hero .lead {
+  font-size: clamp(30px, 3.6vw + 1rem, 50px);
+  font-weight: 900; line-height: 1.25; letter-spacing: -.01em;
   text-wrap: balance;
 }
-.hero-title mark {
-  background: linear-gradient(180deg, transparent 60%, var(--highlight) 60%);
-  color: inherit;
-  padding: 0 2px;
-}
-.hero-sub {
-  margin: 0 auto;
-  font-size: 13.5px;
-  line-height: 1.85;
-  font-weight: 500;
-  color: var(--sub);
-  max-width: 540px;
-}
+.hero .lead { margin-top: 12px; }
+.hero .lead mark { background: linear-gradient(180deg, transparent 60%, var(--highlight) 60%); color: inherit; padding: 0 4px; }
+.hero .sub { margin: 18px auto 0; font-size: 17px; line-height: 1.9; color: var(--sub); max-width: 620px; text-wrap: pretty; }
+.hero .sub strong { color: var(--ink); }
 
-.hero-cta {
-  display: inline-block;
-  margin-top: 18px;
-  font-size: 15px; font-weight: 800;
+/* Jump buttons */
+.jumps {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+  margin: 26px auto 8px; padding: 0 var(--container-pad);
+}
+.jump {
+  display: inline-flex; align-items: center; gap: 8px;
   text-decoration: none;
-  background: var(--ink); color: var(--panel);
-  padding: 10px 22px;
-  border-radius: var(--radius-pill);
-  box-shadow: 3px 4px 0 var(--accent);
+  background: var(--panel);
+  border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 10px 20px;
+  font-size: 16px; font-weight: 800;
   transition: transform .15s, box-shadow .15s;
 }
-.hero-cta:hover { transform: translate(-1px, -2px); box-shadow: 4px 6px 0 var(--accent); }
+.jump:hover { transform: translate(-1px, -2px); box-shadow: 4px 5px 0 var(--ink); }
+.jump .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); background: var(--c); }
 
-/* Showcase */
-.showcase { padding: 6px 0 30px; }
-.showcase-head {
-  max-width: var(--container-w);
-  margin: 0 auto;
-  padding: 0 var(--container-pad) 10px;
-  display: flex; justify-content: space-between; align-items: baseline;
-  flex-wrap: wrap; gap: 8px;
+/* Sections */
+.group { max-width: var(--container-w); margin: 0 auto; padding: 40px var(--container-pad) 8px; scroll-margin-top: 16px; }
+.group-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+.group-badge {
+  width: 46px; height: 46px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--c); border: 2px solid var(--ink); border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-size: 22px; line-height: 1;
 }
-.showcase-head-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.showcase-h2 { font-size: 18px; font-weight: 900; }
-.showcase-hint { font-size: 11px; color: var(--sub); font-weight: 600; }
-.showcase-count { font-size: 11px; color: var(--sub); font-weight: 700; }
+.group-head h2 { font-size: 26px; font-weight: 900; line-height: 1.25; }
+.group-head p { font-size: 15px; color: var(--sub); flex-basis: 100%; margin-left: 60px; margin-top: -8px; }
 
-.showcase-mask {
-  mask-image: linear-gradient(90deg, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
-}
-.showcase-viewport {
-  overflow: hidden;
-  cursor: grab;
-  user-select: none;
-  touch-action: pan-y;
-  padding: 14px 0;
-}
-.showcase-viewport:active { cursor: grabbing; }
-.showcase-track {
-  display: flex;
-  gap: 18px;
-  will-change: transform;
-}
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
 
-.showcase-card {
-  flex: 0 0 auto;
-  width: var(--card-w);
+/* Panel card */
+.app {
+  display: flex; flex-direction: column;
   background: var(--panel);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-card);
+  border: 2px solid var(--ink); border-radius: var(--radius-card);
   box-shadow: var(--shadow-base);
-  overflow: hidden;
   text-decoration: none;
-  color: inherit;
+  overflow: hidden;
   transition: transform .25s var(--ease), box-shadow .25s var(--ease);
-  position: relative;
 }
-.showcase-card[data-tilt="-1"] { transform: rotate(-1deg); }
-.showcase-card[data-tilt="1"]  { transform: rotate(1deg); }
-.showcase-card:hover {
-  transform: translateY(-3px) rotate(0deg);
-  box-shadow: 7px 9px 0 var(--accent);
-}
-.showcase-card-thumb { height: 180px; padding: 8px 8px 0; position: relative; }
-.showcase-card-ribbon {
-  position: absolute; top: 0; left: 0;
-  background: var(--ink); color: var(--panel);
-  padding: 4px 12px;
-  border-radius: 0 0 14px 0;
-  border: 2px solid var(--ink);
-  border-top: none; border-left: none;
-  font-size: 9.5px; font-weight: 800; letter-spacing: .08em;
-  transform: translate(-2px, -2px);
-}
-.showcase-card-badge {
-  position: absolute; top: -6px; right: -6px;
-  background: var(--accent); color: var(--accent-ink);
-  padding: 4px 10px; border-radius: var(--radius-pill);
-  border: 2px solid var(--ink);
-  font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
-  transform: rotate(8deg);
-}
-.showcase-card-body { padding: 14px 18px 16px; }
-.showcase-card-tag {
-  display: inline-block;
-  font-size: 10px; font-weight: 700;
-  background: var(--tag-bg); color: var(--tag-ink);
-  padding: 3px 10px; border-radius: var(--radius-pill);
-  margin-bottom: 8px;
-  border: 1.5px solid var(--ink);
-}
-.showcase-card-title { font-size: 16px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
-.showcase-card-desc {
-  font-size: 11.5px; color: var(--sub); line-height: 1.6;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+.app:hover, .app:focus-visible { transform: translateY(-4px) rotate(-.6deg); box-shadow: var(--shadow-hover); }
+.grid .app:nth-child(even):hover, .grid .app:nth-child(even):focus-visible { transform: translateY(-4px) rotate(.6deg); }
+.app:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 4px; }
 
-/* Sticker (CSS-only thumbnail; future image swap via :has(img)) */
-.sticker {
-  width: 100%; height: 100%;
-  background: oklch(90% 0.10 var(--hue));
-  border-radius: 18px;
+.stage {
   position: relative;
-  overflow: hidden;
-}
-.sticker::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(circle at 30% 30%,
-    oklch(96% 0.10 calc(var(--hue) + 10)) 0%,
-    transparent 65%);
-}
-.sticker::after {
-  content: ''; position: absolute;
-  top: -30%; left: 50%;
-  width: 160%; height: 160%;
-  transform: translate(-50%, 0) rotate(calc(var(--hue) * 1.1deg));
-  background: repeating-conic-gradient(from 0deg,
-    transparent 0deg 10deg,
-    oklch(94% 0.10 calc(var(--hue) + 5) / .35) 10deg 14deg);
-  opacity: .55;
-}
-.sticker-label {
-  position: absolute; bottom: 10px; left: 14px;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 9px;
-  color: rgba(60, 40, 20, .65);
-  letter-spacing: .05em;
-  z-index: 1;
-}
-.sticker:has(img) { background: none; }
-.sticker:has(img)::before, .sticker:has(img)::after { display: none; }
-.sticker img { width: 100%; height: 100%; object-fit: cover; }
-
-/* Works section */
-.works-head {
-  max-width: var(--container-w); margin: 0 auto;
-  padding: 12px var(--container-pad) 14px;
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 16px; flex-wrap: wrap;
-}
-.works-h2 { font-size: 22px; font-weight: 900; }
-.filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-.pill {
+  aspect-ratio: 4 / 3;
+  margin: 8px 8px 0;
   border: 2px solid var(--ink);
+  border-radius: 17px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 28% 22%, rgb(255 255 255 / .75), transparent 55%),
+    var(--bg-c);
+}
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage .kind {
+  position: absolute; top: 10px; left: 10px; z-index: 1;
+  font-size: 12px; font-weight: 800; letter-spacing: .04em;
   background: var(--panel);
-  color: var(--ink);
-  padding: 6px 14px;
+  border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  padding: 2px 11px;
+}
+.stage .fallback {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 56px; opacity: .9;
+}
+.stage.is-live .fallback { display: none; }
+
+.body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.title { font-size: 21px; font-weight: 900; line-height: 1.3; }
+.can { font-size: 15.5px; line-height: 1.7; color: var(--ink); text-wrap: pretty; }
+.needs { display: flex; flex-wrap: wrap; gap: 6px; }
+.need {
+  font-size: 12.5px; font-weight: 700;
+  background: var(--tag-bg);
+  border: 1.5px solid var(--ink); border-radius: var(--radius-pill);
+  padding: 2px 10px;
+}
+.open {
+  margin-top: auto; align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--ink); color: #fff;
   border-radius: var(--radius-pill);
-  font-size: 12px; font-weight: 800;
-  box-shadow: var(--shadow-pill);
-  transition: transform .15s, box-shadow .15s, background .15s, color .15s;
+  padding: 8px 18px 8px 20px;
+  font-size: 15px; font-weight: 800;
+  transition: background .15s;
 }
-.pill:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
-.pill.is-active {
-  background: var(--ink); color: var(--panel);
-  box-shadow: none; transform: none;
-}
-.works-grid-wrap { padding: 8px var(--container-pad) 50px; max-width: var(--container-w); margin: 0 auto; }
-.works-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-}
-.works-empty {
-  text-align: center; padding: 32px 16px;
-  color: var(--sub); font-size: 13px;
-}
+.open svg { width: 18px; height: 18px; transition: transform .2s var(--ease); }
+.app:hover .open { background: var(--accent-deep); }
+.app:hover .open svg { transform: translateX(4px); }
 
-.card {
-  display: block;
-  background: var(--panel);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-base);
-  text-decoration: none;
-  color: inherit;
-  overflow: hidden;
-  transition: transform .22s var(--ease), box-shadow .22s var(--ease);
-  position: relative;
-}
-.card:hover { transform: rotate(-1.2deg) translateY(-2px); box-shadow: -6px 8px 0 var(--ink); }
-.card:nth-child(even):hover { transform: rotate(1.2deg) translateY(-2px); box-shadow: 6px 8px 0 var(--ink); }
-.card-thumb { height: 160px; padding: 8px 8px 0; position: relative; }
-.card-hot {
-  position: absolute; top: -6px; right: -6px;
-  background: var(--accent); color: var(--accent-ink);
-  padding: 4px 10px; border-radius: var(--radius-pill);
-  border: 2px solid var(--ink);
-  font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
-  transform: rotate(8deg);
-}
-.card-body { padding: 14px 16px; }
-.card-tag {
-  display: inline-block;
-  font-size: 10px; font-weight: 700;
-  background: var(--tag-bg); color: var(--tag-ink);
-  padding: 3px 10px; border-radius: var(--radius-pill);
-  margin-bottom: 8px;
-  border: 1.5px solid var(--ink);
-}
-.card-title { font-size: 15px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
-.card-desc {
-  font-size: 11.5px; color: var(--sub); line-height: 1.55;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* 横長カード（2 列ぶん）：絵と説明を横に並べる */
+.app.is-wide { grid-column: span 2; flex-direction: row; }
+.app.is-wide .stage { flex: 0 0 58%; margin: 8px 0 8px 8px; }
+.app.is-wide .body { padding: 22px 24px; justify-content: center; }
+.app.is-wide .title { font-size: 24px; }
+.app.is-wide .can { font-size: 16.5px; }
+.app.is-wide .open { margin-top: 6px; }
 
-/* Placeholder (About / Notes) */
-.placeholder {
-  max-width: var(--container-w);
-  margin: 0 auto 26px;
-  padding: 0 var(--container-pad);
-}
-.placeholder-card {
-  background: var(--panel);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-base);
-  padding: 24px 28px;
-  display: flex; align-items: center; gap: 18px;
-  flex-wrap: wrap;
-}
-.placeholder-card h2 { font-size: 20px; font-weight: 900; }
-.placeholder-card p { font-size: 13px; color: var(--sub); line-height: 1.7; }
-
-/* Footer */
-.footer {
-  max-width: var(--container-w);
-  margin: 0 auto 24px;
-  padding: 0 var(--container-pad);
-}
+.footer { max-width: var(--container-w); margin: 48px auto 26px; padding: 0 var(--container-pad); }
 .footer-inner {
   background: var(--panel);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-card);
+  border: 2px solid var(--ink); border-radius: var(--radius-card);
   box-shadow: var(--shadow-base);
-  padding: 20px 24px;
-  display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 12px;
-  font-size: 12px; font-weight: 700;
+  padding: 18px 24px;
+  text-align: center;
+  font-size: 14px; font-weight: 700;
 }
-.footer-social { display: flex; gap: 10px; flex-wrap: wrap; }
-.footer-social a {
-  text-decoration: none; color: inherit;
-  padding: 4px 10px; border-radius: var(--radius-pill);
-  transition: background .15s, color .15s;
-}
-.footer-social a:hover { background: var(--tag-bg); color: var(--accent-deep); }
 
-/* Focus */
-:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-.card:focus-visible, .showcase-card:focus-visible { outline-offset: 6px; }
-
-/* Responsive */
 @media (max-width: 1023px) {
-  :root { --container-pad: 24px; --card-w: 280px; }
-  .nav-links { gap: 14px; }
-  .works-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
-  .card-thumb { height: 170px; }
-  .showcase-card-thumb { height: 160px; }
+  :root { --container-pad: 22px; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
 }
-@media (max-width: 767px) {
-  :root { --container-pad: 18px; --card-w: 240px; }
-  .nav { padding: 10px 14px; }
-  .nav-links { gap: 12px; font-size: 11px; }
-  .nav-brand-text { font-size: 13px; }
-  .hero { padding: 24px var(--container-pad) 12px; }
-  .hero-pill { font-size: 10.5px; }
-  .works-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .works-h2 { font-size: 18px; }
-  .showcase-h2 { font-size: 16px; }
-  .showcase-card-thumb { height: 140px; padding: 6px 6px 0; }
-  .showcase-card-title { font-size: 14px; }
-  .showcase-card-body { padding: 12px 14px 14px; }
-  .card-thumb { height: 110px; padding: 6px 6px 0; }
-  .card-title { font-size: 14px; }
-  .card-desc { font-size: 11px; }
-  .card-body { padding: 12px 12px; }
-  .placeholder-card { padding: 18px 20px; }
-  .placeholder-card h2 { font-size: 17px; }
-  .footer-inner { padding: 16px 18px; }
+@media (max-width: 640px) {
+  :root { --container-pad: 16px; }
+  .hero { padding-top: 28px; }
+  .hero .sub { font-size: 16px; }
+  .jump { font-size: 15px; padding: 8px 16px; }
+  .grid { grid-template-columns: 1fr; gap: 20px; }
+  .app.is-wide { grid-column: auto; flex-direction: column; }
+  .app.is-wide .stage { flex: none; margin: 8px 8px 0; }
+  .app.is-wide .body { padding: 16px 20px 20px; }
+  .group-head h2 { font-size: 22px; }
+  .group-head p { margin-left: 0; margin-top: 0; }
 }
-
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .card, .showcase-card, .pill, .nav-links a, .footer-social a { transition: none; }
-  .card:hover, .card:nth-child(even):hover, .showcase-card:hover {
-    transform: none;
-    box-shadow: var(--shadow-base);
-  }
+  .app, .jump, .open svg { transition: none; }
+  .app:hover, .grid .app:nth-child(even):hover { transform: none; }
 }
-@media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; }
-}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 </head>
 <body>
 
-<nav class="nav" aria-label="Site">
-  <a class="nav-brand" href="/">
-    <span class="nav-logo" aria-hidden="true">
-      <span class="nav-logo-mouth"></span>
-    </span>
-    <span class="nav-brand-text">ひだまりワークス</span>
-  </a>
-  <div class="nav-links">
-    <a href="apps/">アプリ一覧</a>
-    <a href="#works">Works</a>
-    <a href="#about">About</a>
-    <a href="#notes">Notes</a>
-  </div>
-</nav>
-
 <header class="hero">
-  <div class="hero-pill">☼ ぽかぽか個人制作</div>
-  <h1 class="hero-title">
-    <mark>ぽかぽか</mark>な つくりもの、あつめました。
-  </h1>
-  <p class="hero-sub">ツール、ゲーム、アプリ。気軽に使ったり、遊んでみてください。</p>
-  <a class="hero-cta" href="apps/">はじめての方は こちら → 動く絵でアプリをえらぶ</a>
+  <span class="logo" aria-hidden="true"><i></i></span>
+  <h1>ひだまりワークス</h1>
+  <p class="lead">やってみたいものを、<br><mark>えらんでください</mark></p>
+  <p class="sub">動いている絵は、そのアプリで<strong>できること</strong>です。<br>気になる絵をクリック（タップ）すると、アプリがひらきます。</p>
 </header>
 
-<section class="showcase" aria-labelledby="showcase-h2">
-  <div class="showcase-head">
-    <div class="showcase-head-left">
-      <h2 id="showcase-h2" class="showcase-h2">★ いま人気のつくりもの</h2>
-      <span class="showcase-hint">hover で停止 · ドラッグでスクロール</span>
-    </div>
-    <div class="showcase-count" aria-live="polite"></div>
-  </div>
-  <div class="showcase-mask">
-    <div class="showcase-viewport">
-      <div class="showcase-track"></div>
-    </div>
-  </div>
-</section>
+<nav class="jumps" aria-label="種類でさがす"></nav>
 
-<section id="works" class="works" aria-labelledby="works-h2">
-  <div class="works-head">
-    <h2 id="works-h2" class="works-h2">✦ All Works</h2>
-    <div class="filter-pills" role="group" aria-label="カテゴリフィルター">
-      <button class="pill is-active" type="button" data-cat="all" aria-pressed="true">すべて</button>
-      <button class="pill" type="button" data-cat="tool" aria-pressed="false">ツール</button>
-      <button class="pill" type="button" data-cat="game" aria-pressed="false">ゲーム</button>
-    </div>
-  </div>
-  <div class="works-grid-wrap">
-    <div class="works-grid"></div>
-    <div class="works-empty is-hidden">該当する作品はありません。</div>
-  </div>
-</section>
-
-<section id="about" class="placeholder" aria-labelledby="about-h2">
-  <div class="placeholder-card">
-    <h2 id="about-h2">✿ About</h2>
-    <p>このセクションは準備中です。近日公開予定。</p>
-  </div>
-</section>
-
-<section id="notes" class="placeholder" aria-labelledby="notes-h2">
-  <div class="placeholder-card">
-    <h2 id="notes-h2">✎ Notes</h2>
-    <p>Coming Soon — つくりものの裏話やメモを書いていきます。</p>
-  </div>
-</section>
+<main id="groups"></main>
 
 <footer class="footer">
   <div class="footer-inner">
-    <div>© 2021–2026 hidamari works ✿</div>
-    <div class="footer-social">
-      <a href="#" aria-label="X (Twitter)">X</a>
-      <a href="#" aria-label="GitHub">GitHub</a>
-      <a href="#" aria-label="Zenn">Zenn</a>
-      <a href="#" aria-label="Mail">Mail</a>
-    </div>
+    © 2021–2026 hidamari works ✿
   </div>
 </footer>
 
-<script>
-(() => {
-  const WORKS = [
-    { slug:'pop-memo',       title:'PoP MeMo!',                en:'Pop Memo',         cat:'tool', tag:'Web',        hue:340, href:'tools/pop-memo.html',                 desc:'ポップでカラフルなメモアプリ。気分やエフェクトを選んで、楽しくメモを残そう。',                                  featured:false },
-    { slug:'pop-memo-ika',   title:'PoP MeMo! イカスミ',       en:'Ika Sumi Memo',    cat:'tool', tag:'Web',        hue:230, href:'tools/pop-memo-ika.html',             desc:'イカスミダークテーマのメモアプリ。深海の闇に浮かぶメモで、落ち着いて書こう。',                                featured:false },
-    { slug:'logo-gradient',  title:'ロゴ グラデーション',      en:'Logo Gradient',    cat:'tool', tag:'Web',        hue:280, href:'tools/logo-gradient.html',            desc:'画像をアップロードして、グラデーションや外縁を自動生成。ロゴ加工に。',                                       featured:false },
-    { slug:'grid-keymap',    title:'かんたんキー設定',         en:'Keymap Editor',    cat:'tool', tag:'Web Serial', hue:170, href:'tools/grid-keymap-editor.html',       desc:'拡張キーボードのボタンに好きなキーを割り当て。Web Serialでブラウザから直接設定。',                              featured:true  },
-    { slug:'ace-step',       title:'ACE-Step Prompt Builder',  en:'ACE-Step Builder', cat:'tool', tag:'Web',        hue:30,  href:'tools/ace-step-prompt-builder.html',  desc:'AI音楽生成用のプロンプトをかんたん作成。ジャンル・楽器・ムードを選んでコピー。',                                featured:true  },
-    { slug:'janken-party',   title:'どうぶつ運動会',           en:'Animal Sports',    cat:'game', tag:'Browser',    hue:130, href:'games/janken-party/index.html',       desc:'じゃんけんコントローラーで遊ぶリハビリ向けミニゲーム集。9種のゲームで楽しく運動。',                            featured:true  },
-    { slug:'image-splitter', title:'画像グリッド分割',         en:'Image Splitter',   cat:'tool', tag:'Web',        hue:250, href:'tools/image-splitter.html',           desc:'画像をグリッドに分割。カットラインをドラッグで自由に調整、個別・一括ダウンロード対応。',                       featured:true  },
-    { slug:'push-rpg',       title:'PUSH QUEST 腕立てRPG',     en:'Push Quest',       cat:'game', tag:'Browser',    hue:290, href:'games/push-rpg/index.html',           desc:'腕立て伏せでモンスターを倒す筋トレRPG。カメラでポーズ検出、タイミングで大ダメージ。',                          featured:true  },
-    { slug:'image-trimmer',  title:'画像トリミング',           en:'Image Trimmer',    cat:'tool', tag:'Web',        hue:50,  href:'tools/image-trimmer.html',            desc:'白背景の画像から、中身だけを自動で切り出し。一括処理・透明化・余白調整に対応。',                              featured:true  },
-    { slug:'image-outline',  title:'画像縁取り／色変換',       en:'Image Outline',    cat:'tool', tag:'Web',        hue:200, href:'tools/image-outline.html',            desc:'透過PNGに縁取りを足したり、シルエットの色を自由に変換。ロゴやアイコンの加工に。',                              featured:true  },
-    { slug:'table-hockey',   title:'テーブルホッケー',         en:'Table Hockey',     cat:'game', tag:'Browser',    hue:210, href:'games/table-hockey/index.html',       desc:'マウスホイールでパドルを左右に動かしてCPUと対戦するエアホッケー。難易度3段階・ホイール反転対応。',                  featured:true  },
-    { slug:'bicycle-dash',   title:'ひたすら自転車',           en:'Bicycle Dash',     cat:'game', tag:'Browser',    hue:95,  href:'games/bicycle-dash/index.html',       desc:'マウスホイールで自転車を漕いで47都道府県を駆け抜けるエンドレスゲーム。ギア切替で坂道も楽々。',                    featured:true  },
-  ];
+<script type="module">
+import { APPS, GROUPS } from './apps/apps-data.js';
 
-  const $  = (s, r=document) => r.querySelector(s);
-  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
-  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
-  function showcaseCardHTML(w, i) {
-    const tilt = i % 2 === 0 ? -1 : 1;
-    return `
-      <a class="showcase-card" data-tilt="${tilt}" href="${esc(w.href)}">
-        <div class="showcase-card-thumb">
-          <div class="sticker" style="--hue:${w.hue}">
-            <span class="sticker-label">[ ${esc(w.en)} ]</span>
+document.querySelector('.jumps').innerHTML = GROUPS.map(g =>
+  `<a class="jump" href="#${g.id}" style="--c:${g.color}"><span class="dot" aria-hidden="true"></span>${esc(g.label)}</a>`).join('');
+
+document.getElementById('groups').innerHTML = GROUPS.map(g => `
+  <section class="group" id="${g.id}" aria-labelledby="${g.id}-h">
+    <div class="group-head">
+      <span class="group-badge" style="--c:${g.color}" aria-hidden="true">${g.icon}</span>
+      <h2 id="${g.id}-h">${esc(g.label)}</h2>
+      <p>${esc(g.lead)}</p>
+    </div>
+    <div class="grid">
+      ${APPS.filter(a => a.group === g.id).map(a => `
+        <a class="app${a.wide ? ' is-wide' : ''}" href="${esc(a.href)}" data-slug="${esc(a.slug)}">
+          <div class="stage" style="--bg-c:${a.bg}">
+            <span class="kind">${esc(a.kind)}</span>
+            <span class="fallback" aria-hidden="true">${a.emoji}</span>
+            <canvas aria-hidden="true"></canvas>
           </div>
-          <div class="showcase-card-ribbon">★ FEATURED</div>
-          <div class="showcase-card-badge">♡ NEW</div>
-        </div>
-        <div class="showcase-card-body">
-          <span class="showcase-card-tag">${esc(w.tag)}</span>
-          <div class="showcase-card-title">${esc(w.title)}</div>
-          <div class="showcase-card-desc">${esc(w.desc)}</div>
-        </div>
-      </a>`;
-  }
-  function gridCardHTML(w) {
-    return `
-      <a class="card" data-cat="${esc(w.cat)}" href="${esc(w.href)}">
-        <div class="card-thumb">
-          <div class="sticker" style="--hue:${w.hue}">
-            <span class="sticker-label">[ ${esc(w.en)} ]</span>
+          <div class="body">
+            <div class="title">${esc(a.title)}</div>
+            <p class="can">${esc(a.can)}</p>
+            <div class="needs" aria-label="使うもの">${a.needs.map(n => `<span class="need">${esc(n)}</span>`).join('')}</div>
+            <span class="open">ひらく ${ARROW}</span>
           </div>
-          ${w.featured ? '<div class="card-hot">★ HOT</div>' : ''}
-        </div>
-        <div class="card-body">
-          <span class="card-tag">${esc(w.tag)}</span>
-          <div class="card-title">${esc(w.title)}</div>
-          <div class="card-desc">${esc(w.desc)}</div>
-        </div>
-      </a>`;
-  }
+        </a>`).join('')}
+    </div>
+  </section>`).join('');
 
-  // Render showcase (featured items, doubled for seamless loop)
-  const featured = WORKS.filter(w => w.featured);
-  const doubled = [...featured, ...featured];
-  $('.showcase-track').innerHTML = doubled.map((w, i) => showcaseCardHTML(w, i)).join('');
-  $('.showcase-count').textContent = `${featured.length} 件`;
+// ---- 3D パネル
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+let engine;
+try { engine = await import('./apps/engine.js'); }
+catch (e) { console.warn('3D を読み込めませんでした', e); }
 
-  // Render grid (all 9 works)
-  $('.works-grid').innerHTML = WORKS.map(w => gridCardHTML(w)).join('');
-
-  // Filter pills
-  const Filter = {
-    init() {
-      $$('.filter-pills .pill').forEach(btn => {
-        btn.addEventListener('click', () => Filter.apply(btn.dataset.cat, btn));
-      });
-    },
-    apply(cat, activeBtn) {
-      $$('.filter-pills .pill').forEach(b => {
-        const on = b === activeBtn;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-pressed', String(on));
-      });
-      let visible = 0;
-      $$('.works-grid .card').forEach(card => {
-        const show = cat === 'all' || card.dataset.cat === cat;
-        card.classList.toggle('is-hidden', !show);
-        if (show) visible++;
-      });
-      const empty = $('.works-empty');
-      if (empty) empty.classList.toggle('is-hidden', visible > 0);
-    },
-  };
-  Filter.init();
-
-  // Marquee (auto-scroll featured showcase)
-  const Marquee = {
-    state: {
-      offset: 0,
-      paused: false,
-      lastTs: 0,
-      drag: { down:false, startX:0, startOffset:0, didDrag:false, pointerId:0 },
-      rafId: 0,
-    },
-    track: null, viewport: null, mql: null,
-    init(viewport, track) {
-      this.viewport = viewport; this.track = track;
-      this.mql = matchMedia('(prefers-reduced-motion: reduce)');
-      viewport.addEventListener('mouseenter', () => this.state.paused = true);
-      viewport.addEventListener('mouseleave', () => this.state.paused = false);
-      viewport.addEventListener('focusin',    () => this.state.paused = true);
-      viewport.addEventListener('focusout',   () => this.state.paused = false);
-      viewport.addEventListener('pointerdown',   e => this.onDown(e));
-      viewport.addEventListener('pointermove',   e => this.onMove(e));
-      viewport.addEventListener('pointerup',     e => this.onUp(e));
-      viewport.addEventListener('pointercancel', e => this.onUp(e));
-      this.mql.addEventListener('change', () => this.sync());
-      const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
-      ready.then(() => this.sync());
-    },
-    sync() {
-      cancelAnimationFrame(this.state.rafId);
-      this.state.rafId = 0;
-      if (!this.mql.matches) this.start();
-    },
-    start() {
-      this.state.lastTs = performance.now();
-      const loop = (now) => {
-        const s = this.state;
-        const dt = Math.min((now - s.lastTs) / 1000, 0.1);
-        s.lastTs = now;
-        if (!s.paused && !s.drag.down && this.track) {
-          const halfWidth = this.track.scrollWidth / 2;
-          if (halfWidth > 0) {
-            s.offset -= 28 * dt;
-            if (s.offset <= -halfWidth) s.offset += halfWidth;
-            this.track.style.transform = `translateX(${s.offset}px)`;
-          }
-        }
-        s.rafId = requestAnimationFrame(loop);
-      };
-      this.state.rafId = requestAnimationFrame(loop);
-    },
-    onDown(e) {
-      const s = this.state;
-      s.drag = { down:true, startX:e.clientX, startOffset:s.offset, didDrag:false, captured:false, pointerId:e.pointerId };
-    },
-    onMove(e) {
-      const s = this.state;
-      if (!s.drag.down) return;
-      const dx = e.clientX - s.drag.startX;
-      if (!s.drag.didDrag && Math.abs(dx) > 4) {
-        s.drag.didDrag = true;
-        if (!s.drag.captured) {
-          try { this.viewport.setPointerCapture(s.drag.pointerId); } catch(_) {}
-          s.drag.captured = true;
-        }
-      }
-      let next = s.drag.startOffset + dx;
-      const hw = this.track.scrollWidth / 2;
-      if (hw > 0) {
-        while (next <= -hw) next += hw;
-        while (next > 0)    next -= hw;
-      }
-      s.offset = next;
-      this.track.style.transform = `translateX(${next}px)`;
-    },
-    onUp(e) {
-      const s = this.state;
-      s.drag.down = false;
-      if (s.drag.captured) {
-        try { this.viewport.releasePointerCapture(s.drag.pointerId); } catch(_) {}
-        s.drag.captured = false;
-      }
-    },
-    didDrag()    { return this.state.drag.didDrag; },
-    consumeDrag(){ this.state.drag.didDrag = false; },
-  };
-  Marquee.init($('.showcase-viewport'), $('.showcase-track'));
-
-  // Click guard — cancel showcase navigation if a drag occurred
-  $$('.showcase-card').forEach(a => a.addEventListener('click', e => {
-    if (Marquee.didDrag()) { e.preventDefault(); Marquee.consumeDrag(); }
+if (engine) {
+  const DPR = Math.min(devicePixelRatio || 1, 2);
+  const panels = [...document.querySelectorAll('.app')].map(el => ({
+    el, slug: el.dataset.slug,
+    stage: el.querySelector('.stage'),
+    canvas: el.querySelector('canvas'),
+    inst: null, loading: false, visible: false, hover: false,
+    t: 0, last: 0,
+    ptr: { x: 0, y: 0 }, ptrTarget: { x: 0, y: 0 },
+    poster: (APPS.find(a => a.slug === el.dataset.slug) || {}).poster ?? 2,
   }));
-})();
+
+  const io = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      const p = panels.find(p => p.stage === e.target);
+      p.visible = e.isIntersecting;
+      if (p.visible) ensure(p);
+    }
+  }, { rootMargin: '200px 0px' });
+  panels.forEach(p => io.observe(p.stage));
+
+  function fit(p) {
+    const r = p.stage.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width * DPR)), h = Math.max(1, Math.round(r.height * DPR));
+    if (p.canvas.width !== w || p.canvas.height !== h) { p.canvas.width = w; p.canvas.height = h; return true; }
+    return false;
+  }
+
+  async function ensure(p) {
+    if (p.inst || p.loading) return;
+    p.loading = true;
+    try {
+      p.inst = await engine.loadScene(p.slug);
+      p.t = reduce.matches ? p.poster : 0;
+      fit(p);
+      engine.renderTo(p.inst, p.canvas, p.t, p.ptr);
+      p.stage.classList.add('is-live');
+    } catch (e) { console.warn('scene', p.slug, e); }
+    p.loading = false;
+  }
+
+  for (const p of panels) {
+    p.el.addEventListener('pointerenter', () => { p.hover = true; });
+    p.el.addEventListener('pointerleave', () => { p.hover = false; p.ptrTarget.x = 0; p.ptrTarget.y = 0; });
+    p.el.addEventListener('pointermove', e => {
+      const r = p.stage.getBoundingClientRect();
+      p.ptrTarget.x = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+      p.ptrTarget.y = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+    });
+  }
+  addEventListener('resize', () => panels.forEach(p => { if (p.inst && fit(p)) engine.renderTo(p.inst, p.canvas, p.t, p.ptr); }));
+
+  let prev = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - prev) / 1000);
+    prev = now;
+    for (const p of panels) {
+      if (!p.inst || !p.visible) continue;
+      const animate = !reduce.matches || p.hover;
+      const moved = Math.abs(p.ptr.x - p.ptrTarget.x) + Math.abs(p.ptr.y - p.ptrTarget.y) > 0.002;
+      if (!animate && !moved) continue;
+      p.ptr.x += (p.ptrTarget.x - p.ptr.x) * Math.min(1, dt * 6);
+      p.ptr.y += (p.ptrTarget.y - p.ptr.y) * Math.min(1, dt * 6);
+      if (animate) p.t += dt;
+      // ホバー中は毎フレーム、それ以外は約 30fps
+      if (!p.hover && now - p.last < 32) continue;
+      p.last = now;
+      fit(p);
+      engine.renderTo(p.inst, p.canvas, p.t, p.ptr);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
 </script>
 </body>
 </html>
