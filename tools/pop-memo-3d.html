@@ -296,7 +296,7 @@ h1 {
 <div class="hint" id="hint">
   キーボードで <b>文字を打つ</b> と、メモ帳に書けます ✏️<br>
   画面のキーボードをクリックしても打てます。<br>
-  <small>◀ ▶ やメモ帳を左右にドラッグして、メモを切りかえ</small>
+  <small>◀ ▶ ボタンで、メモを切りかえ</small>
 </div>
 <div class="nogl" id="nogl">
   <div>ごめんなさい、このブラウザでは 3D を表示できませんでした。<br><a href="pop-memo.html">ふつうの PoP MeMo! をひらく</a></div>
@@ -601,22 +601,17 @@ function hideHint() {
 if (store.seen) $('hint').classList.add('hide');
 $('hint').addEventListener('click', hideHint);
 
-// ---------------------------------------------------------------- ポインター（3D のキー・＋・ドット・メモのドラッグ）
+// ---------------------------------------------------------------- ポインター（3D のキー・＋・ドット）
 let down = null;
 function ndc(e) { return [(e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1]; }
 stageEl.addEventListener('pointerdown', (e) => {
   if (!setPanel.hidden) openSettings(false);
   const [x, y] = ndc(e);
-  down = { x: e.clientX, y: e.clientY, hit: W.pick(x, y), swiped: false };
+  down = { hit: W.pick(x, y) };
   ta.focus({ preventScroll: true });
 });
-addEventListener('pointermove', (e) => {
-  if (!down || down.swiped || !down.hit || down.hit.type !== 'card') return;
-  const dx = e.clientX - down.x;
-  if (Math.abs(dx) > 70) { down.swiped = true; go(dx < 0 ? 1 : -1); }
-});
 addEventListener('pointerup', () => {
-  if (down && !down.swiped && down.hit) {
+  if (down && down.hit) {
     const h = down.hit;
     if (h.type === 'key') virtualKey(h.code);
     else if (h.type === 'plus') setPlus(!S.plus.open);
@@ -628,7 +623,7 @@ addEventListener('pointerup', () => {
 stageEl.addEventListener('pointermove', (e) => {
   const [x, y] = ndc(e);
   const h = W.pick(x, y);
-  stageEl.style.cursor = h && h.type !== 'card' ? 'pointer' : h ? 'grab' : 'default';
+  stageEl.style.cursor = h && h.type !== 'card' ? 'pointer' : 'default';
 });
 
 // ---------------------------------------------------------------- ループ
