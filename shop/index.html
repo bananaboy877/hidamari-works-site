@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ひだまりワークス ショップ | おもちゃ・PC周辺機器・収納小物・時計</title>
+<meta name="description" content="ひだまりワークスのオンラインショップ。3Dプリントのフィギュアやペグボードゲーム、汎用マクロキー、衣服掛けフック、恐竜道路標識時計などを販売準備中です。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: oklch(95% 0.04 75);
+  --bg-dot: oklch(85% 0.06 65 / 0.4);
+  --ink: #2b2320;
+  --sub: oklch(40% 0.01 60);
+  --panel: #fff;
+  --accent: oklch(72% 0.15 55);
+  --accent-deep: oklch(50% 0.12 55);
+  --highlight: oklch(88% 0.12 75);
+  --tag-bg: oklch(94% 0.04 70);
+  --logo-fill: oklch(80% 0.14 75);
+  --shadow-base: 4px 5px 0 var(--ink);
+  --shadow-hover: 6px 9px 0 var(--ink);
+  --ease: cubic-bezier(.34, 1.56, .64, 1);
+  --radius-card: 24px;
+  --radius-pill: 999px;
+  --container-w: 1200px;
+  --container-pad: 32px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+body {
+  background-image: radial-gradient(var(--bg-dot) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+.container { max-width: var(--container-w); margin: 0 auto; padding: 0 var(--container-pad); }
+
+/* Logo mark */
+.logo {
+  display: inline-block; flex-shrink: 0;
+  width: 40px; height: 40px;
+  background: var(--logo-fill);
+  border: 2.5px solid var(--ink); border-radius: 50%;
+  box-shadow: 2px 3px 0 var(--ink);
+  position: relative;
+}
+.logo::before, .logo::after {
+  content: ''; position: absolute; top: 12px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--ink);
+}
+.logo::before { left: 9px; }
+.logo::after { right: 9px; }
+.logo i {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 11px; height: 5px; border-top: 2.5px solid var(--ink);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+
+/* Top nav */
+.topnav { max-width: var(--container-w); margin: 20px auto 0; padding: 0 var(--container-pad); }
+.topnav-inner {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: var(--panel);
+  border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-base);
+  padding: 10px 22px 10px 14px;
+}
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand .name { font-size: 20px; font-weight: 900; line-height: 1.2; }
+.brand .name small { display: block; font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: .06em; }
+.topnav ul { display: flex; align-items: center; gap: 6px 18px; list-style: none; flex-wrap: wrap; font-size: 14.5px; font-weight: 800; }
+.topnav ul a { text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+.topnav ul a:hover, .topnav ul a[aria-current] { border-bottom-color: var(--accent); }
+.cart-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent); border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  padding: 6px 16px; font-size: 14px; font-weight: 900; text-decoration: none;
+  box-shadow: 2px 3px 0 var(--ink);
+}
+.cart-pill b { background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-pill); min-width: 26px; text-align: center; padding: 0 7px; line-height: 20px; }
+
+/* Notice banner */
+.notice { max-width: var(--container-w); margin: 22px auto 0; padding: 0 var(--container-pad); }
+.notice-inner {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--highlight);
+  border: 2px solid var(--ink); border-radius: 18px;
+  box-shadow: 3px 4px 0 var(--ink);
+  padding: 12px 20px;
+  font-size: 15px; font-weight: 700;
+}
+.notice-inner .tag {
+  background: var(--ink); color: #fff; border-radius: var(--radius-pill);
+  padding: 3px 14px; font-size: 13.5px; font-weight: 900; letter-spacing: .06em; white-space: nowrap;
+}
+
+/* Hero */
+.hero { text-align: center; padding: 40px var(--container-pad) 6px; max-width: 900px; margin: 0 auto; }
+.hero .kicker {
+  display: inline-block; background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  box-shadow: 3px 3px 0 var(--ink); padding: 4px 16px; font-size: 14px; font-weight: 800; color: var(--accent-deep); margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(30px, 3.6vw + 1rem, 50px);
+  font-weight: 900; line-height: 1.25; letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.hero h1 mark { background: linear-gradient(180deg, transparent 60%, var(--highlight) 60%); color: inherit; padding: 0 4px; }
+.hero .sub { margin: 18px auto 0; font-size: 17px; line-height: 1.9; color: var(--sub); max-width: 640px; text-wrap: pretty; }
+.hero .sub strong { color: var(--ink); }
+
+/* Jump buttons */
+.jumps { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 26px auto 8px; padding: 0 var(--container-pad); }
+.jump {
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  box-shadow: 3px 3px 0 var(--ink); padding: 10px 20px; font-size: 16px; font-weight: 800;
+  transition: transform .15s, box-shadow .15s;
+}
+.jump:hover { transform: translate(-1px, -2px); box-shadow: 4px 5px 0 var(--ink); }
+.jump .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); background: var(--c); }
+
+/* Sections */
+.group { max-width: var(--container-w); margin: 0 auto; padding: 40px var(--container-pad) 8px; scroll-margin-top: 16px; }
+.group-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+.group-badge {
+  width: 46px; height: 46px; flex-shrink: 0; display: grid; place-items: center;
+  background: var(--c); border: 2px solid var(--ink); border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--ink); font-size: 22px; line-height: 1;
+}
+.group-head h2 { font-size: 26px; font-weight: 900; line-height: 1.25; }
+.group-head p { font-size: 15px; color: var(--sub); flex-basis: 100%; margin-left: 60px; margin-top: -8px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+
+/* Product card */
+.item {
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border: 2px solid var(--ink); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base);
+  overflow: hidden;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.item:hover { transform: translateY(-4px) rotate(-.6deg); box-shadow: var(--shadow-hover); }
+.grid .item:nth-child(even):hover { transform: translateY(-4px) rotate(.6deg); }
+.stage {
+  position: relative; aspect-ratio: 4 / 3; margin: 8px 8px 0;
+  border: 2px solid var(--ink); border-radius: 17px; overflow: hidden;
+  background: radial-gradient(circle at 28% 22%, rgb(255 255 255 / .75), transparent 55%), var(--bg-c);
+  display: grid; place-items: center;
+}
+.stage .pic { font-size: 72px; line-height: 1; filter: drop-shadow(3px 4px 0 rgb(43 35 32 / .25)); }
+.stage .photo-note {
+  position: absolute; left: 10px; bottom: 10px;
+  font-size: 12px; font-weight: 800; letter-spacing: .04em;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-pill); padding: 2px 11px;
+}
+.stage .status {
+  position: absolute; top: 10px; right: 10px;
+  font-size: 12.5px; font-weight: 900; letter-spacing: .04em;
+  background: var(--accent); border: 2px solid var(--ink); border-radius: var(--radius-pill); padding: 2px 11px;
+}
+.stage .status.soon { background: var(--highlight); }
+.body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.title { font-size: 20px; font-weight: 900; line-height: 1.3; }
+.desc { font-size: 14.5px; line-height: 1.7; color: var(--sub); text-wrap: pretty; }
+.price { font-size: 24px; font-weight: 900; letter-spacing: -.01em; }
+.price small { font-size: 13px; font-weight: 700; color: var(--sub); margin-left: 6px; }
+.buy {
+  margin-top: auto; align-self: stretch;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--ink); color: #fff; border: 2px solid var(--ink);
+  border-radius: var(--radius-pill); padding: 11px 18px;
+  font: inherit; font-size: 16px; font-weight: 800; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.buy:hover { background: var(--accent-deep); }
+.buy.added { background: var(--panel); color: var(--ink); }
+.buy.reserve { background: var(--accent); color: var(--ink); }
+.buy.reserve:hover { background: var(--highlight); }
+.buy.soon { background: var(--panel); color: var(--sub); border-style: dashed; cursor: default; }
+.buy svg { width: 20px; height: 20px; }
+
+/* Info strip */
+.info { max-width: var(--container-w); margin: 48px auto 0; padding: 0 var(--container-pad); }
+.info-inner {
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base); padding: 26px 28px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;
+}
+.info h3 { font-size: 17px; font-weight: 900; margin-bottom: 6px; }
+.info p { font-size: 14.5px; line-height: 1.8; color: var(--sub); }
+
+/* Footer */
+.footer { max-width: var(--container-w); margin: 32px auto 26px; padding: 0 var(--container-pad); }
+.footer-inner {
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base); padding: 22px 24px; text-align: center;
+  font-size: 14px; font-weight: 700; line-height: 2;
+}
+.footer-inner .seller { font-size: 17px; font-weight: 900; }
+.footer-inner nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 22px; margin: 6px 0; }
+.footer-inner .url { color: var(--sub); font-weight: 700; letter-spacing: .02em; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: #fff; border-radius: var(--radius-pill);
+  padding: 10px 22px; font-size: 15px; font-weight: 800; opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; z-index: 10;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 1023px) {
+  :root { --container-pad: 22px; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .info-inner { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  :root { --container-pad: 16px; }
+  .topnav-inner { border-radius: 22px; justify-content: center; }
+  .hero { padding-top: 26px; }
+  .hero .sub { font-size: 16px; }
+  .jump { font-size: 15px; padding: 8px 16px; }
+  .grid { grid-template-columns: 1fr; gap: 20px; }
+  .group-head h2 { font-size: 22px; }
+  .group-head p { margin-left: 0; margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .item, .jump, .toast { transition: none; }
+  .item:hover, .grid .item:nth-child(even):hover { transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="サイト内">
+  <div class="topnav-inner">
+    <a class="brand" href="./" aria-label="ひだまりワークス ショップ">
+      <span class="logo" aria-hidden="true"><i></i></span>
+      <span class="name">ひだまりワークス<small>ONLINE SHOP</small></span>
+    </a>
+    <ul>
+      <li><a href="../">ホーム</a></li>
+      <li><a href="./" aria-current="page">ショップ</a></li>
+      <li><a href="tokushoho.html">特定商取引法に基づく表記</a></li>
+      <li><a class="cart-pill" href="#cart" id="cart-link">🛒 カート <b id="cart-count">0</b></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="notice" role="status">
+  <div class="notice-inner">
+    <span class="tag">オープン準備中</span>
+    <span>ひだまりワークスのオンラインショップは、現在オープンに向けて準備中です。商品画像と価格は仮のもので、ご注文はまだ受け付けていません。</span>
+  </div>
+</div>
+
+<header class="hero">
+  <span class="kicker">☼ 手づくりの小物と機器のお店</span>
+  <h1>ひだまりワークス<br><mark>オンラインショップ</mark></h1>
+  <p class="sub">リハビリ用のコントローラーづくりから生まれた、<strong>おもちゃ・PC周辺機器・収納小物・時計</strong>を販売します。<br>3D プリンターで、ひとつひとつ作っています。</p>
+</header>
+
+<nav class="jumps" aria-label="カテゴリでさがす">
+  <a class="jump" href="#toys" style="--c:#ffc9a8"><span class="dot" aria-hidden="true"></span>おもちゃ・フィギュア・ゲーム</a>
+  <a class="jump" href="#devices" style="--c:#bfe3ff"><span class="dot" aria-hidden="true"></span>電気機器・PC周辺機器</a>
+  <a class="jump" href="#furniture" style="--c:#c9f0c4"><span class="dot" aria-hidden="true"></span>家具・収納小物</a>
+  <a class="jump" href="#clocks" style="--c:#ffe38a"><span class="dot" aria-hidden="true"></span>時計</a>
+</nav>
+
+<main id="shop"></main>
+
+<section class="info" aria-label="お買い物について">
+  <div class="info-inner">
+    <div><h3>🚚 お届けについて</h3><p>ご注文から 5〜10 日ほどで、日本全国へ発送する予定です。ひとつずつ 3D プリンターで作るため、少しお時間をいただきます。</p></div>
+    <div><h3>💳 お支払いについて</h3><p>クレジットカード、コンビニ払い、銀行振込に対応する予定です。詳しくは特定商取引法に基づく表記をごらんください。</p></div>
+    <div><h3>🛠️ サイズ・色のご相談</h3><p>フックやスタンドの大きさ、色の組み合わせなど、ご相談に応じてお作りします。お気軽にお問い合わせください。</p></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="seller">販売者：ひだまりワークス</div>
+    <nav aria-label="フッター">
+      <a href="../">ホーム</a>
+      <a href="./">ショップ</a>
+      <a href="tokushoho.html">特定商取引法に基づく表記</a>
+    </nav>
+    <div class="url">https://hidamari-works.com/shop/</div>
+    <div>© ひだまりワークス</div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<script>
+const CATEGORIES = [
+  { id: 'toys', label: 'おもちゃ・フィギュア・ゲーム', icon: '🧸', color: '#ffc9a8',
+    lead: '3D プリントや布で作った、手に取って遊べるもの。リハビリの時間を楽しくする道具にもなります。' },
+  { id: 'devices', label: '電気機器・PC周辺機器', icon: '⌨️', color: '#bfe3ff',
+    lead: '大きなボタンで操作できる、手づくりのキーボードやコントローラー。パソコンやスマホまわりの道具です。' },
+  { id: 'furniture', label: '家具・収納小物', icon: '🪝', color: '#c9f0c4',
+    lead: '壁や机まわりを片づける小物。3D プリンターで作るので、大きさや色をえらべます。' },
+  { id: 'clocks', label: '時計', icon: '🕰️', color: '#ffe38a',
+    lead: '見てたのしい、読みやすい時計。部屋のアクセントになります。' },
+];
+
+// status: 'sale' = カートに入れる / 'reserve' = 予約受付中 / 'soon' = 近日発売
+const PRODUCTS = [
+  // ---- おもちゃ・フィギュア・ゲーム
+  { cat: 'toys', emoji: '🦖', bg: '#d8f5c8', name: 'どうぶつアクションフィギュア', price: 1800, status: 'sale',
+    desc: '手足が動く 3D プリント製のアクションフィギュア。恐竜、うさぎ、ねこの 3 種類。' },
+  { cat: 'toys', emoji: '🪧', bg: '#ffe0ec', name: 'ひだまり アクリルスタンド', price: 1200, status: 'sale',
+    desc: 'ひだまりワークスのキャラクターを印刷したアクリルスタンド。机の上に飾れます。' },
+  { cat: 'toys', emoji: '🐻', bg: '#ffe7c2', name: 'どうぶつ縫いぐるみ', price: 2800, status: 'reserve',
+    desc: '手のひらサイズのやわらかい縫いぐるみ。にぎる練習にもちょうどよい大きさです。' },
+  { cat: 'toys', emoji: '🎯', bg: '#dcdcff', name: 'ペグボードゲーム', price: 3500, status: 'soon',
+    desc: '穴にペグをさして遊ぶボードゲーム。指先の運動と、対戦のたのしさを一度に。' },
+  { cat: 'toys', emoji: '🧩', bg: '#cfeeff', name: 'ジグソーパズル', price: 2200, status: 'sale',
+    desc: '大きめのピースで作ったジグソーパズル。どうぶつ運動会の絵柄です。' },
+
+  // ---- 電気機器・PC周辺機器
+  { cat: 'devices', emoji: '🔴', bg: '#ffe0cc', name: '汎用マクロキー（キーボード）スマッシュボタン', price: 6800, status: 'reserve',
+    desc: '大きなボタン 1 つの USB キーボード。好きなキーやショートカットを割り当てられます。' },
+  { cat: 'devices', emoji: '✊', bg: '#d8f5c8', name: 'じゃんけんコントローラー', price: 5400, status: 'soon',
+    desc: 'グー・チョキ・パーの 3 ボタンで遊ぶコンピュータ周辺機器。どうぶつ運動会に対応。' },
+  { cat: 'devices', emoji: '📱', bg: '#d6ecff', name: 'スマホ・タブレットスタンド', price: 1500, status: 'sale',
+    desc: '角度を 3 段階にえらべるスタンド。3D プリント製で軽く、持ち運びにも便利です。' },
+
+  // ---- 家具・収納小物
+  { cat: 'furniture', emoji: '🧥', bg: '#fff1bf', name: '衣服掛けフック', price: 900, status: 'sale',
+    desc: '壁に貼って使う 3D プリント製のフック。上着やかばんを掛けられます。2 個セット。' },
+  { cat: 'furniture', emoji: '🎩', bg: '#f1dcff', name: '帽子掛けスタンド', price: 2400, status: 'sale',
+    desc: '玄関に置ける帽子掛けスタンド。帽子の形がくずれにくい丸い頭つきです。' },
+  { cat: 'furniture', emoji: '🔑', bg: '#d7f3d0', name: '鍵掛けボード', price: 1600, status: 'sale',
+    desc: '鍵を 4 本まで掛けられる小さなボード。家族の名前のプレートを付けられます。' },
+  { cat: 'furniture', emoji: '🪛', bg: '#e3f6c6', name: 'ペグボード（壁掛け収納）', price: 3200, status: 'reserve',
+    desc: '工具や文房具を掛けて整理するペグボード。フックやトレイを組み合わせられます。' },
+  { cat: 'furniture', emoji: '🧮', bg: '#eadcff', name: '計算機用台', price: 1300, status: 'sale',
+    desc: '電卓を見やすい角度に置ける台。机の上で滑りにくいゴム足つきです。' },
+
+  // ---- 時計
+  { cat: 'clocks', emoji: '🦕', bg: '#ffe38a', name: '恐竜道路標識時計', price: 3800, status: 'reserve',
+    desc: '「恐竜横断注意」の道路標識をかたどった時計。子ども部屋やリビングに。' },
+  { cat: 'clocks', emoji: '🕰️', bg: '#d6ecff', name: '掛け時計', price: 4200, status: 'sale',
+    desc: '大きな数字で読みやすい掛け時計。木目調のフレームは 3D プリント製です。' },
+  { cat: 'clocks', emoji: '⏰', bg: '#ffe0ec', name: '置き時計', price: 2900, status: 'sale',
+    desc: '手のひらサイズの置き時計。ベッドサイドや机の上に。' },
+];
+
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const yen = (n) => '¥' + n.toLocaleString('ja-JP');
+const CART_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 11.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 7H6"/></svg>';
+const STATUS = {
+  sale:    { badge: '',          cls: '',        label: 'カートに入れる', icon: CART_SVG },
+  reserve: { badge: '予約受付中', cls: 'reserve', label: '予約受付中（予約する）', icon: '📝' },
+  soon:    { badge: '近日発売',  cls: 'soon',    label: '近日発売', icon: '🔜' },
+};
+
+document.getElementById('shop').innerHTML = CATEGORIES.map(g => `
+  <section class="group" id="${g.id}" aria-labelledby="${g.id}-h">
+    <div class="group-head">
+      <span class="group-badge" style="--c:${g.color}" aria-hidden="true">${g.icon}</span>
+      <h2 id="${g.id}-h">${esc(g.label)}</h2>
+      <p>${esc(g.lead)}</p>
+    </div>
+    <div class="grid">
+      ${PRODUCTS.filter(p => p.cat === g.id).map((p, i) => {
+        const s = STATUS[p.status];
+        return `
+        <article class="item">
+          <div class="stage" style="--bg-c:${p.bg}">
+            <span class="pic" aria-hidden="true">${p.emoji}</span>
+            ${s.badge ? `<span class="status ${p.status}">${s.badge}</span>` : ''}
+            <span class="photo-note">商品画像は準備中</span>
+          </div>
+          <div class="body">
+            <h3 class="title">${esc(p.name)}</h3>
+            <p class="desc">${esc(p.desc)}</p>
+            <div class="price">${yen(p.price)}<small>税込・送料別（仮価格）</small></div>
+            <button class="buy ${s.cls}" type="button" data-name="${esc(p.name)}" data-status="${p.status}" ${p.status === 'soon' ? 'disabled' : ''}>${s.icon} ${s.label}</button>
+          </div>
+        </article>`;
+      }).join('')}
+    </div>
+  </section>`).join('');
+
+// 「カートに入れる」の見た目だけのデモ。決済はまだ動きません。
+let count = 0;
+const countEl = document.getElementById('cart-count');
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+document.querySelectorAll('.buy').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.status === 'soon') return;
+    if (btn.classList.contains('added')) return;
+    count += 1;
+    countEl.textContent = count;
+    if (btn.dataset.status === 'reserve') {
+      btn.classList.add('added');
+      btn.innerHTML = '✓ 予約リストに入れました';
+      showToast(`「${btn.dataset.name}」を予約リストに入れました（オープン準備中のため仮の操作です）`);
+    } else {
+      btn.classList.add('added');
+      btn.innerHTML = '✓ カートに入れました';
+      showToast(`「${btn.dataset.name}」をカートに入れました（オープン準備中のため仮の操作です）`);
+    }
+  });
+});
+document.getElementById('cart-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  showToast(count ? `カートに ${count} 点入っています。お支払いはオープン後にご利用いただけます。` : 'カートは空です。');
+});
+</script>
+</body>
+</html>

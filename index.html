@@ -238,6 +238,7 @@ a { color: inherit; }
 
 <footer class="footer">
   <div class="footer-inner">
+    <a href="shop/">🛒 ひだまりワークス ショップ</a> ・ <a href="shop/tokushoho.html">特定商取引法に基づく表記</a><br>
     © 2021–2026 hidamari works ✿
   </div>
 </footer>
@@ -249,7 +250,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt
 const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
 document.querySelector('.jumps').innerHTML = GROUPS.map(g =>
-  `<a class="jump" href="#${g.id}" style="--c:${g.color}"><span class="dot" aria-hidden="true"></span>${esc(g.label)}</a>`).join('');
+  `<a class="jump" href="#${g.id}" style="--c:${g.color}"><span class="dot" aria-hidden="true"></span>${esc(g.label)}</a>`).join('')
+  + `<a class="jump" href="shop/" style="--c:#ffd27a"><span class="dot" aria-hidden="true"></span>🛒 ショップ</a>`;
 
 document.getElementById('groups').innerHTML = GROUPS.map(g => `
   <section class="group" id="${g.id}" aria-labelledby="${g.id}-h">

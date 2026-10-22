@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特定商取引法に基づく表記 | ひだまりワークス ショップ</title>
+<meta name="description" content="ひだまりワークス オンラインショップの特定商取引法に基づく表記。販売業者、支払方法、商品の引渡時期、返品についてのご案内です。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: oklch(95% 0.04 75);
+  --bg-dot: oklch(85% 0.06 65 / 0.4);
+  --ink: #2b2320;
+  --sub: oklch(40% 0.01 60);
+  --panel: #fff;
+  --accent: oklch(72% 0.15 55);
+  --accent-deep: oklch(50% 0.12 55);
+  --highlight: oklch(88% 0.12 75);
+  --tag-bg: oklch(94% 0.04 70);
+  --logo-fill: oklch(80% 0.14 75);
+  --shadow-base: 4px 5px 0 var(--ink);
+  --radius-card: 24px;
+  --radius-pill: 999px;
+  --container-w: 1200px;
+  --container-pad: 32px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg); color: var(--ink);
+  font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500; -webkit-font-smoothing: antialiased; line-height: 1.7;
+}
+body { background-image: radial-gradient(var(--bg-dot) 1.2px, transparent 1.2px); background-size: 16px 16px; min-height: 100vh; overflow-x: hidden; }
+a { color: inherit; }
+
+.logo {
+  display: inline-block; flex-shrink: 0; width: 40px; height: 40px;
+  background: var(--logo-fill); border: 2.5px solid var(--ink); border-radius: 50%;
+  box-shadow: 2px 3px 0 var(--ink); position: relative;
+}
+.logo::before, .logo::after { content: ''; position: absolute; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--ink); }
+.logo::before { left: 9px; }
+.logo::after { right: 9px; }
+.logo i { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 11px; height: 5px; border-top: 2.5px solid var(--ink); border-radius: 0 0 50% 50% / 0 0 100% 100%; }
+
+.topnav { max-width: var(--container-w); margin: 20px auto 0; padding: 0 var(--container-pad); }
+.topnav-inner {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-base); padding: 10px 22px 10px 14px;
+}
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand .name { font-size: 20px; font-weight: 900; line-height: 1.2; }
+.brand .name small { display: block; font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: .06em; }
+.topnav ul { display: flex; align-items: center; gap: 6px 18px; list-style: none; flex-wrap: wrap; font-size: 14.5px; font-weight: 800; }
+.topnav ul a { text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+.topnav ul a:hover, .topnav ul a[aria-current] { border-bottom-color: var(--accent); }
+
+.page { max-width: 860px; margin: 40px auto 0; padding: 0 var(--container-pad); }
+.page h1 { font-size: clamp(26px, 2.4vw + 1rem, 38px); font-weight: 900; line-height: 1.3; text-align: center; }
+.page h1 mark { background: linear-gradient(180deg, transparent 60%, var(--highlight) 60%); color: inherit; padding: 0 4px; }
+.page .lead { text-align: center; color: var(--sub); margin-top: 12px; font-size: 15.5px; }
+
+.card {
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base); padding: 10px 28px 18px; margin-top: 28px;
+}
+dl { display: grid; grid-template-columns: 220px 1fr; }
+dt, dd { padding: 14px 0; border-bottom: 2px dashed oklch(85% 0.03 70); font-size: 15.5px; }
+dt { font-weight: 900; padding-right: 16px; }
+dd { line-height: 1.8; }
+dl > :nth-last-child(-n+2) { border-bottom: none; }
+.note { display: inline-block; background: var(--tag-bg); border: 1.5px solid var(--ink); border-radius: var(--radius-pill); padding: 1px 10px; font-size: 12.5px; font-weight: 700; margin-left: 6px; vertical-align: 2px; }
+.draft {
+  margin-top: 22px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  background: var(--highlight); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 3px 4px 0 var(--ink);
+  padding: 12px 20px; font-size: 14.5px; font-weight: 700;
+}
+.draft .tag { background: var(--ink); color: #fff; border-radius: var(--radius-pill); padding: 3px 14px; font-size: 13px; font-weight: 900; letter-spacing: .06em; white-space: nowrap; }
+.back { display: inline-flex; align-items: center; gap: 8px; margin-top: 26px; text-decoration: none; background: var(--ink); color: #fff; border-radius: var(--radius-pill); padding: 10px 22px; font-size: 15px; font-weight: 800; }
+.back:hover { background: var(--accent-deep); }
+
+.footer { max-width: var(--container-w); margin: 48px auto 26px; padding: 0 var(--container-pad); }
+.footer-inner {
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-base); padding: 22px 24px; text-align: center; font-size: 14px; font-weight: 700; line-height: 2;
+}
+.footer-inner .seller { font-size: 17px; font-weight: 900; }
+.footer-inner nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 22px; margin: 6px 0; }
+.footer-inner .url { color: var(--sub); letter-spacing: .02em; }
+
+@media (max-width: 640px) {
+  :root { --container-pad: 16px; }
+  .topnav-inner { border-radius: 22px; justify-content: center; }
+  dl { grid-template-columns: 1fr; }
+  dt { padding-bottom: 2px; border-bottom: none; }
+  dd { padding-top: 2px; }
+  .card { padding: 6px 20px 14px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="サイト内">
+  <div class="topnav-inner">
+    <a class="brand" href="./" aria-label="ひだまりワークス ショップ">
+      <span class="logo" aria-hidden="true"><i></i></span>
+      <span class="name">ひだまりワークス<small>ONLINE SHOP</small></span>
+    </a>
+    <ul>
+      <li><a href="../">ホーム</a></li>
+      <li><a href="./">ショップ</a></li>
+      <li><a href="tokushoho.html" aria-current="page">特定商取引法に基づく表記</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="page">
+  <h1><mark>特定商取引法に基づく表記</mark></h1>
+  <p class="lead">ひだまりワークス オンラインショップでのお買い物について、法律にもとづいてお知らせします。</p>
+
+  <div class="draft" role="status">
+    <span class="tag">オープン準備中</span>
+    <span>ショップはオープン準備中のため、「準備中」とある項目はオープンまでに確定してお知らせします。</span>
+  </div>
+
+  <section class="card" aria-label="表記内容">
+    <dl>
+      <dt>販売業者</dt><dd>ひだまりワークス</dd>
+      <dt>運営責任者</dt><dd>準備中<span class="note">オープン時に掲載</span></dd>
+      <dt>所在地</dt><dd>準備中<span class="note">オープン時に掲載</span><br>※ ご請求があれば、遅滞なく開示いたします。</dd>
+      <dt>電話番号</dt><dd>準備中<span class="note">オープン時に掲載</span><br>※ ご請求があれば、遅滞なく開示いたします。</dd>
+      <dt>お問い合わせ</dt><dd>ショップ内のお問い合わせフォーム（準備中）よりご連絡ください。</dd>
+      <dt>販売 URL</dt><dd>https://hidamari-works.com/shop/</dd>
+      <dt>販売価格</dt><dd>各商品ページに表示する価格（消費税込み）によります。</dd>
+      <dt>商品代金以外の必要料金</dt><dd>送料（全国一律 ¥600 を予定。¥8,000 以上のご注文で無料を予定）、銀行振込の場合の振込手数料、コンビニ払いの場合の決済手数料。</dd>
+      <dt>お支払い方法</dt><dd>クレジットカード、コンビニ払い、銀行振込を予定しています。</dd>
+      <dt>お支払い時期</dt><dd>クレジットカード：ご注文時に決済<br>コンビニ払い・銀行振込：ご注文から 7 日以内にお支払いください。</dd>
+      <dt>商品の引渡時期</dt><dd>ご入金の確認後、5〜10 営業日以内に発送します。受注生産品（3D プリント製品）は、商品ページに記載の日数をいただきます。</dd>
+      <dt>返品・交換について</dt><dd>商品の不良や、ご注文と異なる商品が届いた場合は、商品到着後 7 日以内にご連絡ください。送料当店負担で交換または返金いたします。<br>お客様のご都合による返品・交換は、受注生産品のためお受けできません。</dd>
+      <dt>動作環境</dt><dd>電気機器・PC 周辺機器は、USB 接続に対応した Windows / macOS のパソコンでご利用いただけます。詳しくは各商品ページをごらんください。</dd>
+    </dl>
+  </section>
+
+  <a class="back" href="./">← ショップにもどる</a>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="seller">販売者：ひだまりワークス</div>
+    <nav aria-label="フッター">
+      <a href="../">ホーム</a>
+      <a href="./">ショップ</a>
+      <a href="tokushoho.html">特定商取引法に基づく表記</a>
+    </nav>
+    <div class="url">https://hidamari-works.com/shop/tokushoho.html</div>
+    <div>© ひだまりワークス</div>
+  </div>
+</footer>
+
+</body>
+</html>
