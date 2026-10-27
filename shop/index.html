@@ -161,6 +161,7 @@ a { color: inherit; }
   display: grid; place-items: center;
 }
 .stage .pic { font-size: 72px; line-height: 1; filter: drop-shadow(3px 4px 0 rgb(43 35 32 / .25)); }
+.stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .stage .photo-note {
   position: absolute; left: 10px; bottom: 10px;
   font-size: 12px; font-weight: 800; letter-spacing: .04em;
@@ -263,7 +264,7 @@ a { color: inherit; }
 <div class="notice" role="status">
   <div class="notice-inner">
     <span class="tag">オープン準備中</span>
-    <span>ひだまりワークスのオンラインショップは、現在オープンに向けて準備中です。商品画像と価格は仮のもので、ご注文はまだ受け付けていません。</span>
+    <span>ひだまりワークスのオンラインショップは、現在オープンに向けて準備中です。商品画像（AI で生成したイメージ）と価格は仮のもので、ご注文はまだ受け付けていません。</span>
   </div>
 </div>
 
@@ -320,45 +321,43 @@ const CATEGORIES = [
 // status: 'sale' = カートに入れる / 'reserve' = 予約受付中 / 'soon' = 近日発売
 const PRODUCTS = [
   // ---- おもちゃ・フィギュア・ゲーム
-  { cat: 'toys', emoji: '🦖', bg: '#d8f5c8', name: 'どうぶつアクションフィギュア', price: 1800, status: 'sale',
+  { cat: 'toys', emoji: '🦖', bg: '#d8f5c8', name: 'どうぶつアクションフィギュア', img: 'toy-figure', price: 1800, status: 'sale',
     desc: '手足が動く 3D プリント製のアクションフィギュア。恐竜、うさぎ、ねこの 3 種類。' },
-  { cat: 'toys', emoji: '🪧', bg: '#ffe0ec', name: 'ひだまり アクリルスタンド', price: 1200, status: 'sale',
+  { cat: 'toys', emoji: '🪧', bg: '#ffe0ec', name: 'ひだまり アクリルスタンド', img: 'toy-acrylic', price: 1200, status: 'sale',
     desc: 'ひだまりワークスのキャラクターを印刷したアクリルスタンド。机の上に飾れます。' },
-  { cat: 'toys', emoji: '🐻', bg: '#ffe7c2', name: 'どうぶつ縫いぐるみ', price: 2800, status: 'reserve',
+  { cat: 'toys', emoji: '🐻', bg: '#ffe7c2', name: 'どうぶつ縫いぐるみ', img: 'toy-plush', price: 2800, status: 'reserve',
     desc: '手のひらサイズのやわらかい縫いぐるみ。にぎる練習にもちょうどよい大きさです。' },
-  { cat: 'toys', emoji: '🎯', bg: '#dcdcff', name: 'ペグボードゲーム', price: 3500, status: 'soon',
-    desc: '穴にペグをさして遊ぶボードゲーム。指先の運動と、対戦のたのしさを一度に。' },
-  { cat: 'toys', emoji: '🧩', bg: '#cfeeff', name: 'ジグソーパズル', price: 2200, status: 'sale',
+  { cat: 'toys', emoji: '🎯', bg: '#dcdcff', name: 'ペグボードゲーム', img: 'toy-pegboard', price: 3500, status: 'soon',
+    desc: '机に置いた盤の穴に、ペグを 1 本ずつさして遊ぶ盤ゲーム。ペグが穴に収まるので盤面がくずれにくく、指先を動かす練習と対戦のたのしさを一度に。' },
+  { cat: 'toys', emoji: '🧩', bg: '#cfeeff', name: 'ジグソーパズル', img: 'toy-puzzle', price: 2200, status: 'sale',
     desc: '大きめのピースで作ったジグソーパズル。どうぶつ運動会の絵柄です。' },
 
   // ---- 電気機器・PC周辺機器
-  { cat: 'devices', emoji: '🔴', bg: '#ffe0cc', name: '汎用マクロキー（キーボード）スマッシュボタン', price: 6800, status: 'reserve',
+  { cat: 'devices', emoji: '🔴', bg: '#ffe0cc', name: '汎用マクロキー（キーボード）スマッシュボタン', img: 'dev-smash', price: 6800, status: 'reserve',
     desc: '大きなボタン 1 つの USB キーボード。好きなキーやショートカットを割り当てられます。' },
-  { cat: 'devices', emoji: '✊', bg: '#d8f5c8', name: 'じゃんけんコントローラー', price: 5400, status: 'soon',
+  { cat: 'devices', emoji: '✊', bg: '#d8f5c8', name: 'じゃんけんコントローラー', img: 'dev-janken', price: 5400, status: 'soon',
     desc: 'グー・チョキ・パーの 3 ボタンで遊ぶコンピュータ周辺機器。どうぶつ運動会に対応。' },
-  { cat: 'devices', emoji: '📱', bg: '#d6ecff', name: 'スマホ・タブレットスタンド', price: 1500, status: 'sale',
+  { cat: 'devices', emoji: '📱', bg: '#d6ecff', name: 'スマホ・タブレットスタンド', img: 'dev-stand', price: 1500, status: 'sale',
     desc: '角度を 3 段階にえらべるスタンド。3D プリント製で軽く、持ち運びにも便利です。' },
 
   // ---- 家具・収納小物
-  { cat: 'furniture', emoji: '🎩', bg: '#f1dcff', name: '帽子掛けスタンド', price: 2400, status: 'sale',
+  { cat: 'furniture', emoji: '🎩', bg: '#f1dcff', name: '帽子掛けスタンド', img: 'fur-hatstand', price: 2400, status: 'sale',
     desc: '玄関に置ける帽子掛けスタンド。帽子の形がくずれにくい丸い頭つきです。' },
-  { cat: 'furniture', emoji: '🧮', bg: '#eadcff', name: '計算機（電卓・ノートPC）用の台', price: 1300, status: 'sale',
+  { cat: 'furniture', emoji: '🧮', bg: '#eadcff', name: '計算機（電卓・ノートPC）用の台', img: 'fur-calcstand', price: 1300, status: 'sale',
     desc: '電卓やノートパソコンを見やすい角度に置ける台。机の上で滑りにくいゴム足つきです。' },
-  { cat: 'furniture', emoji: '🗄️', bg: '#fff1bf', name: '卓上ラック（小物スタンド）', price: 2600, status: 'sale',
+  { cat: 'furniture', emoji: '🗄️', bg: '#fff1bf', name: '卓上ラック（小物スタンド）', img: 'fur-rack', price: 2600, status: 'sale',
     desc: '机の上の文房具やリモコンを立てて置ける 2 段の卓上ラック。幅をえらべます。' },
-  { cat: 'furniture', emoji: '🪛', bg: '#e3f6c6', name: 'ペグボード（壁掛け収納）', price: 3200, status: 'reserve',
-    desc: '工具や文房具を掛けて整理するペグボード。フックやトレイを組み合わせられます。' },
-  { cat: 'furniture', emoji: '🧥', bg: '#d6ecff', name: '衣服掛けフック', price: 900, status: 'sale',
+  { cat: 'furniture', emoji: '🧥', bg: '#d6ecff', name: '衣服掛けフック', img: 'fur-hook', price: 900, status: 'sale',
     desc: '壁に貼って使う 3D プリント製のフック。上着やかばんを掛けられます。2 個セット。' },
-  { cat: 'furniture', emoji: '🔑', bg: '#d7f3d0', name: '鍵掛けボード', price: 1600, status: 'sale',
+  { cat: 'furniture', emoji: '🔑', bg: '#d7f3d0', name: '鍵掛けボード', img: 'fur-keyboard', price: 1600, status: 'sale',
     desc: '鍵を 4 本まで掛けられる小さなボード。家族の名前のプレートを付けられます。' },
 
   // ---- 時計
-  { cat: 'clocks', emoji: '🦕', bg: '#ffe38a', name: '恐竜道路標識時計', price: 3800, status: 'reserve',
+  { cat: 'clocks', emoji: '🦕', bg: '#ffe38a', name: '恐竜道路標識時計', img: 'clk-dino', price: 3800, status: 'reserve',
     desc: '「恐竜横断注意」の道路標識をかたどった時計。子ども部屋やリビングに。' },
-  { cat: 'clocks', emoji: '🕰️', bg: '#d6ecff', name: '掛け時計', price: 4200, status: 'sale',
+  { cat: 'clocks', emoji: '🕰️', bg: '#d6ecff', name: '掛け時計', img: 'clk-wall', price: 4200, status: 'sale',
     desc: '大きな数字で読みやすい掛け時計。木目調のフレームは 3D プリント製です。' },
-  { cat: 'clocks', emoji: '⏰', bg: '#ffe0ec', name: '置き時計', price: 2900, status: 'sale',
+  { cat: 'clocks', emoji: '⏰', bg: '#ffe0ec', name: '置き時計', img: 'clk-desk', price: 2900, status: 'sale',
     desc: '手のひらサイズの置き時計。ベッドサイドや机の上に。' },
 ];
 
@@ -385,8 +384,9 @@ document.getElementById('shop').innerHTML = CATEGORIES.map(g => `
         <article class="item">
           <div class="stage" style="--bg-c:${p.bg}">
             <span class="pic" aria-hidden="true">${p.emoji}</span>
+            ${p.img ? `<img src="images/${p.img}.webp" width="800" height="600" loading="lazy" alt="${esc(p.name)}（イメージ）" onerror="this.remove()">` : ''}
             ${s.badge ? `<span class="status ${p.status}">${s.badge}</span>` : ''}
-            <span class="photo-note">商品画像は準備中</span>
+            <span class="photo-note">${p.img ? 'イメージ画像（AI生成）' : '商品画像は準備中'}</span>
           </div>
           <div class="body">
             <h3 class="title">${esc(p.name)}</h3>
